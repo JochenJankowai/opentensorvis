@@ -18,20 +18,26 @@
 
 #include <iterator>
 #include <string>
+#include <memory>
 #include <unordered_set>
 #include <unordered_map>
+#include <map>
 #include <vtkArrayDispatch.h>
 #include <vtkEdgeTable.h>
 #include <vtkIntArray.h>
 #include <vtkCellArray.h>
+#include <vtkDoubleArray.h>
+#include <vtkPolyData.h>
+#include <vtkPointData.h>
 #include <vtkTriangle.h>
 #include <vtkPointSet.h>
 #include <vtkPointSetAlgorithm.h>
 #include <vtkSmartPointer.h>
-#include <vtkTensorFieldCriticalCellsFilterModule.h> // For export macro
+//#include <vtkTensorFieldCriticalCellsFilterModule.h> // For export macro
+#include <vtkTensorFieldCriticalCellsModule.h>
 #include <vtkBitArray.h>
 
-class VTKTENSORFIELDCRITICALCELLSFILTER_EXPORT vtkTensorFieldCriticalCells
+class VTKTENSORFIELDCRITICALCELLS_EXPORT vtkTensorFieldCriticalCells
   : public vtkPointSetAlgorithm
 {
 public:
@@ -233,11 +239,10 @@ private:
   void ClassifyCells();
   
   // New methods
-  void addOutputTriangle(vtkCellArray* trianglesArr, 
-    vtkTriangle* triangleVtk, vtkIdType p1, vtkIdType p2, vtkIdType p3);
+  void addOutputTriangle(vtkCellArray *trianglesArr, vtkTriangle *triangleVtk, vtkIdType p1, vtkIdType p2, vtkIdType p3);
 
   template<typename TensorArray>
-  int vtkTensorFieldCriticalCells::SubdivideMesh(
+  int SubdivideMesh(
     vtkPolyData* outputMesh, vtkPointSet* inField, TensorArray* tensors)
   {
     std::vector<Edge> edges;
@@ -245,7 +250,7 @@ private:
     std::vector<Triangle> triangles;
     
     typedef std::pair<vtkIdType, vtkIdType> pair;
-    std::unordered_map<pair, int> pairMap; 
+    std::map<pair, int> pairMap; 
     
     auto pointIDs = vtkSmartPointer<vtkIdList>::New();
     const auto numberOfCells = inField->GetNumberOfCells();
@@ -299,7 +304,7 @@ private:
     anisotropyArray->SetNumberOfComponents(1);
     anisotropyArray->SetName("Anisotropy");
 
-    vtkSmartPointer<TensorArray> outputTensorsArray = vtkSmartPointer<TensorArray>::New();
+    vtkSmartPointer<vtkDoubleArray> outputTensorsArray = vtkSmartPointer<vtkDoubleArray>::New();
     outputTensorsArray->SetNumberOfComponents(4);
     outputTensorsArray->SetName("Tensors");
     outputTensorsArray->DeepCopy(tensors);
@@ -312,9 +317,9 @@ private:
       ValueType tensor[4];
       tensorsAccessor.Get(pointIndex, tensor);
       
-      ValueType E = tensor1[0];
-      ValueType F = tensor1[1];
-      ValueType G = tensor1[2];
+      ValueType E = tensor[0];
+      ValueType F = tensor[1];
+      ValueType G = tensor[2];
 
       ValueType anisotropy = std::sqrt((E-G) * (E-G) + 4 * F * F);
       anisotropyArray->InsertNextTuple1(anisotropy);
@@ -365,8 +370,8 @@ private:
           double coords1[3];
           double coords2[3];
 
-          newPoints.GetPoint(p1, coords1);
-          newPoints.GetPoint(p2, coords2);
+          newPoints->GetPoint(p1, coords1);
+          newPoints->GetPoint(p2, coords2);
 
           double coordsEdgePoint[3];
           for (size_t i{ 0 }; i < 3; ++i)
@@ -374,7 +379,7 @@ private:
             coordsEdgePoint[i] = (1-t) * coords1[i] + t * coords2[i];
           }
 
-          newPoints.InsertNextPoint(coordsEdgePoint);
+          newPoints->InsertNextPoint(coordsEdgePoint);
           edge.newEdgeVertexId = origNumberOfPoints + edgePoints;
           ++edgePoints;
         }
@@ -451,9 +456,9 @@ private:
           double coords2[3];
           double coords3[3];
 
-          newPoints.GetPoint(p1, coords1);
-          newPoints.GetPoint(p2, coords2);
-          newPoints.GetPoint(p3, coords3);
+          newPoints->GetPoint(p1, coords1);
+          newPoints->GetPoint(p2, coords2);
+          newPoints->GetPoint(p3, coords3);
 
           double coordsTriPoint[3];
           for (size_t i{ 0 }; i < 3; ++i)
@@ -461,7 +466,7 @@ private:
             coordsTriPoint[i] = alpha * coords1[i] + beta * coords2[i] + gamma * coords3[i];
           }
 
-          newPoints.InsertNextPoint(coordsTriPoint);
+          newPoints->InsertNextPoint(coordsTriPoint);
           tri.newTriVertexId = origNumberOfPoints + edgePoints + triPoints;
           ++triPoints;
         }
@@ -477,13 +482,13 @@ private:
       auto p2 = tri.p2;
       auto p3 = tri.p3;
 
-      auto e1Id = tri.triEdgeIndices[0]
-      auto e2Id = tri.triEdgeIndices[1]
-      auto e3Id = tri.triEdgeIndices[2]
+      auto e1Id = tri.triEdgeIndices[0];
+      auto e2Id = tri.triEdgeIndices[1];
+      auto e3Id = tri.triEdgeIndices[2];
 
-      auto e1 = edges[e1Id]
-      auto e2 = edges[e2Id]
-      auto e3 = edges[e3Id]
+      auto e1 = edges[e1Id];
+      auto e2 = edges[e2Id];
+      auto e3 = edges[e3Id];
 
       vtkIdType p12{0}, p23{0}, p13{0}, p123{0};
       if(tri.isDivided) 
@@ -541,66 +546,66 @@ private:
         switch(numCrits) 
         {
           case 0:
-            addOutputTriangle(trianglesArr, triangleVtk, v1, v2, v3);
+            addOutputTriangle(trianglesArr, triangleVtk, p1, p2, p3);
             break;
           case 1:
             if(e1.isDivided) 
             {
-              addOutputTriangle(trianglesArr, triangleVtk, v12, v3, v1);
-              addOutputTriangle(trianglesArr, triangleVtk, v12, v3, v2);
+              addOutputTriangle(trianglesArr, triangleVtk, p12, p3, p1);
+              addOutputTriangle(trianglesArr, triangleVtk, p12, p3, p2);
             } 
             else if(e2.isDivided) 
             {
-              addOutputTriangle(trianglesArr, triangleVtk, v23, v1, v2);
-              addOutputTriangle(trianglesArr, triangleVtk, v23, v1, v3);
+              addOutputTriangle(trianglesArr, triangleVtk, p23, p1, p2);
+              addOutputTriangle(trianglesArr, triangleVtk, p23, p1, p3);
             } 
             else if(e3.isDivided) 
             {
-              addOutputTriangle(trianglesArr, triangleVtk, v13, v2, v3);
-              addOutputTriangle(trianglesArr, triangleVtk, v13, v2, v1);
+              addOutputTriangle(trianglesArr, triangleVtk, p13, p2, p3);
+              addOutputTriangle(trianglesArr, triangleVtk, p13, p2, p1);
             }
             break;
           case 2:
             if(!e1.isDivided) 
             {
-              addOutputTriangle(trianglesArr, triangleVtk, v23, v13, v3);
+              addOutputTriangle(trianglesArr, triangleVtk, p23, p13, p3);
               if(e2.anisValue < e3.anisValue) 
               {
-                addOutputTriangle(trianglesArr, triangleVtk, v23, v13, v1);
-                addOutputTriangle(trianglesArr, triangleVtk, v23, v2, 1);
+                addOutputTriangle(trianglesArr, triangleVtk, p23, p13, p1);
+                addOutputTriangle(trianglesArr, triangleVtk, p23, p2, p1);
               } 
               else 
               {
-                addOutputTriangle(trianglesArr, triangleVtk, v13, v23, v2);
-                addOutputTriangle(trianglesArr, triangleVtk, v13, v1, v2);
+                addOutputTriangle(trianglesArr, triangleVtk, p13, p23, p2);
+                addOutputTriangle(trianglesArr, triangleVtk, p13, p1, p2);
               }
             } 
             else if(!e2.isDivided) 
             {
-              addOutputTriangle(trianglesArr, triangleVtk, v12, v13, v1);
+              addOutputTriangle(trianglesArr, triangleVtk, p12, p13, p1);
               if(e1.anisValue < e3.anisValue) 
               {
-                addOutputTriangle(trianglesArr, triangleVtk, v12, v13, v3);
-                addOutputTriangle(trianglesArr, triangleVtk, v12, v2, v3);
+                addOutputTriangle(trianglesArr, triangleVtk, p12, p13, p3);
+                addOutputTriangle(trianglesArr, triangleVtk, p12, p2, p3);
               } 
               else 
               {
-                addOutputTriangle(trianglesArr, triangleVtk, v13, v12, v2);
-                addOutputTriangle(trianglesArr, triangleVtk, v13, v3, v2);
+                addOutputTriangle(trianglesArr, triangleVtk, p13, p12, p2);
+                addOutputTriangle(trianglesArr, triangleVtk, p13, p3, p2);
               }
             } 
             else if(!e3.isDivided) 
             {
-              addOutputTriangle(trianglesArr, triangleVtk, v12, v23, v2);
+              addOutputTriangle(trianglesArr, triangleVtk, p12, p23, p2);
               if(e1.anisValue < e2.anisValue) 
               {
-                addOutputTriangle(trianglesArr, triangleVtk, v12, v23, v3);
-                addOutputTriangle(trianglesArr, triangleVtk, v12, v1, v3);
+                addOutputTriangle(trianglesArr, triangleVtk, p12, p23, p3);
+                addOutputTriangle(trianglesArr, triangleVtk, p12, p1, p3);
               } 
               else 
               {
-                addOutputTriangle(trianglesArr, triangleVtk, v23, v12, v1);
-                addOutputTriangle(trianglesArr, triangleVtk, v23, v3, v1);
+                addOutputTriangle(trianglesArr, triangleVtk, p23, p12, p1);
+                addOutputTriangle(trianglesArr, triangleVtk, p23, p3, p1);
               }
             }
             break;
@@ -610,24 +615,24 @@ private:
             auto val13 = e3.anisValue;
             if(val12 < val23 && val12 < val13) 
             {
-              addOutputTriangle(trianglesArr, triangleVtk, v12, v1, v13);
-              addOutputTriangle(trianglesArr, triangleVtk, v12, v13, v3);
-              addOutputTriangle(trianglesArr, triangleVtk, v12, v3, v23);
-              addOutputTriangle(trianglesArr, triangleVtk, v12, v23, v2);
+              addOutputTriangle(trianglesArr, triangleVtk, p12, p1, p13);
+              addOutputTriangle(trianglesArr, triangleVtk, p12, p13, p3);
+              addOutputTriangle(trianglesArr, triangleVtk, p12, p3, p23);
+              addOutputTriangle(trianglesArr, triangleVtk, p12, p23, p2);
             } 
             else if(val23 < val12 && val23 < val13) 
             {
-              addOutputTriangle(trianglesArr, triangleVtk, v23, v2, v12);
-              addOutputTriangle(trianglesArr, triangleVtk, v23, v12, v1);
-              addOutputTriangle(trianglesArr, triangleVtk, v23, v1, v13);
-              addOutputTriangle(trianglesArr, triangleVtk, v23, v13, v3);
+              addOutputTriangle(trianglesArr, triangleVtk, p23, p2, p12);
+              addOutputTriangle(trianglesArr, triangleVtk, p23, p12, p1);
+              addOutputTriangle(trianglesArr, triangleVtk, p23, p1, p13);
+              addOutputTriangle(trianglesArr, triangleVtk, p23, p13, p3);
             } 
             else 
             {
-              addOutputTriangle(trianglesArr, triangleVtk, v13, v3, v23);
-              addOutputTriangle(trianglesArr, triangleVtk, v13, v23, v2);
-              addOutputTriangle(trianglesArr, triangleVtk, v13, v2, v12);
-              addOutputTriangle(trianglesArr, triangleVtk, v13, v12, v1);
+              addOutputTriangle(trianglesArr, triangleVtk, p13, p3, p23);
+              addOutputTriangle(trianglesArr, triangleVtk, p13, p23, p2);
+              addOutputTriangle(trianglesArr, triangleVtk, p13, p2, p12);
+              addOutputTriangle(trianglesArr, triangleVtk, p13, p12, p1);
             }
             break;
         }

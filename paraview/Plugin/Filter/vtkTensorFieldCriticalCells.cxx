@@ -391,11 +391,11 @@ int vtkTensorFieldCriticalCells::RequestData(vtkInformation* vtkNotUsed(request)
     outPointData->Update();
   }
 
-  auto outportData2 = outputVector->GetInformationObject(1);
-  vtkSmartPointer<vtkPolydata> outputMesh =
+  auto outportData = outputVector->GetInformationObject(1);
+  vtkSmartPointer<vtkPolyData> outputMesh =
     vtkPolyData::SafeDownCast(outportData->Get(vtkDataObject::DATA_OBJECT()));
 
-  SubdivideMesh(outputMesh, Setup->InField, Setup->Tensors);
+  SubdivideMesh(outputMesh, Setup->InField, Setup->Tensors.GetPointer());
 
   return 1;
 }
