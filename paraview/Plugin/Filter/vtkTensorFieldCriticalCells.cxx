@@ -15,7 +15,6 @@
 #include "vtkTensorFieldCriticalCells.h"
 
 #include "vtkCell.h"
-#include "vtkCellArray.h"
 #include "vtkDoubleArray.h"
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
@@ -38,7 +37,7 @@ vtkStandardNewMacro(vtkTensorFieldCriticalCells);
 vtkTensorFieldCriticalCells::vtkTensorFieldCriticalCells()
 {
   this->SetNumberOfInputPorts(1);
-  this->SetNumberOfOutputPorts(1);
+  this->SetNumberOfOutputPorts(2);
   this->PerturbateIfNecessaryOn();
   this->CopyEigenvectorsOn();
   this->CopyTensorsOn();
@@ -64,7 +63,14 @@ int vtkTensorFieldCriticalCells::FillInputPortInformation(int, vtkInformation* i
 
 int vtkTensorFieldCriticalCells::FillOutputPortInformation(int port, vtkInformation* info)
 {
-  info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkPointSet");
+  if (port == 0)
+  {
+    info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkPointSet");
+  } 
+  else if (port == 1)
+  {
+    info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkPolyData");
+  } 
   return 1;
 }
 
@@ -385,6 +391,12 @@ int vtkTensorFieldCriticalCells::RequestData(vtkInformation* vtkNotUsed(request)
     outPointData->Update();
   }
 
+  auto outportData2 = outputVector->GetInformationObject(1);
+  vtkSmartPointer<vtkPolydata> outputMesh =
+    vtkPolyData::SafeDownCast(outportData->Get(vtkDataObject::DATA_OBJECT()));
+
+  SubdivideMesh(outputMesh, Setup->InField, Setup->Tensors);
+
   return 1;
 }
 
@@ -585,4 +597,13 @@ void vtkTensorFieldCriticalCells::ClassifyCells()
       Setup->DegenerateCellsTypes->InsertNextValue(static_cast<int>(EdgeRotation::None));
     }
   }
+}
+
+void vtkTensorFieldCriticalCells::addOutputTriangle(vtkCellArray *trianglesArr, 
+  vtkTriangle *triangleVtk, vtkIdType p1, vtkIdType p2, vtkIdType p3)
+{
+  triangleVtk->GetPointIds()->SetId(0, p1);
+  triangleVtk->GetPointIds()->SetId(1, p2);
+  triangleVtk->GetPointIds()->SetId(2, p3);
+  trianglesArr->InsertNextCell(triangleVtk);
 }
