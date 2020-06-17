@@ -33,11 +33,12 @@
 #include <vtkPointSet.h>
 #include <vtkPointSetAlgorithm.h>
 #include <vtkSmartPointer.h>
-//#include <vtkTensorFieldCriticalCellsFilterModule.h> // For export macro
-#include <vtkTensorFieldCriticalCellsModule.h>
+#include <vtkTensorFieldCriticalCellsFilterModule.h> // For export macro
+//#include <vtkTensorFieldCriticalCellsModule.h> // This works for me
 #include <vtkBitArray.h>
 
-class VTKTENSORFIELDCRITICALCELLS_EXPORT vtkTensorFieldCriticalCells
+class VTKTENSORFIELDCRITICALCELLSFILTER_EXPORT vtkTensorFieldCriticalCells
+//class VTKTENSORFIELDCRITICALCELLS_EXPORT vtkTensorFieldCriticalCells // This works for me
   : public vtkPointSetAlgorithm
 {
 public:
@@ -170,28 +171,6 @@ public:
     double anisValue;
     vtkIdType newTriVertexId;
   };
-
-  struct MeshSubdivision
-  {
-    MeshSubdivision()
-      : InField(nullptr)
-      , OutField(nullptr)
-      , Tensors(nullptr)
-    {
-    }
-
-    MeshSubdivision(vtkSmartPointer<vtkPointSet> inField, vtkSmartPointer<vtkPolyData> outField,
-      vtkSmartPointer<vtkDataArray> tensors)
-      : InField(inField)
-      , OutField(outField)
-      , Tensors(tensors)
-    {
-    }
-
-    vtkSmartPointer<vtkPointSet> InField;
-    vtkSmartPointer<vtkPolyData> OutField;
-    vtkSmartPointer<vtkDataArray> Tensors;
-  };
   // ------------ End New Code ---------- //
 
   using Dispatcher = vtkArrayDispatch::DispatchByValueType<vtkArrayDispatch::Reals>;
@@ -260,7 +239,7 @@ private:
       pointIDs->Resize(0);
       inField->GetCellPoints(cellIndex, pointIDs);
 
-      std::vector<int> triEdgeIndices(3);
+      std::vector<int> triEdgeIndices;
 
       for (vtkIdType i{ 0 }; i < 3; ++i)
       {
@@ -289,7 +268,7 @@ private:
 
       const auto p1 = pointIDs->GetId(0);
       const auto p2 = pointIDs->GetId(1);
-      const auto p3 = pointIDs->GetId(3);
+      const auto p3 = pointIDs->GetId(2);
 
       Triangle triangle(p1, p2, p3);
       triangle.triEdgeIndices = triEdgeIndices;
@@ -297,8 +276,7 @@ private:
     }
 
     const auto origNumberOfPoints = inField->GetNumberOfPoints();
-    auto newPoints = outputMesh->GetPoints();
-    newPoints->DeepCopy(inField->GetPoints());
+    vtkSmartPointer<vtkPoints> newPoints = vtkSmartPointer<vtkPoints>::New();
     
     vtkSmartPointer<vtkDoubleArray> anisotropyArray = vtkSmartPointer<vtkDoubleArray>::New();
     anisotropyArray->SetNumberOfComponents(1);
@@ -323,6 +301,9 @@ private:
 
       ValueType anisotropy = std::sqrt((E-G) * (E-G) + 4 * F * F);
       anisotropyArray->InsertNextTuple1(anisotropy);
+
+      auto coords = inField->GetPoints()->GetPoint(pointIndex);
+      newPoints->InsertNextPoint(coords[0], coords[1], coords[2]);
     }
 
     vtkIdType edgePoints{ 0 };
@@ -399,7 +380,7 @@ private:
 
       tensorsAccessor.Get(p1, tensor1);
       tensorsAccessor.Get(p2, tensor2);
-      tensorsAccessor.Get(p2, tensor3);
+      tensorsAccessor.Get(p3, tensor3);
 
       ValueType E1 = tensor1[0];
       ValueType F1 = tensor1[1];
@@ -639,6 +620,7 @@ private:
       }
     }
     
+    outputMesh->SetPoints(newPoints);
     outputMesh->SetPolys(trianglesArr);
     std::cout << "Number of cells: " << std::to_string(outputMesh->GetNumberOfCells())
               << std::endl;
