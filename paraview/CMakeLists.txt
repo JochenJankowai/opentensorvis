@@ -12,7 +12,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}"
 
 set("_paraview_plugin_default_${CMAKE_PROJECT_NAME}" ON)
 paraview_plugin_scan(
-  PLUGIN_FILES      "${CMAKE_CURRENT_SOURCE_DIR}/Plugin/tensorfieldcriticalcells.plugin"
+  PLUGIN_FILES      "${CMAKE_CURRENT_SOURCE_DIR}/Plugin/paraview.plugin"
   PROVIDES_PLUGINS  plugins
   REQUIRES_MODULES  required_modules)
 

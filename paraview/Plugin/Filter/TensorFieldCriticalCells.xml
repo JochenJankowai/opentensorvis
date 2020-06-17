@@ -34,8 +34,8 @@
       <StringVectorProperty command="SetLineField"
                             element_types="2"
                             name="SetLineField"
-                            number_of_elements="2">
-        <ArrayListDomain attribute_type="Vectors"
+                            number_of_elements="1">
+        <ArrayListDomain attribute_type="Scalars"
                          name="array_list">
           <RequiredProperties>
             <Property function="Input"
@@ -50,8 +50,8 @@
       <StringVectorProperty command="SetTensorField"
                             element_types="2"
                             name="SetTensorField"
-                            number_of_elements="4">
-        <ArrayListDomain attribute_type="Tensors"
+                            number_of_elements="1">
+        <ArrayListDomain attribute_type="Scalars"
                          name="array_list">
           <RequiredProperties>
             <Property function="Input"
