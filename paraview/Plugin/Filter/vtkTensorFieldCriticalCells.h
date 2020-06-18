@@ -27,6 +27,7 @@
 #include <vtkIntArray.h>
 #include <vtkCellArray.h>
 #include <vtkDoubleArray.h>
+#include <vtkUnsignedCharArray.h>
 #include <vtkPolyData.h>
 #include <vtkPointData.h>
 #include <vtkTriangle.h>
@@ -287,6 +288,10 @@ private:
     outputTensorsArray->SetName("Tensors");
     outputTensorsArray->DeepCopy(tensors);
 
+    vtkSmartPointer<vtkUnsignedCharArray> pointTypeArray = vtkSmartPointer<vtkUnsignedCharArray>::New();
+    pointTypeArray->SetNumberOfComponents(1);
+    pointTypeArray->SetName("Point Type");
+
     using ValueType = vtk::GetAPIType<TensorArray>;
     vtkDataArrayAccessor<TensorArray> tensorsAccessor(tensors);
 
@@ -304,6 +309,7 @@ private:
 
       auto coords = inField->GetPoints()->GetPoint(pointIndex);
       newPoints->InsertNextPoint(coords[0], coords[1], coords[2]);
+      pointTypeArray->InsertNextTuple1(0);
     }
 
     vtkIdType edgePoints{ 0 };
@@ -361,6 +367,7 @@ private:
           }
 
           newPoints->InsertNextPoint(coordsEdgePoint);
+          pointTypeArray->InsertNextTuple1(1);
           edge.newEdgeVertexId = origNumberOfPoints + edgePoints;
           ++edgePoints;
         }
@@ -448,6 +455,7 @@ private:
           }
 
           newPoints->InsertNextPoint(coordsTriPoint);
+          pointTypeArray->InsertNextTuple1(2);
           tri.newTriVertexId = origNumberOfPoints + edgePoints + triPoints;
           ++triPoints;
         }
@@ -622,13 +630,14 @@ private:
     
     outputMesh->SetPoints(newPoints);
     outputMesh->SetPolys(trianglesArr);
-    std::cout << "Number of cells: " << std::to_string(outputMesh->GetNumberOfCells())
+    std::cout << "Number of cells after subdivision: " << std::to_string(outputMesh->GetNumberOfCells())
               << std::endl;
 
     auto outPointData = outputMesh->GetPointData();
 
     outPointData->AddArray(anisotropyArray);
     outPointData->AddArray(outputTensorsArray);
+    outPointData->AddArray(pointTypeArray);
     outPointData->Update();
 
     return 1;
