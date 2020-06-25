@@ -65,11 +65,10 @@ class VTKTENSORFIELDCRITICALCELLSFILTER_EXPORT vtkTensorFieldCriticalCells
   struct Triangle {
     Triangle() = delete;
 
-    Triangle(std::array<vtkIdType, 3> vertexIDs, std::array<vtkIdType, 3> edgeIDs)
-        : VertexIDs(vertexIDs), EdgeIDs(edgeIDs), Subdivision(std::nullopt) {}
+    Triangle(std::array<vtkIdType, 3> vertexIDs)
+        : VertexIDs(vertexIDs), Subdivision(std::nullopt) {}
 
     std::array<vtkIdType, 3> VertexIDs;
-    std::array<vtkIdType, 3> EdgeIDs;
     std::optional<SubdivisionData<T>> Subdivision;
   };
 

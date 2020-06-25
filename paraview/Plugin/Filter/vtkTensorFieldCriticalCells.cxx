@@ -108,15 +108,13 @@ struct EdgeTableBuildFunctor {
       pointIDs->Resize(0);
       Setup->InField->GetCellPoints(cellIndex, pointIDs);
 
-      std::unordered_set<vtkIdType> vertexIDs{};
-      std::array<vtkIdType, 3> edgeIDs{};
+      std::array<vtkIdType, 3> vertexIDs{};
 
       for (vtkIdType i{0}; i < 3; ++i) {
         const auto p1 = pointIDs->GetId(i);
         const auto p2 = pointIDs->GetId((i + 1) % 3);
 
-        vertexIDs.insert(p1);
-        vertexIDs.insert(p2);
+        vertexIDs[i] = p1;
 
         ValueType ev1[2];
         ValueType ev2[2];
@@ -135,19 +133,13 @@ struct EdgeTableBuildFunctor {
           auto edgeInformation = std::make_shared<vtkTensorFieldCriticalCells::EdgeInformation>(
               vtkTensorFieldCriticalCells::EdgeRotation::Uninitialized, edgeValue);
 
-          edgeIDs[i] = edgeInformation->ID;
-
           Setup->EdgeInformationVector.push_back(edgeInformation);
 
           Setup->EdgeTable->InsertEdge(p1, p2, Setup->EdgeInformationVector.back().get());
         }
       }
 
-      Setup->Triangles.emplace_back(
-          std::array<vtkIdType, 3>{vertexIDs.extract(--std::end(vertexIDs)).value(),
-                                   vertexIDs.extract(--std::end(vertexIDs)).value(),
-                                   vertexIDs.extract(--std::end(vertexIDs)).value()},
-          edgeIDs);
+      Setup->Triangles.emplace_back(vertexIDs);
     }
   }
 
@@ -509,10 +501,6 @@ struct MeshSubdivisionFunctor {
       const auto p1 = triangle.VertexIDs[0];
       const auto p2 = triangle.VertexIDs[1];
       const auto p3 = triangle.VertexIDs[2];
-
-      const auto e1Id = triangle.EdgeIDs[0];
-      const auto e2Id = triangle.EdgeIDs[1];
-      const auto e3Id = triangle.EdgeIDs[2];
 
       void* edge1InfoPtr{nullptr};
       void* edge2InfoPtr{nullptr};
