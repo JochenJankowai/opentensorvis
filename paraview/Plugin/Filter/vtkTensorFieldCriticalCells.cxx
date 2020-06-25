@@ -319,7 +319,7 @@ struct MeshSubdivisionFunctor {
 
       ValueType E = tensor[0];
       ValueType F = tensor[1];
-      ValueType G = tensor[2];
+      ValueType G = tensor[3];
 
       ValueType anisotropy = std::sqrt((E - G) * (E - G) + 4 * F * F);
       anisotropyArray->InsertNextValue(anisotropy);
@@ -347,11 +347,11 @@ struct MeshSubdivisionFunctor {
 
       ValueType E1 = tensor1[0];
       ValueType F1 = tensor1[1];
-      ValueType G1 = tensor1[2];
+      ValueType G1 = tensor1[3];
 
       ValueType E2 = tensor2[0];
       ValueType F2 = tensor2[1];
-      ValueType G2 = tensor2[2];
+      ValueType G2 = tensor2[3];
 
       ValueType A = (E2 - E1 - G2 + G1) * (E2 - E1 - G2 + G1) + 4 * (F2 - F1) * (F2 - F1);
       ValueType B = 2 * (E2 - E1 - G2 + G1) * (E1 - G1) + 8 * F1 * (F2 - F1);
@@ -370,9 +370,9 @@ struct MeshSubdivisionFunctor {
           anisotropyArray->InsertNextValue(s.Anisotropy);
 
           ValueType edgetensor[4];
-          edgetensor[0] = edgetensor[3] = (1 - t) * E1 + t * E2;
-          edgetensor[1] = (1 - t) * F1 + t * F2;
-          edgetensor[2] = (1 - t) * G1 + t * G2;
+          edgetensor[0] = (1 - t) * E1 + t * E2;
+          edgetensor[1] = edgetensor[2] = (1 - t) * F1 + t * F2;
+          edgetensor[3] = (1 - t) * G1 + t * G2;
           outputTensorsArray->InsertNextTuple(edgetensor);
 
           double coords1[3];
@@ -412,15 +412,15 @@ struct MeshSubdivisionFunctor {
 
       const auto E1 = tensor1[0];
       const auto F1 = tensor1[1];
-      const auto G1 = tensor1[2];
+      const auto G1 = tensor1[3];
 
       const auto E2 = tensor2[0];
       const auto F2 = tensor2[1];
-      const auto G2 = tensor2[2];
+      const auto G2 = tensor2[3];
 
       const auto E3 = tensor3[0];
       const auto F3 = tensor3[1];
-      const auto G3 = tensor3[2];
+      const auto G3 = tensor3[3];
 
       const auto Ex = E1 - E3;
       const auto Fx = F1 - F3;
@@ -457,9 +457,9 @@ struct MeshSubdivisionFunctor {
 
           ValueType triTensor[4];
 
-          triTensor[0] = triTensor[3] = alpha * E1 + beta * E2 + gamma * E3;
-          triTensor[1] = alpha * F1 + beta * F2 + gamma * F3;
-          triTensor[2] = alpha * G1 + beta * G2 + gamma * G3;
+          triTensor[0] = alpha * E1 + beta * E2 + gamma * E3;
+          triTensor[1] = triTensor[2] = alpha * F1 + beta * F2 + gamma * F3;
+          triTensor[3] = alpha * G1 + beta * G2 + gamma * G3;
 
           outputTensorsArray->InsertNextTuple(triTensor);
 
