@@ -129,11 +129,14 @@ struct EdgeTableBuildFunctor {
           const auto edgeValue = edgeValueFn(ev1, ev2);
 
           auto edgeInformation = std::make_shared<vtkTensorFieldCriticalCells::EdgeInformation>(
-              vtkTensorFieldCriticalCells::EdgeRotation::Uninitialized, edgeValue);
+              vtkTensorFieldCriticalCells::EdgeRotation::Uninitialized, edgeValue, cellIndex);
 
           Setup->EdgeInformationVector.push_back(edgeInformation);
 
           Setup->EdgeTable->InsertEdge(p1, p2, Setup->EdgeInformationVector.back().get());
+        } else {
+          auto edgeInformation = static_cast<vtkTensorFieldCriticalCells::EdgeInformation*>(edgeInfoPtr);
+          edgeInformation->AdjacentCellIDs.push_back(cellIndex);
         }
       }
 
@@ -342,9 +345,8 @@ struct MeshSubdivisionFunctor {
 
     void* edgeInfoPtr{nullptr};
 
-    
-
     vtkIdType triPoints{0};
+    vtkIdType triangleID{0};
     for (auto& triangle : Setup->Triangles) {
       const auto p1 = triangle.VertexIDs[0];
       const auto p2 = triangle.VertexIDs[1];
@@ -395,43 +397,50 @@ struct MeshSubdivisionFunctor {
         const auto beta = (ValueType{-2} * A * E + B * D) / H;
         const auto gamma = ValueType{1} - alpha - beta;
 
-        if (alpha > ValueType{0} && beta > ValueType{0} && gamma > ValueType{0}) {
-          auto s = vtkTensorFieldCriticalCells::SubdivisionData<Precision>();
+        // CHECK IF THIS CELL HAS BEEN IDENTIFIED TO CONTAIN A DEGENERATE POINT
+        if (Setup->DegenerateCellsFlags->GetValue(triangleID)) {
 
-          s.Anisotropy = ValueType{0};
-          s.Coefficients = std::array<Precision, 2>{alpha, beta};
+          if (alpha > ValueType{0} && beta > ValueType{0} && gamma > ValueType{0}) {
 
-          anisotropyArray->InsertNextValue(s.Anisotropy);
+            auto s = vtkTensorFieldCriticalCells::SubdivisionData<Precision>();
 
-          ValueType triTensor[4];
+            s.Anisotropy = ValueType{0};
+            s.Coefficients = std::array<Precision, 2>{alpha, beta};
 
-          triTensor[0] = alpha * E1 + beta * E2 + gamma * E3;
-          triTensor[1] = triTensor[2] = alpha * F1 + beta * F2 + gamma * F3;
-          triTensor[3] = alpha * G1 + beta * G2 + gamma * G3;
+            anisotropyArray->InsertNextValue(s.Anisotropy);
 
-          outputTensorsArray->InsertNextTuple(triTensor);
+            ValueType triTensor[4];
 
-          double coords1[3];
-          double coords2[3];
-          double coords3[3];
+            triTensor[0] = alpha * E1 + beta * E2 + gamma * E3;
+            triTensor[1] = triTensor[2] = alpha * F1 + beta * F2 + gamma * F3;
+            triTensor[3] = alpha * G1 + beta * G2 + gamma * G3;
 
-          newPoints->GetPoint(p1, coords1);
-          newPoints->GetPoint(p2, coords2);
-          newPoints->GetPoint(p3, coords3);
+            outputTensorsArray->InsertNextTuple(triTensor);
 
-          double coordsTriPoint[3];
-          for (size_t i{0}; i < 3; ++i) {
-            coordsTriPoint[i] = alpha * coords1[i] + beta * coords2[i] + gamma * coords3[i];
+            double coords1[3];
+            double coords2[3];
+            double coords3[3];
+
+            newPoints->GetPoint(p1, coords1);
+            newPoints->GetPoint(p2, coords2);
+            newPoints->GetPoint(p3, coords3);
+
+            double coordsTriPoint[3];
+            for (size_t i{0}; i < 3; ++i) {
+              coordsTriPoint[i] = alpha * coords1[i] + beta * coords2[i] + gamma * coords3[i];
+            }
+
+            newPoints->InsertNextPoint(coordsTriPoint);
+            pointTypeArray->InsertNextValue(2);
+            s.NewVertexID = originalNumberOfPoints + triPoints;
+            ++triPoints;
+
+            triangle.Subdivision = s;
           }
-
-          newPoints->InsertNextPoint(coordsTriPoint);
-          pointTypeArray->InsertNextValue(2);
-          s.NewVertexID = originalNumberOfPoints + triPoints;
-          ++triPoints;
-
-          triangle.Subdivision = s;
         }
       }
+
+      triangleID++;
     }
 
     while (Setup->EdgeTable->GetNextEdge(p1, p2, edgeInfoPtr)) {
@@ -457,6 +466,10 @@ struct MeshSubdivisionFunctor {
         const auto t = -B / (ValueType{2} * A);
 
         if (t > ValueType{0} && t < ValueType{1}) {
+          // THERE IS A MINUMUM ALONG THE EDGE
+          // THE CHECK IF ADJACENT CELLS CONTAIN A DEGENERATE POINT AND HAVE NOT YET BEEN SUBDIVIDED IS
+          // AMBIGUOUS; LEAVE AS IS
+
           auto edgeInfo = static_cast<vtkTensorFieldCriticalCells::EdgeInformation*>(edgeInfoPtr);
           auto s = vtkTensorFieldCriticalCells::SubdivisionData<Precision>();
 
@@ -596,11 +609,11 @@ struct MeshSubdivisionFunctor {
               }
             } else if (!e2->Subdivision) {
               addOutputTriangle(p12, p13, p1);
-              
+
               if (!e1->Subdivision || !e3->Subdivision) {
                 return;
               }
-              
+
               if (e1->Subdivision.value().Anisotropy < e3->Subdivision.value().Anisotropy) {
                 addOutputTriangle(p12, p13, p3);
                 addOutputTriangle(p12, p2, p3);
@@ -610,7 +623,7 @@ struct MeshSubdivisionFunctor {
               }
             } else if (!e3->Subdivision) {
               addOutputTriangle(p12, p23, p2);
-              
+
               if (!e1->Subdivision || !e2->Subdivision) {
                 return;
               }

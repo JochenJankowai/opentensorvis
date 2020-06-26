@@ -41,8 +41,7 @@
 #include <unordered_set>
 #include <variant>
 
-class VTKTENSORFIELDCRITICALCELLSFILTER_EXPORT vtkTensorFieldCriticalCells
-    : public vtkPointSetAlgorithm {
+class VTKTENSORFIELDCRITICALCELLSFILTER_EXPORT vtkTensorFieldCriticalCells : public vtkPointSetAlgorithm {
   public:
   using Dispatcher = vtkArrayDispatch::DispatchByValueType<vtkArrayDispatch::Reals>;
 
@@ -65,8 +64,7 @@ class VTKTENSORFIELDCRITICALCELLSFILTER_EXPORT vtkTensorFieldCriticalCells
   struct Triangle {
     Triangle() = delete;
 
-    Triangle(std::array<vtkIdType, 3> vertexIDs)
-        : VertexIDs(vertexIDs), Subdivision(std::nullopt) {}
+    Triangle(std::array<vtkIdType, 3> vertexIDs) : VertexIDs(vertexIDs), Subdivision(std::nullopt) {}
 
     std::array<vtkIdType, 3> VertexIDs;
     std::optional<SubdivisionData<T>> Subdivision;
@@ -76,14 +74,16 @@ class VTKTENSORFIELDCRITICALCELLSFILTER_EXPORT vtkTensorFieldCriticalCells
     EdgeInformation()
         : Rotation(EdgeRotation::Uninitialized)
         , Value(EdgeValue::Uninitialized)
-        , Subdivision(std::nullopt) {}
+        , Subdivision(std::nullopt)
+        , AdjacentCellIDs({}) {}
 
-    EdgeInformation(EdgeRotation rotation, EdgeValue value)
-        : Rotation(rotation), Value(value), Subdivision(std::nullopt) {}
+    EdgeInformation(EdgeRotation rotation, EdgeValue value, vtkIdType cellID)
+        : Rotation(rotation), Value(value), Subdivision(std::nullopt), AdjacentCellIDs({cellID}) {}
 
     EdgeRotation Rotation;
     EdgeValue Value;
     std::optional<SubdivisionData<OutputPrecision>> Subdivision;
+    std::vector<vtkIdType> AdjacentCellIDs;
   };
 
   struct AlgorithmSetup {
@@ -101,10 +101,8 @@ class VTKTENSORFIELDCRITICALCELLSFILTER_EXPORT vtkTensorFieldCriticalCells
 
     AlgorithmSetup(vtkSmartPointer<vtkPointSet> inField, vtkSmartPointer<vtkPointSet> outField,
                    vtkSmartPointer<vtkPolyData> outMesh, vtkSmartPointer<vtkDataArray> eigenvectors,
-                   vtkSmartPointer<vtkDataArray> tensors,
-                   vtkSmartPointer<vtkBitArray> degenerateCellFlags,
-                   vtkSmartPointer<vtkIntArray> degenerateCellTypes,
-                   vtkSmartPointer<vtkEdgeTable> edgeTable)
+                   vtkSmartPointer<vtkDataArray> tensors, vtkSmartPointer<vtkBitArray> degenerateCellFlags,
+                   vtkSmartPointer<vtkIntArray> degenerateCellTypes, vtkSmartPointer<vtkEdgeTable> edgeTable)
         : InField(inField)
         , OutField(outField)
         , OutMesh(outMesh)
