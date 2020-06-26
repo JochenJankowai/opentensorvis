@@ -74,20 +74,16 @@ class VTKTENSORFIELDCRITICALCELLSFILTER_EXPORT vtkTensorFieldCriticalCells
 
   struct EdgeInformation {
     EdgeInformation()
-        : ID(0)
-        , Rotation(EdgeRotation::Uninitialized)
+        : Rotation(EdgeRotation::Uninitialized)
         , Value(EdgeValue::Uninitialized)
         , Subdivision(std::nullopt) {}
 
     EdgeInformation(EdgeRotation rotation, EdgeValue value)
-        : ID(NumberOfEdges++), Rotation(rotation), Value(value), Subdivision(std::nullopt) {}
+        : Rotation(rotation), Value(value), Subdivision(std::nullopt) {}
 
-    vtkIdType ID;
     EdgeRotation Rotation;
     EdgeValue Value;
     std::optional<SubdivisionData<OutputPrecision>> Subdivision;
-
-    static vtkIdType NumberOfEdges;
   };
 
   struct AlgorithmSetup {

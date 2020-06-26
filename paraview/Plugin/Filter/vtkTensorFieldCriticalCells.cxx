@@ -31,8 +31,6 @@
 #include <cmath>
 #include <unordered_set>
 
-vtkIdType vtkTensorFieldCriticalCells::EdgeInformation::NumberOfEdges = 0;
-
 vtkStandardNewMacro(vtkTensorFieldCriticalCells);
 
 //----------------------------------------------------------------------------
@@ -285,7 +283,8 @@ struct EdgeClassificationFunctor {
 
 struct MeshSubdivisionFunctor {
   MeshSubdivisionFunctor() = delete;
-  MeshSubdivisionFunctor(std::shared_ptr<vtkTensorFieldCriticalCells::AlgorithmSetup> setup) : Setup(setup) {}
+  MeshSubdivisionFunctor(std::shared_ptr<vtkTensorFieldCriticalCells::AlgorithmSetup> setup)
+      : Setup(setup), Success(false) {}
 
   template <typename TensorArray>
   void operator()(TensorArray* tensors) {
@@ -311,17 +310,22 @@ struct MeshSubdivisionFunctor {
     pointTypeArray->SetNumberOfComponents(1);
     pointTypeArray->SetName("Point Type");
 
+    vtkSmartPointer<vtkBitArray> degenerateCellFlags =
+        vtkBitArray::SafeDownCast(Setup->OutField->GetCellData()->GetArray("Degenerate cell flags"));
+    vtkSmartPointer<vtkIntArray> degenerateCellTypes =
+        vtkIntArray::SafeDownCast(Setup->OutField->GetCellData()->GetArray("Degenerate cell types"));
+
     vtkDataArrayAccessor<TensorArray> tensorsAccessor(tensors);
 
     for (vtkIdType pointIndex{0}; pointIndex < originalNumberOfPoints; ++pointIndex) {
       ValueType tensor[4];
       tensorsAccessor.Get(pointIndex, tensor);
 
-      ValueType E = tensor[0];
-      ValueType F = tensor[1];
-      ValueType G = tensor[3];
+      const auto E = tensor[0];
+      const auto F = tensor[1];
+      const auto G = tensor[3];
 
-      ValueType anisotropy = std::sqrt((E - G) * (E - G) + 4 * F * F);
+      const auto anisotropy = std::sqrt((E - G) * (E - G) + ValueType{4} * F * F);
       anisotropyArray->InsertNextValue(anisotropy);
 
       auto coords = Setup->InField->GetPoints()->GetPoint(pointIndex);
@@ -338,63 +342,7 @@ struct MeshSubdivisionFunctor {
 
     void* edgeInfoPtr{nullptr};
 
-    while (Setup->EdgeTable->GetNextEdge(p1, p2, edgeInfoPtr)) {
-      ValueType tensor1[4];
-      ValueType tensor2[4];
-
-      tensorsAccessor.Get(p1, tensor1);
-      tensorsAccessor.Get(p2, tensor2);
-
-      ValueType E1 = tensor1[0];
-      ValueType F1 = tensor1[1];
-      ValueType G1 = tensor1[3];
-
-      ValueType E2 = tensor2[0];
-      ValueType F2 = tensor2[1];
-      ValueType G2 = tensor2[3];
-
-      ValueType A = (E2 - E1 - G2 + G1) * (E2 - E1 - G2 + G1) + 4 * (F2 - F1) * (F2 - F1);
-      ValueType B = 2 * (E2 - E1 - G2 + G1) * (E1 - G1) + 8 * F1 * (F2 - F1);
-      ValueType C = (E1 - G1) * (E1 - G1) + 4 * F1 * F1;
-
-      if (A != 0) {
-        ValueType t = -B / (2 * A);
-
-        if (t > ValueType{0} && t < ValueType{1}) {
-          auto edgeInfo = static_cast<vtkTensorFieldCriticalCells::EdgeInformation*>(edgeInfoPtr);
-          auto s = vtkTensorFieldCriticalCells::SubdivisionData<Precision>();
-          
-          s.Coefficients = t;
-
-          s.Anisotropy = std::sqrt(A * t * t + B * t + C);
-          anisotropyArray->InsertNextValue(s.Anisotropy);
-
-          ValueType edgetensor[4];
-          edgetensor[0] = (1 - t) * E1 + t * E2;
-          edgetensor[1] = edgetensor[2] = (1 - t) * F1 + t * F2;
-          edgetensor[3] = (1 - t) * G1 + t * G2;
-          outputTensorsArray->InsertNextTuple(edgetensor);
-
-          double coords1[3];
-          double coords2[3];
-
-          newPoints->GetPoint(p1, coords1);
-          newPoints->GetPoint(p2, coords2);
-
-          double coordsEdgePoint[3];
-          for (size_t i{0}; i < 3; ++i) {
-            coordsEdgePoint[i] = (1 - t) * coords1[i] + t * coords2[i];
-          }
-
-          newPoints->InsertNextPoint(coordsEdgePoint);
-          pointTypeArray->InsertNextValue(1);
-          s.NewVertexID = originalNumberOfPoints + edgePoints;
-          ++edgePoints;
-
-          edgeInfo->Subdivision = s;
-        }
-      }
-    }
+    
 
     vtkIdType triPoints{0};
     for (auto& triangle : Setup->Triangles) {
@@ -478,7 +426,7 @@ struct MeshSubdivisionFunctor {
 
           newPoints->InsertNextPoint(coordsTriPoint);
           pointTypeArray->InsertNextValue(2);
-          s.NewVertexID = originalNumberOfPoints + edgePoints + triPoints;
+          s.NewVertexID = originalNumberOfPoints + triPoints;
           ++triPoints;
 
           triangle.Subdivision = s;
@@ -486,11 +434,69 @@ struct MeshSubdivisionFunctor {
       }
     }
 
+    while (Setup->EdgeTable->GetNextEdge(p1, p2, edgeInfoPtr)) {
+      ValueType tensor1[4];
+      ValueType tensor2[4];
+
+      tensorsAccessor.Get(p1, tensor1);
+      tensorsAccessor.Get(p2, tensor2);
+
+      const auto E1 = tensor1[0];
+      const auto F1 = tensor1[1];
+      const auto G1 = tensor1[3];
+
+      const auto E2 = tensor2[0];
+      const auto F2 = tensor2[1];
+      const auto G2 = tensor2[3];
+
+      const auto A = (E2 - E1 - G2 + G1) * (E2 - E1 - G2 + G1) + ValueType{4} * (F2 - F1) * (F2 - F1);
+      const auto B = ValueType{2} * (E2 - E1 - G2 + G1) * (E1 - G1) + ValueType{8} * F1 * (F2 - F1);
+      const auto C = (E1 - G1) * (E1 - G1) + ValueType{4} * F1 * F1;
+
+      if (A != 0) {
+        const auto t = -B / (ValueType{2} * A);
+
+        if (t > ValueType{0} && t < ValueType{1}) {
+          auto edgeInfo = static_cast<vtkTensorFieldCriticalCells::EdgeInformation*>(edgeInfoPtr);
+          auto s = vtkTensorFieldCriticalCells::SubdivisionData<Precision>();
+
+          s.Coefficients = t;
+
+          s.Anisotropy = std::sqrt(A * t * t + B * t + C);
+          anisotropyArray->InsertNextValue(s.Anisotropy);
+
+          ValueType edgetensor[4];
+          edgetensor[0] = (ValueType{1} - t) * E1 + t * E2;
+          edgetensor[1] = edgetensor[2] = (ValueType{1} - t) * F1 + t * F2;
+          edgetensor[3] = (ValueType{1} - t) * G1 + t * G2;
+          outputTensorsArray->InsertNextTuple(edgetensor);
+
+          double coords1[3];
+          double coords2[3];
+
+          newPoints->GetPoint(p1, coords1);
+          newPoints->GetPoint(p2, coords2);
+
+          double coordsEdgePoint[3];
+          for (size_t i{0}; i < 3; ++i) {
+            coordsEdgePoint[i] = (1.0 - double(t)) * coords1[i] + double(t) * coords2[i];
+          }
+
+          newPoints->InsertNextPoint(coordsEdgePoint);
+          pointTypeArray->InsertNextValue(1);
+          s.NewVertexID = originalNumberOfPoints + edgePoints + triPoints;
+          ++edgePoints;
+
+          edgeInfo->Subdivision = s;
+        }
+      }
+    }
+
     vtkSmartPointer<vtkCellArray> trianglesArr = vtkSmartPointer<vtkCellArray>::New();
     vtkSmartPointer<vtkTriangle> triangleVtk = vtkSmartPointer<vtkTriangle>::New();
 
-    auto addOutputTriangle = [](vtkCellArray* trianglesArr, vtkTriangle* triangleVtk, vtkIdType p1,
-                                vtkIdType p2, vtkIdType p3) -> void {
+    auto addOutputTriangle = [trianglesArr, triangleVtk](const vtkIdType p1, const vtkIdType p2,
+                                                         const vtkIdType p3) -> void {
       triangleVtk->GetPointIds()->SetId(0, p1);
       triangleVtk->GetPointIds()->SetId(1, p2);
       triangleVtk->GetPointIds()->SetId(2, p3);
@@ -511,7 +517,6 @@ struct MeshSubdivisionFunctor {
       Setup->EdgeTable->IsEdge(p3, p1, edge3InfoPtr);
 
       if (!edge1InfoPtr || !edge2InfoPtr || !edge3InfoPtr) {
-        vtkWarningWithObjectMacro(nullptr, "One of the edges is maldefined. Aborting.");
         return;
       }
 
@@ -521,150 +526,128 @@ struct MeshSubdivisionFunctor {
 
       vtkIdType p12{0}, p23{0}, p13{0}, p123{0};
       if (triangle.Subdivision) {
-        const auto& t_s = *triangle.Subdivision;
 
-        p123 = t_s.NewVertexID;
+        p123 = triangle.Subdivision.value().NewVertexID;
 
         if (e1->Subdivision) {
-          const auto& e_s = *e1->Subdivision;
-          p12 = e_s.NewVertexID;
-          addOutputTriangle(trianglesArr, triangleVtk, p123, p1, p12);
-          addOutputTriangle(trianglesArr, triangleVtk, p123, p12, p2);
+          p12 = e1->Subdivision.value().NewVertexID;
+          addOutputTriangle(p123, p1, p12);
+          addOutputTriangle(p123, p12, p2);
         } else {
-          addOutputTriangle(trianglesArr, triangleVtk, p123, p1, p2);
+          addOutputTriangle(p123, p1, p2);
         }
         if (e2->Subdivision) {
-          const auto& e_s = *e2->Subdivision;
-          p23 = e_s.NewVertexID;
-          addOutputTriangle(trianglesArr, triangleVtk, p123, p2, p23);
-          addOutputTriangle(trianglesArr, triangleVtk, p123, p23, p3);
+          p23 = e2->Subdivision.value().NewVertexID;
+          addOutputTriangle(p123, p2, p23);
+          addOutputTriangle(p123, p23, p3);
         } else {
-          addOutputTriangle(trianglesArr, triangleVtk, p123, p2, p3);
+          addOutputTriangle(p123, p2, p3);
         }
         if (e3->Subdivision) {
-          const auto& e_s = *e3->Subdivision;
-          p13 = e_s.NewVertexID;
-          addOutputTriangle(trianglesArr, triangleVtk, p123, p3, p13);
-          addOutputTriangle(trianglesArr, triangleVtk, p123, p13, p1);
+          p13 = e3->Subdivision.value().NewVertexID;
+          addOutputTriangle(p123, p3, p13);
+          addOutputTriangle(p123, p13, p1);
         } else {
-          addOutputTriangle(trianglesArr, triangleVtk, p123, p3, p1);
+          addOutputTriangle(p123, p3, p1);
         }
       } else {
         int numCrits = 0;
         if (e1->Subdivision) {
-          const auto& e_s = *e1->Subdivision;
-          p12 = e_s.NewVertexID;
+          p12 = e1->Subdivision.value().NewVertexID;
           numCrits++;
         }
         if (e2->Subdivision) {
-          const auto& e_s = *e2->Subdivision;
-          p23 = e_s.NewVertexID;
+          p23 = e2->Subdivision.value().NewVertexID;
           numCrits++;
         }
         if (e3->Subdivision) {
-          const auto& e_s = *e3->Subdivision;
-          p13 = e_s.NewVertexID;
+          p13 = e3->Subdivision.value().NewVertexID;
           numCrits++;
         }
         switch (numCrits) {
           case 0:
-            addOutputTriangle(trianglesArr, triangleVtk, p1, p2, p3);
+            addOutputTriangle(p1, p2, p3);
             break;
           case 1:
             if (e1->Subdivision) {
-              addOutputTriangle(trianglesArr, triangleVtk, p12, p3, p1);
-              addOutputTriangle(trianglesArr, triangleVtk, p12, p3, p2);
+              addOutputTriangle(p12, p3, p1);
+              addOutputTriangle(p12, p3, p2);
             } else if (e2->Subdivision) {
-              addOutputTriangle(trianglesArr, triangleVtk, p23, p1, p2);
-              addOutputTriangle(trianglesArr, triangleVtk, p23, p1, p3);
+              addOutputTriangle(p23, p1, p2);
+              addOutputTriangle(p23, p1, p3);
             } else if (e3->Subdivision) {
-              addOutputTriangle(trianglesArr, triangleVtk, p13, p2, p3);
-              addOutputTriangle(trianglesArr, triangleVtk, p13, p2, p1);
+              addOutputTriangle(p13, p2, p3);
+              addOutputTriangle(p13, p2, p1);
             }
             break;
           case 2:
             if (!e1->Subdivision) {
-              addOutputTriangle(trianglesArr, triangleVtk, p23, p13, p3);
+              addOutputTriangle(p23, p13, p3);
               if (!e2->Subdivision || !e3->Subdivision) {
-                vtkErrorWithObjectMacro(nullptr,
-                                        "Inconsistency in detection of number of critical points. Aborting.");
                 return;
               }
-              const auto& e2_s = *e2->Subdivision;
-              const auto& e3_s = *e3->Subdivision;
 
-              if (e2_s.Anisotropy < e3_s.Anisotropy) {
-                addOutputTriangle(trianglesArr, triangleVtk, p23, p13, p1);
-                addOutputTriangle(trianglesArr, triangleVtk, p23, p2, p1);
+              if (e2->Subdivision.value().Anisotropy < e3->Subdivision.value().Anisotropy) {
+                addOutputTriangle(p23, p13, p1);
+                addOutputTriangle(p23, p2, p1);
               } else {
-                addOutputTriangle(trianglesArr, triangleVtk, p13, p23, p2);
-                addOutputTriangle(trianglesArr, triangleVtk, p13, p1, p2);
+                addOutputTriangle(p13, p23, p2);
+                addOutputTriangle(p13, p1, p2);
               }
             } else if (!e2->Subdivision) {
+              addOutputTriangle(p12, p13, p1);
+              
               if (!e1->Subdivision || !e3->Subdivision) {
-                vtkErrorWithObjectMacro(nullptr,
-                                        "Inconsistency in detection of number of critical points. Aborting.");
                 return;
               }
-              const auto& e1_s = *e1->Subdivision;
-              const auto& e3_s = *e3->Subdivision;
-
-              addOutputTriangle(trianglesArr, triangleVtk, p12, p13, p1);
-              if (e1_s.Anisotropy < e3_s.Anisotropy) {
-                addOutputTriangle(trianglesArr, triangleVtk, p12, p13, p3);
-                addOutputTriangle(trianglesArr, triangleVtk, p12, p2, p3);
+              
+              if (e1->Subdivision.value().Anisotropy < e3->Subdivision.value().Anisotropy) {
+                addOutputTriangle(p12, p13, p3);
+                addOutputTriangle(p12, p2, p3);
               } else {
-                addOutputTriangle(trianglesArr, triangleVtk, p13, p12, p2);
-                addOutputTriangle(trianglesArr, triangleVtk, p13, p3, p2);
+                addOutputTriangle(p13, p12, p2);
+                addOutputTriangle(p13, p3, p2);
               }
             } else if (!e3->Subdivision) {
+              addOutputTriangle(p12, p23, p2);
+              
               if (!e1->Subdivision || !e2->Subdivision) {
-                vtkErrorWithObjectMacro(nullptr,
-                                        "Inconsistency in detection of number of critical points. Aborting.");
                 return;
               }
-              const auto& e1_s = *e1->Subdivision;
-              const auto& e2_s = *e2->Subdivision;
 
-              addOutputTriangle(trianglesArr, triangleVtk, p12, p23, p2);
-              if (e1_s.Anisotropy < e2_s.Anisotropy) {
-                addOutputTriangle(trianglesArr, triangleVtk, p12, p23, p3);
-                addOutputTriangle(trianglesArr, triangleVtk, p12, p1, p3);
+              if (e1->Subdivision.value().Anisotropy < e2->Subdivision.value().Anisotropy) {
+                addOutputTriangle(p12, p23, p3);
+                addOutputTriangle(p12, p1, p3);
               } else {
-                addOutputTriangle(trianglesArr, triangleVtk, p23, p12, p1);
-                addOutputTriangle(trianglesArr, triangleVtk, p23, p3, p1);
+                addOutputTriangle(p23, p12, p1);
+                addOutputTriangle(p23, p3, p1);
               }
             }
             break;
           case 3:
             if (!e1->Subdivision || !e2->Subdivision || !e3->Subdivision) {
-              vtkErrorWithObjectMacro(nullptr,
-                                      "Inconsistency in detection of number of critical points. Aborting.");
               return;
             }
-            const auto& e1_s = *e1->Subdivision;
-            const auto& e2_s = *e2->Subdivision;
-            const auto& e3_s = *e3->Subdivision;
 
-            const auto val12 = e1_s.Anisotropy;
-            const auto val23 = e2_s.Anisotropy;
-            const auto val13 = e3_s.Anisotropy;
+            const auto val12 = e1->Subdivision.value().Anisotropy;
+            const auto val23 = e2->Subdivision.value().Anisotropy;
+            const auto val13 = e3->Subdivision.value().Anisotropy;
 
             if (val12 < val23 && val12 < val13) {
-              addOutputTriangle(trianglesArr, triangleVtk, p12, p1, p13);
-              addOutputTriangle(trianglesArr, triangleVtk, p12, p13, p3);
-              addOutputTriangle(trianglesArr, triangleVtk, p12, p3, p23);
-              addOutputTriangle(trianglesArr, triangleVtk, p12, p23, p2);
+              addOutputTriangle(p12, p1, p13);
+              addOutputTriangle(p12, p13, p3);
+              addOutputTriangle(p12, p3, p23);
+              addOutputTriangle(p12, p23, p2);
             } else if (val23 < val12 && val23 < val13) {
-              addOutputTriangle(trianglesArr, triangleVtk, p23, p2, p12);
-              addOutputTriangle(trianglesArr, triangleVtk, p23, p12, p1);
-              addOutputTriangle(trianglesArr, triangleVtk, p23, p1, p13);
-              addOutputTriangle(trianglesArr, triangleVtk, p23, p13, p3);
+              addOutputTriangle(p23, p2, p12);
+              addOutputTriangle(p23, p12, p1);
+              addOutputTriangle(p23, p1, p13);
+              addOutputTriangle(p23, p13, p3);
             } else {
-              addOutputTriangle(trianglesArr, triangleVtk, p13, p3, p23);
-              addOutputTriangle(trianglesArr, triangleVtk, p13, p23, p2);
-              addOutputTriangle(trianglesArr, triangleVtk, p13, p2, p12);
-              addOutputTriangle(trianglesArr, triangleVtk, p13, p12, p1);
+              addOutputTriangle(p13, p3, p23);
+              addOutputTriangle(p13, p23, p2);
+              addOutputTriangle(p13, p2, p12);
+              addOutputTriangle(p13, p12, p1);
             }
             break;
         }
@@ -673,8 +656,6 @@ struct MeshSubdivisionFunctor {
 
     Setup->OutMesh->SetPoints(newPoints);
     Setup->OutMesh->SetPolys(trianglesArr);
-    std::cout << "Number of cells after subdivision: " << std::to_string(Setup->OutMesh->GetNumberOfCells())
-              << std::endl;
 
     auto outPointData = Setup->OutMesh->GetPointData();
 
@@ -726,7 +707,6 @@ int vtkTensorFieldCriticalCells::RequestData(vtkInformation* vtkNotUsed(request)
   //----------------------------------------------------------------------------
   // Build initial edge table
   //----------------------------------------------------------------------------
-  EdgeInformation::NumberOfEdges = 0;
   BuildEdgeTable();
 
   //----------------------------------------------------------------------------
@@ -778,6 +758,7 @@ int vtkTensorFieldCriticalCells::RequestData(vtkInformation* vtkNotUsed(request)
   }
 
   if (!SubdivideMesh()) {
+    vtkErrorMacro(<< "Mesh subdivision failed.");
     return 0;
   }
 
