@@ -22,7 +22,9 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 #include "vtkStructuredGrid.h"
+#include <array>
 #include <unordered_set>
+#include <vtkBitArray.h>
 #include <vtkCellData.h>
 #include <vtkCellTypes.h>
 #include <vtkDelaunay2D.h>
@@ -33,9 +35,10 @@ vtkStandardNewMacro(vtkTensorFieldCriticalCells);
 
 //----------------------------------------------------------------------------
 
-vtkTensorFieldCriticalCells::vtkTensorFieldCriticalCells() {
+vtkTensorFieldCriticalCells::vtkTensorFieldCriticalCells()
+{
   this->SetNumberOfInputPorts(1);
-  this->SetLineField(nullptr);
+  this->SetNumberOfOutputPorts(1);
   this->PerturbateIfNecessaryOn();
   this->CopyEigenvectorsOn();
   this->CopyTensorsOn();
@@ -43,14 +46,15 @@ vtkTensorFieldCriticalCells::vtkTensorFieldCriticalCells() {
 
 //----------------------------------------------------------------------------
 
-void vtkTensorFieldCriticalCells::PrintSelf(ostream &os, vtkIndent indent) {
+void vtkTensorFieldCriticalCells::PrintSelf(ostream& os, vtkIndent indent)
+{
   this->Superclass::PrintSelf(os, indent);
 }
 
 //----------------------------------------------------------------------------
 
-int vtkTensorFieldCriticalCells::FillInputPortInformation(
-    int, vtkInformation *info) {
+int vtkTensorFieldCriticalCells::FillInputPortInformation(int, vtkInformation* info)
+{
   // port expects a uniform grid containing an array defining the line field
   info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkPointSet");
   return 1;
@@ -58,15 +62,27 @@ int vtkTensorFieldCriticalCells::FillInputPortInformation(
 
 //----------------------------------------------------------------------------
 
-namespace {
-struct EdgeTableBuildFunctor {
-  EdgeTableBuildFunctor() = delete;
-  EdgeTableBuildFunctor(
-      std::shared_ptr<vtkTensorFieldCriticalCells::AlgorithmSetup> setup)
-      : Setup(setup) {}
+int vtkTensorFieldCriticalCells::FillOutputPortInformation(int port, vtkInformation* info)
+{
+  info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkPointSet");
+  return 1;
+}
 
-  template <typename EigenVectorArray>
-  void operator()(EigenVectorArray *eigenvectors) {
+//----------------------------------------------------------------------------
+
+namespace
+{
+struct EdgeTableBuildFunctor
+{
+  EdgeTableBuildFunctor() = delete;
+  EdgeTableBuildFunctor(std::shared_ptr<vtkTensorFieldCriticalCells::AlgorithmSetup> setup)
+    : Setup(setup)
+  {
+  }
+
+  template<typename EigenVectorArray>
+  void operator()(EigenVectorArray* eigenvectors)
+  {
     using ValueType = vtk::GetAPIType<EigenVectorArray>;
 
     vtkDataArrayAccessor<EigenVectorArray> eigenvectorsAccessor(eigenvectors);
@@ -78,53 +94,52 @@ struct EdgeTableBuildFunctor {
     // shells := 1)
     Setup->EdgeTable->InitEdgeInsertion(numberOfPoints, 2);
 
-    auto edgeValueFn =
-        [this](const ValueType *ev1,
-               const ValueType *ev2) -> vtkTensorFieldCriticalCells::EdgeValue {
+    auto edgeValueFn = [this](const ValueType* ev1,
+                         const ValueType* ev2) -> vtkTensorFieldCriticalCells::EdgeValue {
       const auto dotProduct = vtkMath::Dot2D(ev1, ev2);
 
-      if (std::abs(dotProduct) < std::numeric_limits<ValueType>::epsilon()) {
+      if (std::abs(dotProduct) < std::numeric_limits<ValueType>::epsilon())
+      {
         return vtkTensorFieldCriticalCells::EdgeValue::Perpendicular;
       }
 
       return vtkTensorFieldCriticalCells::EdgeValue(
-          vtkIdType(dotProduct > ValueType{0}) -
-          vtkIdType(dotProduct < ValueType{0}));
+        vtkIdType(dotProduct > ValueType{ 0 }) - vtkIdType(dotProduct < ValueType{ 0 }));
     };
 
     auto pointIDs = vtkSmartPointer<vtkIdList>::New();
 
-    for (vtkIdType cellIndex{0}; cellIndex < numberOfCells; ++cellIndex) {
+    for (vtkIdType cellIndex{ 0 }; cellIndex < numberOfCells; ++cellIndex)
+    {
       pointIDs->Resize(0);
       Setup->InField->GetCellPoints(cellIndex, pointIDs);
 
-      for (vtkIdType i{0}; i < 3; ++i) {
+      for (vtkIdType i{ 0 }; i < 3; ++i)
+      {
         const auto p1 = pointIDs->GetId(i);
         const auto p2 = pointIDs->GetId((i + 1) % 3);
 
         ValueType ev1[2];
         ValueType ev2[2];
 
-        void *edgeInfoPtr{nullptr};
+        void* edgeInfoPtr{ nullptr };
 
         Setup->EdgeTable->IsEdge(p1, p2, edgeInfoPtr);
 
         // Insert unique edge, if not present
-        if (!edgeInfoPtr) {
+        if (!edgeInfoPtr)
+        {
           eigenvectorsAccessor.Get(p1, ev1);
           eigenvectorsAccessor.Get(p2, ev2);
 
           const auto edgeValue = edgeValueFn(ev1, ev2);
 
-          auto edgeInformation =
-              std::make_shared<vtkTensorFieldCriticalCells::EdgeInformation>(
-                  vtkTensorFieldCriticalCells::EdgeRotation::Uninitialized,
-                  edgeValue);
+          auto edgeInformation = std::make_shared<vtkTensorFieldCriticalCells::EdgeInformation>(
+            vtkTensorFieldCriticalCells::EdgeRotation::Uninitialized, edgeValue);
 
           Setup->EdgeInformationVector.push_back(edgeInformation);
 
-          Setup->EdgeTable->InsertEdge(
-              p1, p2, Setup->EdgeInformationVector.back().get());
+          Setup->EdgeTable->InsertEdge(p1, p2, Setup->EdgeInformationVector.back().get());
         }
       }
     }
@@ -134,43 +149,46 @@ private:
   std::shared_ptr<vtkTensorFieldCriticalCells::AlgorithmSetup> Setup;
 };
 
-struct LineFieldPerturbationFunctor {
+struct LineFieldPerturbationFunctor
+{
   LineFieldPerturbationFunctor() = delete;
-  LineFieldPerturbationFunctor(
-      std::shared_ptr<vtkTensorFieldCriticalCells::AlgorithmSetup> setup)
-      : Setup(setup) {}
+  LineFieldPerturbationFunctor(std::shared_ptr<vtkTensorFieldCriticalCells::AlgorithmSetup> setup)
+    : Setup(setup)
+  {
+  }
 
-  template <typename EigenVectorArray>
-  void operator()(EigenVectorArray *eigenvectors) {
+  template<typename EigenVectorArray>
+  void operator()(EigenVectorArray* eigenvectors)
+  {
     using ValueType = vtk::GetAPIType<EigenVectorArray>;
 
     vtkDataArrayAccessor<EigenVectorArray> eigenvectorsAccessor(eigenvectors);
 
-    auto edgeValueFn =
-        [this](const ValueType *ev1,
-               const ValueType *ev2) -> vtkTensorFieldCriticalCells::EdgeValue {
+    auto edgeValueFn = [this](const ValueType* ev1,
+                         const ValueType* ev2) -> vtkTensorFieldCriticalCells::EdgeValue {
       const auto dotProduct = vtkMath::Dot2D(ev1, ev2);
 
-      if (std::abs(dotProduct) < std::numeric_limits<ValueType>::epsilon()) {
+      if (std::abs(dotProduct) < std::numeric_limits<ValueType>::epsilon())
+      {
         return vtkTensorFieldCriticalCells::EdgeValue::Perpendicular;
       }
 
       return vtkTensorFieldCriticalCells::EdgeValue(
-          vtkIdType(dotProduct > ValueType{0}) -
-          vtkIdType(dotProduct < ValueType{0}));
+        vtkIdType(dotProduct > ValueType{ 0 }) - vtkIdType(dotProduct < ValueType{ 0 }));
     };
 
-    vtkIdType p1{0};
-    vtkIdType p2{0};
+    vtkIdType p1{ 0 };
+    vtkIdType p2{ 0 };
 
-    void *edgeInfoPtr{nullptr};
+    void* edgeInfoPtr{ nullptr };
 
-    while (Setup->EdgeTable->GetNextEdge(p1, p2, edgeInfoPtr) > 0) {
-      auto edgeInfo =
-          static_cast<vtkTensorFieldCriticalCells::EdgeInformation *>(
-              edgeInfoPtr);
-      if (edgeInfo->Value ==
-          vtkTensorFieldCriticalCells::EdgeValue::Perpendicular) {
+    Setup->EdgeTable->InitTraversal();
+
+    while (Setup->EdgeTable->GetNextEdge(p1, p2, edgeInfoPtr))
+    {
+      auto edgeInfo = static_cast<vtkTensorFieldCriticalCells::EdgeInformation*>(edgeInfoPtr);
+      if (edgeInfo->Value == vtkTensorFieldCriticalCells::EdgeValue::Perpendicular)
+      {
         ValueType ev1[2];
         // Perturbate (rotate ever so slightly)
         eigenvectorsAccessor.Get(p1, ev1);
@@ -193,13 +211,13 @@ struct LineFieldPerturbationFunctor {
     // point. So here goes a semi-efficient way of updating all edges that
     // contain p1.
     const auto numberOfPoints = Setup->Eigenvectors->GetNumberOfTuples();
-    for (auto p2{0}; p2 < numberOfPoints; ++p2) {
-      void *edgeInfoPtr{nullptr};
+    for (auto p2{ 0 }; p2 < numberOfPoints; ++p2)
+    {
+      void* edgeInfoPtr{ nullptr };
       Setup->EdgeTable->IsEdge(p1, p2, edgeInfoPtr);
-      if (edgeInfoPtr) {
-        auto edgeInfo =
-            static_cast<vtkTensorFieldCriticalCells::EdgeInformation *>(
-                edgeInfoPtr);
+      if (edgeInfoPtr)
+      {
+        auto edgeInfo = static_cast<vtkTensorFieldCriticalCells::EdgeInformation*>(edgeInfoPtr);
         ValueType ev1[2];
         ValueType ev2[2];
 
@@ -216,13 +234,70 @@ struct LineFieldPerturbationFunctor {
 private:
   std::shared_ptr<vtkTensorFieldCriticalCells::AlgorithmSetup> Setup;
 };
+
+struct EdgeClassificationFunctor
+{
+  EdgeClassificationFunctor() = delete;
+  EdgeClassificationFunctor(std::shared_ptr<vtkTensorFieldCriticalCells::AlgorithmSetup> setup)
+    : Setup(setup)
+  {
+  }
+
+  template<typename TensorArray>
+  void operator()(TensorArray* tensors)
+  {
+    using ValueType = vtk::GetAPIType<TensorArray>;
+
+    vtkDataArrayAccessor<TensorArray> tensorsAccessor(tensors);
+
+    auto signum = [](ValueType val) { return (ValueType{ 0 } < val) - (val < ValueType{ 0 }); };
+
+    auto edgeRotationFn = [this, signum](const ValueType* tensor1,
+                            const ValueType* tensor2) -> vtkTensorFieldCriticalCells::EdgeRotation {
+      auto delta1 = (tensor1[0] - tensor1[3]) / ValueType{ 2 };
+      auto delta2 = (tensor2[0] - tensor2[3]) / ValueType{ 2 };
+
+      auto c1 = tensor1[1];
+      auto c2 = tensor2[1];
+
+      auto sgn = signum(c2 * delta1 - c1 * delta2);
+
+      return vtkTensorFieldCriticalCells::EdgeRotation(sgn);
+    };
+
+    vtkIdType p1{ 0 };
+    vtkIdType p2{ 0 };
+
+    ValueType tensor1[4];
+    ValueType tensor2[4];
+
+    void* edgeInfoPtr{ nullptr };
+
+    Setup->EdgeTable->InitTraversal();
+
+    while (Setup->EdgeTable->GetNextEdge(p1, p2, edgeInfoPtr))
+    {
+      tensorsAccessor.Get(p1, tensor1);
+      tensorsAccessor.Get(p2, tensor2);
+
+      auto rotation = edgeRotationFn(tensor1, tensor2);
+
+      auto edgeInfo = static_cast<vtkTensorFieldCriticalCells::EdgeInformation*>(edgeInfoPtr);
+
+      edgeInfo->Rotation = rotation;
+    }
+  }
+
+private:
+  std::shared_ptr<vtkTensorFieldCriticalCells::AlgorithmSetup> Setup;
+};
 } // namespace
 
 //----------------------------------------------------------------------------
 
-int vtkTensorFieldCriticalCells::RequestData(
-    vtkInformation *vtkNotUsed(request), vtkInformationVector **inputVector,
-    vtkInformationVector *outputVector) {
+int vtkTensorFieldCriticalCells::RequestData(vtkInformation* vtkNotUsed(request),
+  vtkInformationVector** inputVector, vtkInformationVector* outputVector)
+{
   //----------------------------------------------------------------------------
   // Initialize algorithm. Fetch inport data, etc.
   //----------------------------------------------------------------------------
@@ -242,10 +317,11 @@ int vtkTensorFieldCriticalCells::RequestData(
   const auto numberOfCellTypes = cellTypes->GetNumberOfTypes();
 
   const auto oneCellTypeButNotTriangles =
-      (numberOfCellTypes == 1 && !cellTypes->IsType(VTK_TRIANGLE));
+    (numberOfCellTypes == 1 && !cellTypes->IsType(VTK_TRIANGLE));
   const auto moreThanOneCellType = (numberOfCellTypes != 1);
 
-  if (oneCellTypeButNotTriangles || moreThanOneCellType) {
+  if (oneCellTypeButNotTriangles || moreThanOneCellType)
+  {
     vtkErrorMacro("Cell types not either uniform or triangles, terminating.");
     return 1;
   }
@@ -259,15 +335,24 @@ int vtkTensorFieldCriticalCells::RequestData(
   // Check line field for perpendicular vectors and perturbate if desired and
   // necessary. Update edge table afterwards. Repeat until line field is valid.
   //----------------------------------------------------------------------------
-  if (PerturbateIfNecessary) {
-    while (!CheckLineField()) {
+  if (PerturbateIfNecessary)
+  {
+    while (!CheckLineField())
+    {
       PerturbateLineField();
     }
-  } else {
+  }
+  else
+  {
     vtkErrorMacro("Line field contains perpendicular vectors but perturbation "
                   "is not desired. Terminating.");
     return 1;
   }
+
+  //----------------------------------------------------------------------------
+  // Classify edges.
+  //----------------------------------------------------------------------------
+  ClassifyEdges();
 
   //----------------------------------------------------------------------------
   // Classify cells.
@@ -277,21 +362,24 @@ int vtkTensorFieldCriticalCells::RequestData(
   //----------------------------------------------------------------------------
   // Add result to output data.
   //----------------------------------------------------------------------------
-  std::cout << "Number of cells: "
-            << std::to_string(Setup->OutField->GetNumberOfCells()) << std::endl;
+  std::cout << "Number of cells: " << std::to_string(Setup->OutField->GetNumberOfCells())
+            << std::endl;
 
   auto outCellData = Setup->OutField->GetCellData();
 
-  outCellData->AddArray(Setup->DegenerateCells);
+  outCellData->AddArray(Setup->DegenerateCellsFlags);
+  outCellData->AddArray(Setup->DegenerateCellsTypes);
   outCellData->Update();
 
-  if (CopyEigenvectors) {
+  if (CopyEigenvectors)
+  {
     auto outPointData = Setup->OutField->GetPointData();
     outPointData->AddArray(Setup->Eigenvectors);
     outPointData->Update();
   }
 
-  if (CopyTensors) {
+  if (CopyTensors)
+  {
     auto outPointData = Setup->OutField->GetPointData();
     outPointData->AddArray(Setup->Tensors);
     outPointData->Update();
@@ -300,8 +388,11 @@ int vtkTensorFieldCriticalCells::RequestData(
   return 1;
 }
 
-void vtkTensorFieldCriticalCells::Init(vtkInformationVector **inputVector,
-                                       vtkInformationVector *outputVector) {
+//----------------------------------------------------------------------------
+
+void vtkTensorFieldCriticalCells::Init(
+  vtkInformationVector** inputVector, vtkInformationVector* outputVector)
+{
   //----------------------------------------------------------------------------
   // Obtain the input/output port info and data.
   //----------------------------------------------------------------------------
@@ -309,57 +400,68 @@ void vtkTensorFieldCriticalCells::Init(vtkInformationVector **inputVector,
   auto outportData = outputVector->GetInformationObject(0);
 
   vtkSmartPointer<vtkPointSet> inField =
-      vtkPointSet::SafeDownCast(inportData->Get(vtkDataObject::DATA_OBJECT()));
+    vtkPointSet::SafeDownCast(inportData->Get(vtkDataObject::DATA_OBJECT()));
   vtkSmartPointer<vtkPointSet> outField =
-      vtkPointSet::SafeDownCast(outportData->Get(vtkDataObject::DATA_OBJECT()));
+    vtkPointSet::SafeDownCast(outportData->Get(vtkDataObject::DATA_OBJECT()));
 
   outField->CopyStructure(inField);
 
   vtkSmartPointer<vtkPointData> inPointData = inField->GetPointData();
 
-  auto degenerateCellFlags = vtkSmartPointer<vtkIntArray>::New();
+  auto degenerateCellFlags = vtkSmartPointer<vtkBitArray>::New();
   degenerateCellFlags->SetNumberOfComponents(1);
+  degenerateCellFlags->Allocate(inField->GetNumberOfCells());
   degenerateCellFlags->SetComponentName(0, "Flag value");
   degenerateCellFlags->SetName("Degenerate cell flags");
 
-  vtkSmartPointer<vtkDataArray> eigenvectors =
-      inPointData->GetArray(LineField.c_str());
-  vtkSmartPointer<vtkDataArray> tensors =
-      inPointData->GetArray(TensorField.c_str());
+  auto degenerateCellTypes = vtkSmartPointer<vtkIntArray>::New();
+  degenerateCellTypes->SetNumberOfComponents(1);
+  degenerateCellTypes->Allocate(inField->GetNumberOfCells());
+  degenerateCellTypes->SetComponentName(0, "Type value");
+  degenerateCellTypes->SetName("Degenerate cell types");
+
+  vtkSmartPointer<vtkDataArray> eigenvectors = inPointData->GetArray(LineField.c_str());
+  vtkSmartPointer<vtkDataArray> tensors = inPointData->GetArray(TensorField.c_str());
 
   //----------------------------------------------------------------------------
   // Bundle everything up for easy access
   //----------------------------------------------------------------------------
-  Setup = std::make_shared<AlgorithmSetup>(
-      inField, outField, eigenvectors, tensors, degenerateCellFlags,
-      vtkSmartPointer<vtkEdgeTable>::New());
+  Setup = std::make_shared<AlgorithmSetup>(inField, outField, eigenvectors, tensors,
+    degenerateCellFlags, degenerateCellTypes, vtkSmartPointer<vtkEdgeTable>::New());
 }
 
-bool vtkTensorFieldCriticalCells::CheckInput() const {
+//----------------------------------------------------------------------------
+
+bool vtkTensorFieldCriticalCells::CheckInput() const
+{
   auto dataType = Setup->Eigenvectors->GetDataType();
-  if (dataType != VTK_FLOAT && dataType != VTK_DOUBLE) {
+  if (dataType != VTK_FLOAT && dataType != VTK_DOUBLE)
+  {
     vtkErrorMacro("Input data type for eigenvectors expected to be either "
                   "single or double precision floating "
                   "point. Input data type is "
-                  << Setup->Eigenvectors->GetDataTypeAsString());
+      << Setup->Eigenvectors->GetDataTypeAsString());
     return false;
   }
 
   dataType = Setup->Tensors->GetDataType();
-  if (dataType != VTK_FLOAT && dataType != VTK_DOUBLE) {
+  if (dataType != VTK_FLOAT && dataType != VTK_DOUBLE)
+  {
     vtkErrorMacro("Input data type for tensors expected to be either single or "
                   "double precision floating "
                   "point. Input data type is "
-                  << Setup->Tensors->GetDataTypeAsString());
+      << Setup->Tensors->GetDataTypeAsString());
     return false;
   }
 
-  if (Setup->Eigenvectors->GetNumberOfComponents() != 2) {
+  if (Setup->Eigenvectors->GetNumberOfComponents() != 2)
+  {
     vtkErrorMacro("The specified line field does not contain 2D vectors.");
     return false;
   }
 
-  if (Setup->Tensors->GetNumberOfComponents() != 4) {
+  if (Setup->Tensors->GetNumberOfComponents() != 4)
+  {
     vtkErrorMacro("The specified tensor field does not contain 2D tensors.");
     return false;
   }
@@ -367,23 +469,34 @@ bool vtkTensorFieldCriticalCells::CheckInput() const {
   return true;
 }
 
-void vtkTensorFieldCriticalCells::BuildEdgeTable() {
+//----------------------------------------------------------------------------
+
+void vtkTensorFieldCriticalCells::BuildEdgeTable()
+{
   EdgeTableBuildFunctor edgeTableBuilder(Setup);
 
-  if (!Dispatcher::Execute(Setup->Eigenvectors, edgeTableBuilder)) {
+  if (!Dispatcher::Execute(Setup->Eigenvectors, edgeTableBuilder))
+  {
     edgeTableBuilder(Setup->Eigenvectors.GetPointer());
   }
 }
 
-bool vtkTensorFieldCriticalCells::CheckLineField() const {
-  vtkIdType p1{0};
-  vtkIdType p2{0};
+//----------------------------------------------------------------------------
 
-  void *edgeInfoPtr{nullptr};
+bool vtkTensorFieldCriticalCells::CheckLineField() const
+{
+  vtkIdType p1{ 0 };
+  vtkIdType p2{ 0 };
 
-  while (Setup->EdgeTable->GetNextEdge(p1, p2, edgeInfoPtr) > 0) {
-    auto edgeInfo = static_cast<EdgeInformation *>(edgeInfoPtr);
-    if (edgeInfo->Value == EdgeValue::Perpendicular) {
+  void* edgeInfoPtr{ nullptr };
+
+  Setup->EdgeTable->InitTraversal();
+
+  while (Setup->EdgeTable->GetNextEdge(p1, p2, edgeInfoPtr))
+  {
+    auto edgeInfo = static_cast<EdgeInformation*>(edgeInfoPtr);
+    if (edgeInfo->Value == EdgeValue::Perpendicular)
+    {
       return false;
     }
   }
@@ -391,73 +504,85 @@ bool vtkTensorFieldCriticalCells::CheckLineField() const {
   return true;
 }
 
-void vtkTensorFieldCriticalCells::PerturbateLineField() {
+//----------------------------------------------------------------------------
+
+void vtkTensorFieldCriticalCells::PerturbateLineField()
+{
   LineFieldPerturbationFunctor lineFieldPerturbator(Setup);
 
-  if (!Dispatcher::Execute(Setup->Eigenvectors, lineFieldPerturbator)) {
+  if (!Dispatcher::Execute(Setup->Eigenvectors, lineFieldPerturbator))
+  {
     lineFieldPerturbator(Setup->Eigenvectors.GetPointer());
   }
 }
 
-void vtkTensorFieldCriticalCells::ClassifyCells() {
+//----------------------------------------------------------------------------
+
+void vtkTensorFieldCriticalCells::ClassifyEdges()
+{
+  EdgeClassificationFunctor edgeClassificationFunctor(Setup);
+
+  if (!Dispatcher::Execute(Setup->Tensors, edgeClassificationFunctor))
+  {
+    edgeClassificationFunctor(Setup->Tensors.GetPointer());
+  }
+}
+
+//----------------------------------------------------------------------------
+
+void vtkTensorFieldCriticalCells::ClassifyCells()
+{
   const auto numberOfCells = Setup->InField->GetNumberOfCells();
 
   auto pointIDs = vtkSmartPointer<vtkIdList>::New();
 
-#ifndef NDEBUG
-  int numberOfCriticalCells{0};
-#endif // !NDEBUG
-
-  for (vtkIdType cellIndex{0}; cellIndex < numberOfCells; ++cellIndex) {
+  for (vtkIdType cellIndex{ 0 }; cellIndex < numberOfCells; ++cellIndex)
+  {
     pointIDs->Resize(0);
     Setup->InField->GetCellPoints(cellIndex, pointIDs);
 
-    vtkIdType cellValue{1};
+    vtkIdType cellValue{ 1 };
 
-#ifndef NDEBUG
-    std::unordered_set<vtkIdType> vertexIDs{};
-#endif // !NDEBUG
+    std::array<vtkTensorFieldCriticalCells::EdgeInformation*, 3> edgeInfos{ nullptr, nullptr,
+      nullptr };
 
-    for (vtkIdType i{0}; i < 3; ++i) {
+    for (vtkIdType i{ 0 }; i < 3; ++i)
+    {
       const auto p1 = pointIDs->GetId(i);
       const auto p2 = pointIDs->GetId((i + 1) % 3);
 
-#ifndef NDEBUG
-      vertexIDs.insert(p1);
-      vertexIDs.insert(p2);
-#endif // !NDEBUG
-
-      void *edgeInfoPtr{nullptr};
+      void* edgeInfoPtr{ nullptr };
       Setup->EdgeTable->IsEdge(p1, p2, edgeInfoPtr);
-      if (edgeInfoPtr) {
-        auto edgeInfo =
-            static_cast<vtkTensorFieldCriticalCells::EdgeInformation *>(
-                edgeInfoPtr);
+      if (edgeInfoPtr)
+      {
+        edgeInfos[i] = static_cast<vtkTensorFieldCriticalCells::EdgeInformation*>(edgeInfoPtr);
 
-        cellValue *= static_cast<vtkIdType>(edgeInfo->Value);
+        cellValue *= static_cast<vtkIdType>(edgeInfos[i]->Value);
       }
     }
 
-    if (cellValue < 0) {
-#ifndef NDEBUG
-      numberOfCriticalCells++;
-      std::cout << "Cell #" << std::to_string(cellIndex)
-                << " contains critical point. Vertex IDs: ";
-      for (auto entry : vertexIDs) {
-        std::cout << std::to_string(entry) << " ";
+    if (cellValue < 0)
+    {
+      Setup->DegenerateCellsFlags->InsertNextValue(static_cast<int>(1));
+
+      EdgeRotation direction{ EdgeRotation::Uninitialized };
+
+      for (auto edgeInfo : edgeInfos)
+      {
+        direction = edgeInfo->Rotation;
+        if (direction != EdgeRotation::None)
+          break;
       }
 
-      std::cout << std::endl;
-#endif // !NDEBUG
+      if (direction == EdgeRotation::None)
+        vtkErrorMacro(<< "Degenerate cell without rotation. Result inconsistent.");
 
-      Setup->DegenerateCells->InsertNextValue(static_cast<int>(1));
-    } else {
-      Setup->DegenerateCells->InsertNextValue(static_cast<int>(0));
+      Setup->DegenerateCellsTypes->InsertNextValue(static_cast<int>(direction));
+    }
+    else
+    {
+      Setup->DegenerateCellsFlags->InsertNextValue(static_cast<int>(0));
+      Setup->DegenerateCellsTypes->InsertNextValue(static_cast<int>(EdgeRotation::None));
     }
   }
-
-#ifndef NDEBUG
-  std::cout << "Number of critical points: "
-            << std::to_string(numberOfCriticalCells) << std::endl;
-#endif // !NDEBUG
 }
