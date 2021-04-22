@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.8)
-project(OpenTensorVis-ParaviewPlugins)
+project(TensorFieldTopology-ParaView-Plugins)
 
 find_package(ParaView REQUIRED)
+
+set(CMAKE_CXX_STANDARD 20)
 
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 

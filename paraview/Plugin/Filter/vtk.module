@@ -1,5 +1,7 @@
 NAME
-  OpenTensorVis::TensorFieldCriticalCells
+  TensorFieldCriticalCells::TensorFieldCriticalCellsFilter
+LIBRARY_NAME
+  vtkTensorFieldCriticalCellsFilter
 DEPENDS
   VTK::FiltersCore
 PRIVATE_DEPENDS

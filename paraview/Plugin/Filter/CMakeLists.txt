@@ -1,8 +1,14 @@
 set(classes
   vtkTensorFieldCriticalCells)
 
-vtk_module_add_module(OpenTensorVis::TensorFieldCriticalCells
+# set(headers
+#   vtkTensorFieldCriticalCells.h)
+
+# set(sources
+#   vtkTensorFieldCriticalCells.cpp)
+
+vtk_module_add_module(TensorFieldCriticalCells::TensorFieldCriticalCellsFilter
   CLASSES ${classes})
 
 paraview_add_server_manager_xmls(
-  XMLS  TensorFieldCriticalCells.xml)
+  XMLS  TensorFieldCriticalCellsFilter.xml)

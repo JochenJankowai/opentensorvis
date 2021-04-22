@@ -4,7 +4,7 @@
     <!-- ==================================================================== -->
     <!-- ==================================================================== -->
     <SourceProxy class="vtkTensorFieldCriticalCells"
-                 label="Classify critical cells in a 2D tensor field."
+                 label="Tensor Field Critical Cells"
                  name="TensorFieldCriticalCells">
       <!-- ==================================================================== -->
       <!-- ==================================================================== -->
@@ -33,7 +33,7 @@
       <!-- ==================================================================== -->
       <StringVectorProperty command="SetLineField"
                             element_types="2"
-                            name="SetLineField"
+                            name="Input line field"
                             number_of_elements="1">
         <ArrayListDomain attribute_type="Scalars"
                          name="array_list">
@@ -42,14 +42,14 @@
                       name="Input" />
           </RequiredProperties>
         </ArrayListDomain>
-        <Documentation>Vectors.</Documentation>
+        <Documentation>Input line field.</Documentation>
       </StringVectorProperty>
       <!-- ==================================================================== -->
       <!-- ==================================================================== -->
       <!-- ==================================================================== -->
       <StringVectorProperty command="SetTensorField"
                             element_types="2"
-                            name="SetTensorField"
+                            name="Input tensor field"
                             number_of_elements="1">
         <ArrayListDomain attribute_type="Scalars"
                          name="array_list">
@@ -58,7 +58,7 @@
                       name="Input" />
           </RequiredProperties>
         </ArrayListDomain>
-        <Documentation>Tensors.</Documentation>
+        <Documentation>Input tensor field.</Documentation>
       </StringVectorProperty>
       <!-- ==================================================================== -->
       <!-- ==================================================================== -->
