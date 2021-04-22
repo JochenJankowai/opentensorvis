@@ -1,0 +1,91 @@
+<ServerManagerConfiguration>
+  <ProxyGroup name="filters">
+    <!-- ==================================================================== -->
+    <!-- ==================================================================== -->
+    <!-- ==================================================================== -->
+    <SourceProxy class="vtkTensorFieldCriticalCells"
+                 label="Classify critical cells in a 2D tensor field."
+                 name="TensorFieldCriticalCells">
+      <!-- ==================================================================== -->
+      <!-- ==================================================================== -->
+      <!-- ==================================================================== -->
+      <Documentation long_help="Long help." short_help="Short help.">
+        This is the documentation.
+      </Documentation>
+      <!-- ==================================================================== -->
+      <!-- ==================================================================== -->
+      <!-- ==================================================================== -->
+      <InputProperty command="SetInputConnection"
+                     name="Input">
+        <ProxyGroupDomain name="groups">
+          <Group name="sources" />
+          <Group name="filters" />
+        </ProxyGroupDomain>
+        <DataTypeDomain name="input_type">
+          <DataType value="vtkPointSet" />
+        </DataTypeDomain>
+        <Documentation>
+          This property specifies the input to the filter.
+        </Documentation>
+      </InputProperty>
+      <!-- ==================================================================== -->
+      <!-- ==================================================================== -->
+      <!-- ==================================================================== -->
+      <StringVectorProperty command="SetLineField"
+                            element_types="2"
+                            name="SetLineField"
+                            number_of_elements="1">
+        <ArrayListDomain attribute_type="Vectors"
+                         name="array_list">
+          <RequiredProperties>
+            <Property function="Input"
+                      name="Input" />
+          </RequiredProperties>
+        </ArrayListDomain>
+        <Documentation>Vectors.</Documentation>
+      </StringVectorProperty>
+      <!-- ==================================================================== -->
+      <!-- ==================================================================== -->
+      <!-- ==================================================================== -->
+      <StringVectorProperty command="SetTensorField"
+                            element_types="2"
+                            name="SetTensorField"
+                            number_of_elements="1">
+        <ArrayListDomain attribute_type="Tensors"
+                         name="array_list">
+          <RequiredProperties>
+            <Property function="Input"
+                      name="Input" />
+          </RequiredProperties>
+        </ArrayListDomain>
+        <Documentation>Tensors.</Documentation>
+      </StringVectorProperty>
+      <!-- ==================================================================== -->
+      <!-- ==================================================================== -->
+      <!-- ==================================================================== -->
+      <IntVectorProperty command="SetPerturbateIfNecessary"
+                         default_values="1"
+                         name="PerturbateIfNecessary"
+                         number_of_elements="1">
+        <BooleanDomain name="bool" />
+        <Documentation>
+          Set PerturbateIfNecessary.
+        </Documentation>
+      </IntVectorProperty>
+      <!-- ==================================================================== -->
+      <!-- ==================================================================== -->
+      <!-- ==================================================================== -->
+    <Hints>
+      <ShowInMenu category="OpenTensorVis" />
+    </Hints>
+    
+    </SourceProxy>
+    <!-- ==================================================================== -->
+    <!-- ==================================================================== -->
+    <!-- ==================================================================== -->
+    
+    <!-- ==================================================================== -->
+    <!-- ==================================================================== -->
+    <!-- ==================================================================== -->
+  </ProxyGroup>
+</ServerManagerConfiguration>
