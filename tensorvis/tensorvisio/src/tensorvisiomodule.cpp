@@ -47,13 +47,15 @@
 #include <modules/tensorvisio/processors/vtkxmlrectilineargridreader.h>
 #include <modules/tensorvisio/processors/vtkstructuredpointsreader.h>
 #include <modules/tensorvisio/processors/vtkvolumereader.h>
-#include <modules/tensorvisio/processors/vtkwriter.h>
+#include <modules/tensorvisio/util/vtkoutputlogger.h>
 
 namespace inviwo {
 
-TensorVisIOModule::TensorVisIOModule(InviwoApplication* app) : InviwoModule(app, "TensorVisIO") {   
-	registerProcessor<AmiraTensorReader>();
-	registerProcessor<NRRDReader>();
+TensorVisIOModule::TensorVisIOModule(InviwoApplication* app)
+    : InviwoModule{app, "TensorVisIO"}, vtkoutput_{std::make_unique<VtkOutputLogger>()} {
+
+    registerProcessor<AmiraTensorReader>();
+    registerProcessor<NRRDReader>();
     registerProcessor<TensorField2DExport>();
     registerProcessor<TensorField2DImport>();
     registerProcessor<TensorField3DExport>();
@@ -73,4 +75,6 @@ TensorVisIOModule::TensorVisIOModule(InviwoApplication* app) : InviwoModule(app,
     registerProcessor<VTKWriter>();
 }
 
-} // namespace
+TensorVisIOModule::~TensorVisIOModule() = default;
+
+}  // namespace inviwo

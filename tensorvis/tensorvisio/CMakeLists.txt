@@ -14,21 +14,17 @@ set(HEADER_FILES
     include/modules/tensorvisio/processors/tensorfield2dimport.h
     include/modules/tensorvisio/processors/tensorfield3dexport.h
     include/modules/tensorvisio/processors/tensorfield3dimport.h
-    include/modules/tensorvisio/processors/vtkdataarrayselection.h
-    include/modules/tensorvisio/processors/vtkdataarraytotensorfield3d.h
-    include/modules/tensorvisio/processors/vtkdatasetinformation.h
-    include/modules/tensorvisio/processors/vtkreader.h
     include/modules/tensorvisio/processors/vtkrectilineargridreader.h
     include/modules/tensorvisio/processors/vtkstructuredgridreader.h
     include/modules/tensorvisio/processors/vtkstructuredpointsreader.h
     include/modules/tensorvisio/processors/vtktotensorfield3d.h
     include/modules/tensorvisio/processors/vtkunstructuredgridtorectilineargrid.h
     include/modules/tensorvisio/processors/vtkvolumereader.h
-    include/modules/tensorvisio/processors/vtkwriter.h
     include/modules/tensorvisio/processors/vtkxmlrectilineargridreader.h
     include/modules/tensorvisio/processors/witofilereader.h
     include/modules/tensorvisio/tensorvisiomodule.h
     include/modules/tensorvisio/tensorvisiomoduledefine.h
+    include/modules/tensorvisio/util/vtkoutputlogger.h
 )
 ivw_group("Header Files" ${HEADER_FILES})
 
@@ -41,20 +37,16 @@ set(SOURCE_FILES
     src/processors/tensorfield2dimport.cpp
     src/processors/tensorfield3dexport.cpp
     src/processors/tensorfield3dimport.cpp
-    src/processors/vtkdataarrayselection.cpp
-    src/processors/vtkdataarraytotensorfield3d.cpp
-    src/processors/vtkdatasetinformation.cpp
-    src/processors/vtkreader.cpp
     src/processors/vtkrectilineargridreader.cpp
     src/processors/vtkstructuredgridreader.cpp
     src/processors/vtkstructuredpointsreader.cpp
     src/processors/vtktotensorfield3d.cpp
     src/processors/vtkunstructuredgridtorectilineargrid.cpp
     src/processors/vtkvolumereader.cpp
-    src/processors/vtkwriter.cpp
     src/processors/vtkxmlrectilineargridreader.cpp
     src/processors/witofilereader.cpp
     src/tensorvisiomodule.cpp
+    src/util/vtkoutputlogger.cpp
 )
 ivw_group("Source Files" ${SOURCE_FILES})
 
