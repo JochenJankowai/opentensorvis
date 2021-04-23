@@ -6,6 +6,7 @@ ivw_module(TensorVisIO)
 # Add header files
 set(HEADER_FILES
     include/modules/tensorvisio/processors/amiratensorreader.h
+    include/modules/tensorvisio/processors/flowguifilereader.h
     include/modules/tensorvisio/processors/nrrdreader.h
     include/modules/tensorvisio/processors/tensorfield2dexport.h
     include/modules/tensorvisio/processors/tensorfield2dimport.h
@@ -15,6 +16,7 @@ set(HEADER_FILES
 <<<<<<< HEAD
 =======
     include/modules/tensorvisio/processors/vtkdatasettotensorfield3d.h
+<<<<<<< HEAD
 <<<<<<< HEAD
     include/modules/tensorvisio/processors/vtkdatasetinformation.h
     include/modules/tensorvisio/processors/vtkreader.h
@@ -35,6 +37,9 @@ set(HEADER_FILES
 >>>>>>> eedd932... Move VTK-only code to VTK module
     include/modules/tensorvisio/processors/flowguifilereader.h
 >>>>>>> 66b7c02... Basic VTK pipeline in place
+=======
+    include/modules/tensorvisio/processors/vtktotensorfield2d.h
+>>>>>>> 60d78da... TensorVisIO: Added VTK to Tensor Field 2D processor
     include/modules/tensorvisio/tensorvisiomodule.h
     include/modules/tensorvisio/tensorvisiomoduledefine.h
 )
@@ -44,6 +49,7 @@ ivw_group("Header Files" ${HEADER_FILES})
 # Add source files
 set(SOURCE_FILES
     src/processors/amiratensorreader.cpp
+    src/processors/flowguifilereader.cpp
     src/processors/nrrdreader.cpp
     src/processors/tensorfield2dexport.cpp
     src/processors/tensorfield2dimport.cpp
@@ -53,6 +59,7 @@ set(SOURCE_FILES
 <<<<<<< HEAD
 =======
     src/processors/vtkdatasettotensorfield3d.cpp
+<<<<<<< HEAD
 <<<<<<< HEAD
     src/processors/vtkdatasetinformation.cpp
     src/processors/vtkreader.cpp
@@ -73,10 +80,12 @@ set(SOURCE_FILES
 >>>>>>> eedd932... Move VTK-only code to VTK module
     src/processors/flowguifilereader.cpp
 >>>>>>> 66b7c02... Basic VTK pipeline in place
+=======
+    src/processors/vtktotensorfield2d.cpp
+>>>>>>> 60d78da... TensorVisIO: Added VTK to Tensor Field 2D processor
     src/tensorvisiomodule.cpp
 )
 ivw_group("Source Files" ${SOURCE_FILES})
-
 
 #--------------------------------------------------------------------
 # Add shaders
@@ -84,7 +93,6 @@ set(SHADER_FILES
     #${CMAKE_CURRENT_SOURCE_DIR}/glsl/tensorfieldioprocessor.frag
 )
 ivw_group("Shader Files" ${SHADER_FILES})
-
 
 #--------------------------------------------------------------------
 # Add Unittests

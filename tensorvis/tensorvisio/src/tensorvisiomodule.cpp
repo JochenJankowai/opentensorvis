@@ -52,6 +52,7 @@
 #include <modules/tensorvisio/util/vtkoutputlogger.h>
 =======
 #include <modules/tensorvisio/processors/flowguifilereader.h>
+<<<<<<< HEAD
 #include <modules/tensorvisio/processors/vtkwriter.h>
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -64,6 +65,9 @@
 =======
 #include <modules/tensorvisio/processors/flowguifilereader.h>
 >>>>>>> eedd932... Move VTK-only code to VTK module
+=======
+#include <modules/tensorvisio/processors/vtktotensorfield2d.h>
+>>>>>>> 60d78da... TensorVisIO: Added VTK to Tensor Field 2D processor
 
 namespace inviwo {
 
@@ -83,6 +87,7 @@ TensorVisIOModule::TensorVisIOModule(InviwoApplication* app) : InviwoModule(app,
     registerProcessor<TensorField3DImport>();
     registerProcessor<VTKDataSetToTensorField3D>();
     registerProcessor<FlowGUIFileReader>();
+    registerProcessor<VTKToTensorField2D>();
 }
 
 <<<<<<< HEAD
