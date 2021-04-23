@@ -37,6 +37,7 @@
 #include <modules/tensorvisio/processors/tensorfield3dexport.h>
 #include <modules/tensorvisio/processors/tensorfield3dimport.h>
 #include <modules/tensorvisio/processors/vtkdatasettotensorfield3d.h>
+<<<<<<< HEAD
 #include <modules/tensorvisio/processors/vtkdatasetinformation.h>
 #include <modules/tensorvisio/processors/vtkreader.h>
 #include <modules/tensorvisio/processors/vtkunstructuredgridtorectilineargrid.h>
@@ -60,6 +61,9 @@
 >>>>>>> 57758cd... TensorVisIO: Added missing include
 =======
 >>>>>>> fa193bd... TensorVis/VTK: Moved VTK Output Logger to the VTK module
+=======
+#include <modules/tensorvisio/processors/flowguifilereader.h>
+>>>>>>> eedd932... Move VTK-only code to VTK module
 
 namespace inviwo {
 
@@ -78,11 +82,7 @@ TensorVisIOModule::TensorVisIOModule(InviwoApplication* app) : InviwoModule(app,
     registerProcessor<TensorField3DExport>();
     registerProcessor<TensorField3DImport>();
     registerProcessor<VTKDataSetToTensorField3D>();
-    registerProcessor<VTKDataSetInformation>();
-    registerProcessor<VTKReader>();
-    registerProcessor<VTKUnstructuredGridToRectilinearGrid>();
     registerProcessor<FlowGUIFileReader>();
-    registerProcessor<VTKWriter>();
 }
 
 <<<<<<< HEAD

@@ -5,8 +5,6 @@ ivw_module(TensorVisIO)
 #--------------------------------------------------------------------
 # Add header files
 set(HEADER_FILES
-    include/modules/tensorvisio/datastructures/vtkdataset.h
-    include/modules/tensorvisio/ports/vtkdatasetport.h
     include/modules/tensorvisio/processors/amiratensorreader.h
     include/modules/tensorvisio/processors/nrrdreader.h
     include/modules/tensorvisio/processors/tensorfield2dexport.h
@@ -17,6 +15,7 @@ set(HEADER_FILES
 <<<<<<< HEAD
 =======
     include/modules/tensorvisio/processors/vtkdatasettotensorfield3d.h
+<<<<<<< HEAD
     include/modules/tensorvisio/processors/vtkdatasetinformation.h
     include/modules/tensorvisio/processors/vtkreader.h
 <<<<<<< HEAD
@@ -32,19 +31,18 @@ set(HEADER_FILES
 =======
     include/modules/tensorvisio/processors/vtkunstructuredgridtorectilineargrid.h
     include/modules/tensorvisio/processors/vtkwriter.h
+=======
+>>>>>>> eedd932... Move VTK-only code to VTK module
     include/modules/tensorvisio/processors/flowguifilereader.h
 >>>>>>> 66b7c02... Basic VTK pipeline in place
     include/modules/tensorvisio/tensorvisiomodule.h
     include/modules/tensorvisio/tensorvisiomoduledefine.h
-	include/modules/tensorvisio/util/vtkutil.h
 )
 ivw_group("Header Files" ${HEADER_FILES})
 
 #--------------------------------------------------------------------
 # Add source files
 set(SOURCE_FILES
-    src/datastructures/vtkdataset.cpp
-    src/ports/vtkdatasetport.cpp
     src/processors/amiratensorreader.cpp
     src/processors/nrrdreader.cpp
     src/processors/tensorfield2dexport.cpp
@@ -55,6 +53,7 @@ set(SOURCE_FILES
 <<<<<<< HEAD
 =======
     src/processors/vtkdatasettotensorfield3d.cpp
+<<<<<<< HEAD
     src/processors/vtkdatasetinformation.cpp
     src/processors/vtkreader.cpp
 <<<<<<< HEAD
@@ -70,6 +69,8 @@ set(SOURCE_FILES
 =======
     src/processors/vtkunstructuredgridtorectilineargrid.cpp
     src/processors/vtkwriter.cpp
+=======
+>>>>>>> eedd932... Move VTK-only code to VTK module
     src/processors/flowguifilereader.cpp
 >>>>>>> 66b7c02... Basic VTK pipeline in place
     src/tensorvisiomodule.cpp
