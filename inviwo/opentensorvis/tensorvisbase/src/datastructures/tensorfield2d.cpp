@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2016-2018 Inviwo Foundation
+ * Copyright (c) 2016-2020 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,540 +27,169 @@
  *
  *********************************************************************************/
 
-#include <inviwo/tensorvisbase/datastructures/tensorfield2d.h>
+#include <inviwo/opentensorvisbase/datastructures/tensorfield2d.h>
 #include <inviwo/core/datastructures/image/imageram.h>
 
 namespace inviwo {
-TensorField2D::TensorField2D(const size2_t dimensions, const std::vector<dmat2>& data,
-                             const dvec2& extends)
-    : dimensions_(dimensions)
-    , extends_(extends)
-    , size_(dimensions.x * dimensions.y)
-    , rank_(2)
-    , dimensionality_(2)
-    , indexMapper_(dimensions)
-    , tensors_(data) {
-    computeEigenValuesAndEigenVectors();
+TensorField2D::TensorField2D(const sizeN_t& dimensions, const std::vector<matN>& tensors,
+                             std::shared_ptr<DataFrame> metaData)
+    : TensorField<2, float>(dimensions, tensors, metaData) {
+    initializeDefaultMetaData();
+    computeDataMaps();
     computeNormalizedScreenCoordinates();
 }
 
-TensorField2D::TensorField2D(const size2_t dimensions, const std::vector<double>& data,
-                             const dvec2& extends)
-    : dimensions_(dimensions)
-    , extends_(extends)
-    , size_(dimensions.x * dimensions.y)
-    , rank_(2)
-    , dimensionality_(2)
-    , indexMapper_(dimensions) {
-    for (size_t i = 0; i < data.size(); i += 4) {
-        dmat2 tensor;
-        tensor[0][0] = data[i];
-        tensor[1][0] = data[i + 1];
-        tensor[0][1] = data[i + 2];
-        tensor[1][1] = data[i + 3];
-
-        tensors_.push_back(tensor);
-    }
-
-    computeEigenValuesAndEigenVectors();
+TensorField2D::TensorField2D(const sizeN_t& dimensions, std::shared_ptr<std::vector<matN>> tensors,
+                             std::shared_ptr<DataFrame> metaData)
+    : TensorField<2, float>(dimensions, tensors, metaData) {
+    initializeDefaultMetaData();
+    computeDataMaps();
     computeNormalizedScreenCoordinates();
 }
 
-TensorField2D::TensorField2D(const size2_t dimensions, const std::vector<double>& data,
-                             const std::vector<double>& majorEigenvalues,
-                             const std::vector<double>& minorEigenvalues,
-                             const std::vector<dvec2>& majorEigenvectors,
-                             const std::vector<dvec2>& minorEigenvectors, const dvec2& extends)
-    : majorEigenVectors_(majorEigenvectors)
-    , minorEigenVectors_(minorEigenvectors)
-    , majorEigenValues_(majorEigenvalues)
-    , minorEigenValues_(minorEigenvalues)
-    , dimensions_(dimensions)
-    , extends_(extends)
-    , offset_(dvec2(0.0))
-    , size_(dimensions.x * dimensions.y)
-    , rank_(2)
-    , dimensionality_(2)
-    , indexMapper_(dimensions) {
-    for (size_t i = 0; i < data.size(); i += 4) {
-        dmat3 tensor;
-        tensor[0][0] = data[i];
-        tensor[1][0] = data[i + 1];
-        tensor[0][1] = data[i + 2];
-        tensor[1][1] = data[i + 3];
-
-        tensors_.emplace_back(tensor);
-    }
-    computeNormalizedScreenCoordinates();
+TensorField2D::TensorField2D(const TensorField2D& tf)
+    : TensorField<2, float>(tf), normalizedImagePositions_(tf.normalizedImagePositions_) {
+    initializeDefaultMetaData();
+    computeDataMaps();
 }
 
-TensorField2D::TensorField2D(const size2_t dimensions, const std::vector<dmat2>& data,
-                             const std::vector<double>& majorEigenvalues,
-                             const std::vector<double>& minorEigenvalues,
-                             const std::vector<dvec2>& majorEigenvectors,
-                             const std::vector<dvec2>& minorEigenvectors, const dvec2& extends)
-    : majorEigenVectors_(majorEigenvectors)
-    , minorEigenVectors_(minorEigenvectors)
-    , majorEigenValues_(majorEigenvalues)
-    , minorEigenValues_(minorEigenvalues)
-    , dimensions_(dimensions)
-    , extends_(extends)
-    , offset_(dvec2(0.0))
-    , size_(dimensions.x * dimensions.y)
-    , rank_(2)
-    , dimensionality_(2)
-    , indexMapper_(dimensions)
-    , tensors_(data) {
-    computeNormalizedScreenCoordinates();
-}
+TensorField2D* TensorField2D::clone() const { return new TensorField2D(*this); }
 
-TensorField2D::TensorField2D(const size_t x, const size_t y, const std::vector<dmat2>& data,
-                             const dvec2& extends)
-    : dimensions_(size2_t(x, y))
-    , extends_(extends)
-    , size_(x * y)
-    , rank_(2)
-    , dimensionality_(2)
-    , indexMapper_(size2_t(x, y))
-    , tensors_(data) {
-    computeEigenValuesAndEigenVectors();
-    computeNormalizedScreenCoordinates();
-}
+TensorField2D* TensorField2D::deepCopy() const {
+    auto tf = new TensorField2D(*this);
 
-TensorField2D::TensorField2D(const size_t x, const size_t y, const std::vector<double>& data,
-                             const dvec2& extends)
-    : dimensions_(size2_t(x, y))
-    , extends_(extends)
-    , size_(x * y)
-    , rank_(2)
-    , dimensionality_(2)
-    , indexMapper_(size2_t(x, y)) {
-    for (size_t i = 0; i < data.size(); i += 4) {
-        dmat2 tensor;
-        tensor[0][0] = data[i];
-        tensor[1][0] = data[i + 1];
-        tensor[0][1] = data[i + 2];
-        tensor[1][1] = data[i + 3];
+    tf->setTensors(std::make_shared<std::vector<matN>>(*tensors_));
+    tf->setMetaData(std::make_shared<DataFrame>(*metaData_));
 
-        tensors_.push_back(tensor);
-    }
-
-    computeEigenValuesAndEigenVectors();
-    computeNormalizedScreenCoordinates();
-}
-
-TensorField2D::TensorField2D(const size_t x, const size_t y, const std::vector<double>& data,
-                             const std::vector<double>& majorEigenvalues,
-                             const std::vector<double>& minorEigenvalues,
-                             const std::vector<dvec2>& majorEigenvectors,
-                             const std::vector<dvec2>& minorEigenvectors, const dvec2& extends)
-    : majorEigenVectors_(majorEigenvectors)
-    , minorEigenVectors_(minorEigenvectors)
-    , majorEigenValues_(majorEigenvalues)
-    , minorEigenValues_(minorEigenvalues)
-    , dimensions_(size2_t(x, y))
-    , extends_(extends)
-    , offset_(dvec3(0.0))
-    , size_(x * y)
-    , rank_(2)
-    , dimensionality_(2)
-    , indexMapper_(size2_t(x, y)) {
-    for (size_t i = 0; i < data.size(); i += 4) {
-        dmat3 tensor;
-        tensor[0][0] = data[i];
-        tensor[1][0] = data[i + 1];
-        tensor[0][1] = data[i + 2];
-        tensor[1][1] = data[i + 3];
-
-        tensors_.emplace_back(tensor);
-    }
-    computeNormalizedScreenCoordinates();
-}
-
-TensorField2D::TensorField2D(const size_t x, const size_t y, const std::vector<dmat2>& data,
-                             const std::vector<double>& majorEigenvalues,
-                             const std::vector<double>& minorEigenvalues,
-                             const std::vector<dvec2>& majorEigenvectors,
-                             const std::vector<dvec2>& minorEigenvectors, const dvec2& extends)
-    : majorEigenVectors_(majorEigenvectors)
-    , minorEigenVectors_(minorEigenvectors)
-    , majorEigenValues_(majorEigenvalues)
-    , minorEigenValues_(minorEigenvalues)
-    , dimensions_(size2_t(x, y))
-    , extends_(extends)
-    , offset_(dvec3(0.0))
-    , size_(x * y)
-    , rank_(2)
-    , dimensionality_(2)
-    , indexMapper_(size2_t(x, y))
-    , tensors_(data) {
-    computeNormalizedScreenCoordinates();
-}
-
-std::string TensorField2D::getDataInfo() const {
-    std::stringstream ss;
-    ss << "<table border='0' cellspacing='0' cellpadding='0' "
-          "style='border-color:white;white-space:pre;'>/n"
-       << "<tr>"
-       << "<td style='color:#bbb;padding-right:8px;'>"
-       << "Type"
-       << "</td>"
-       << "<td>"
-       << "<nobr>2D tensor field</nobr>"
-       << "</td>"
-       << "</tr>"
-       << "<tr>"
-       << "<td style='color:#bbb;padding-right:8px;'>"
-       << "Number of tensors"
-       << "</td>"
-       << "<td>"
-       << "<nobr>" << tensors_.size() << "</nobr>"
-       << "</td>"
-       << "</tr>"
-       << "<tr>"
-       << "<td style='color:#bbb;padding-right:8px;'>"
-       << "Dimensions"
-       << "</td>"
-       << "<td>"
-       << "<nobr>" << glm::to_string(dimensions_) << "</nobr>"
-       << "</td>"
-       << "</tr>"
-       << "<tr>"
-       << "<td style='color:#bbb;padding-right:8px;'>"
-       << "Max eigenvalue (major)"
-       << "</td>"
-       << "<td>"
-       << "<nobr>"
-       << static_cast<float>(*std::max_element(majorEigenValues_.begin(), majorEigenValues_.end()))
-       << "</nobr>"
-       << "</td>"
-       << "</tr>"
-       << "<tr>"
-       << "<td style='color:#bbb;padding-right:8px;'>"
-       << "Min eigenvalue (major)"
-       << "</td>"
-       << "<td>"
-       << "<nobr>"
-       << static_cast<float>(*std::min_element(majorEigenValues_.begin(), majorEigenValues_.end()))
-       << "</nobr>"
-       << "</td>"
-       << "</tr>"
-       << "<tr>"
-       << "<td style='color:#bbb;padding-right:8px;'>"
-       << "Max eigenvalue (minor)"
-       << "</td>"
-       << "<td>"
-       << "<nobr>"
-       << static_cast<float>(*std::max_element(minorEigenValues_.begin(), minorEigenValues_.end()))
-       << "</nobr>"
-       << "</td>"
-       << "</tr>"
-       << "<tr>"
-       << "<td style='color:#bbb;padding-right:8px;'>"
-       << "Min eigenvalue (minor)"
-       << "</td>"
-       << "<td>"
-       << "<nobr>"
-       << static_cast<float>(*std::min_element(minorEigenValues_.begin(), minorEigenValues_.end()))
-       << "</nobr>"
-       << "</td>"
-       << "</tr>"
-       << "<tr>"
-       << "<td style='color:#bbb;padding-right:8px;'>"
-       << "Extends"
-       << "</td>"
-       << "<td>"
-       << "<nobr>" << glm::to_string(extends_) << "</nobr>"
-       << "</td>"
-       << "</tr>"
-       << "</table>";
-    return ss.str();
+    return tf;
 }
 
 std::shared_ptr<Image> TensorField2D::getImageRepresentation() const {
-    std::shared_ptr<Image> ret = std::make_shared<Image>(dimensions_, DataVec4Float32::get());
+    using layer_type = glm::vec<4, value_type>;
+    auto dataFormat = new DataFormat<layer_type>();
+    auto layer = std::make_shared<Layer>(dimensions_, dataFormat);
+    auto data =
+        static_cast<LayerRAMPrecision<layer_type>*>(layer->getEditableRepresentation<LayerRAM>())
+            ->getDataTyped();
 
-    auto colorLayer = ret->getEditableRepresentation<ImageRAM>()->getColorLayerRAM();
-
-    for (size_t y = 0; y < dimensions_.y; y++) {
-        for (size_t x = 0; x < dimensions_.x; x++) {
-            auto tensor = at(x, y);
-
-            colorLayer->setFromDVec4(size2_t(x, y),
-                                     dvec4(tensor[0][0], tensor[1][0], tensor[0][1], tensor[1][1]));
-        }
+    for (size_t i{0}; i < glm::compMul(dimensions_); ++i) {
+        const auto& tensor = at(i);
+        data[i] = vec4(tensor[0][0], tensor[1][0], tensor[0][1], tensor[1][1]);
     }
 
-    return ret;
-}
-
-dmat2& TensorField2D::at(const size2_t position) { return tensors_[indexMapper_(position)]; }
-
-dmat2& TensorField2D::at(const size_t x, const size_t y) {
-    return tensors_[indexMapper_(size2_t(x, y))];
-}
-
-dmat2& TensorField2D::at(const size_t index) { return tensors_[index]; }
-
-const dmat2& TensorField2D::at(const size2_t position) const {
-    return tensors_[indexMapper_(position)];
-}
-
-const dmat2& TensorField2D::at(const size_t x, const size_t y) const {
-    return tensors_[indexMapper_(size2_t(x, y))];
-}
-
-const dmat2& TensorField2D::at(const size_t index) const { return tensors_[index]; }
-
-size_t TensorField2D::getSize() const { return size_; }
-
-dmat2 TensorField2D::sample(const dvec2& position,
-                            const tensorutil::InterpolationMethod method) const {
-    const auto fBounds = getBounds<double>();
-
-    if (method == tensorutil::InterpolationMethod::Nearest) {
-        return at(size2_t(glm::round(position * dvec2(fBounds))));
-    }
-
-    const auto uBounds = getBounds();
-    const auto indexPosition = size2_t(glm::floor(position * dvec2(fBounds)));
-
-    const auto pos00 = size2_t(indexPosition);
-    const auto pos11 = pos00 + size2_t(1);
-    const auto pos10 = pos00 + size2_t(1, 0);
-    const auto pos01 = pos00 + size2_t(0, 1);
-
-    const auto xFrac = glm::fract(position.x * fBounds.x);
-    const auto yFrac = glm::fract(position.y * fBounds.y);
-
-    if (pos00 == uBounds) {
-        return at(uBounds);
-    }
-    if (pos00.x == uBounds.x) {
-        return glm::mix(at(pos00), at(pos01), yFrac);
-    }
-    if (pos00.y == uBounds.y) {
-        return glm::mix(at(pos00), at(pos10), xFrac);
-    }
-
-    if (method == tensorutil::InterpolationMethod::Linear) {
-        const auto& tensor00 = at(pos00);
-        const auto& tensor11 = at(pos11);
-        const auto& tensor10 = at(pos10);
-        const auto& tensor01 = at(pos01);
-
-        const auto botRow = glm::mix(tensor00, tensor10, xFrac);
-        const auto topRow = glm::mix(tensor01, tensor11, xFrac);
-
-        return glm::mix(botRow, topRow, yFrac);
-    }
-    if (method == tensorutil::InterpolationMethod::Barycentric) {
-        // Find out which triangle we need to use
-        auto a = dvec2(pos00) / fBounds;
-        auto b = dvec2(pos11) / fBounds;
-        auto c = position;
-
-        dmat2 tensorAtA;
-        dmat2 tensorAtB;
-        dmat2 tensorAtC;
-
-        auto sys = dmat2(a.x - c.x, a.y - c.y, b.x - c.x, b.y - c.y);
-        // lower
-        if (glm::determinant(sys) <= 0.) {
-            a = dvec2(pos00) / fBounds;
-            tensorAtA = at(pos00);
-            b = dvec2(pos10) / fBounds;
-            tensorAtB = at(pos10);
-            c = dvec2(pos11) / fBounds;
-            tensorAtC = at(pos11);
-        }
-        // upper
-        else {
-            a = dvec2(pos00) / fBounds;
-            tensorAtA = at(pos00);
-            b = dvec2(pos11) / fBounds;
-            tensorAtB = at(pos11);
-            c = dvec2(pos01) / fBounds;
-            tensorAtC = at(pos01);
-        }
-
-        // barycentric coords
-        const auto v0 = b - a;
-        const auto v1 = c - a;
-        const auto v2 = position - a;
-        const auto den = v0.x * v1.y - v1.x * v0.y;
-        const auto v = (v2.x * v1.y - v1.x * v2.y) / den;
-        const auto w = (v0.x * v2.y - v2.x * v0.y) / den;
-        const auto u = 1.0f - v - w;
-
-        return dmat2(u * tensorAtA + v * tensorAtB + w * tensorAtC);
-    }
-    return dmat2();
-}
-
-dmat2 TensorField2D::getBasis() const {
-    return dmat2(dvec2(extends_.x, 0.0), dvec2(0.0, extends_.y));
-}
-
-dmat3 TensorField2D::getBasisAndOffset() const {
-    auto basis = dmat2(dvec2(extends_.x, 0.0), dvec2(0.0, extends_.y));
-
-    dmat3 modelMatrix;
-
-    modelMatrix[0][0] = basis[0][0];
-    modelMatrix[0][1] = basis[0][1];
-    modelMatrix[1][0] = basis[1][0];
-    modelMatrix[1][1] = basis[1][1];
-
-    modelMatrix[2][0] = offset_[0];
-    modelMatrix[2][1] = offset_[1];
-
-    modelMatrix[0][2] = 0.0;
-    modelMatrix[1][2] = 0.0;
-    modelMatrix[2][2] = 1.0;
-
-    return modelMatrix;
+    return std::make_shared<Image>(layer);
 }
 
 const dvec2& TensorField2D::getNormalizedImagePosition(const size_t index) const {
     return normalizedImagePositions_[index];
 }
 
-const dvec2& TensorField2D::getMinorEigenVector(const size_t index) const {
-    return minorEigenVectors_[index];
-}
-
-const dvec2& TensorField2D::getMinorEigenVector(const size2_t& position) const {
-    return minorEigenVectors_[indexMapper_(position)];
-}
-
-const dvec2& TensorField2D::getMajorEigenVector(const size_t index) const {
-    return majorEigenVectors_[index];
-}
-
-const dvec2& TensorField2D::getMajorEigenVector(const size2_t& position) const {
-    return majorEigenVectors_[indexMapper_(position)];
-}
-
-const std::vector<dvec2>& TensorField2D::minorEigenVectors() const { return minorEigenVectors_; }
-
-const std::vector<dvec2>& TensorField2D::majorEigenVectors() const { return majorEigenVectors_; }
-
-const std::vector<double>& TensorField2D::minorEigenValues() const { return minorEigenValues_; }
-
-const std::vector<double>& TensorField2D::majorEigenValues() const { return majorEigenValues_; }
-
 const std::vector<dvec2>& TensorField2D::normalizedImagePositions() const {
     return normalizedImagePositions_;
 }
 
-const std::vector<dmat2>& TensorField2D::tensors() const { return tensors_; }
+void TensorField2D::initializeDefaultMetaData() {
+    // clang-format off
+    if (this->hasMetaData<attributes::MajorEigenValue>() &&
+        this->hasMetaData<attributes::MinorEigenValue>() &&
+        this->hasMetaData<attributes::MajorEigenVector2D>() &&
+        this->hasMetaData<attributes::MinorEigenVector2D>()) {
+        return;
+    }
+    // clang-format on
 
-std::array<std::pair<double, dvec2>, 2> TensorField2D::getSortedEigenValuesAndEigenVectorsForTensor(
-    const size_t index) const {
-    const auto& majorEigenValue = majorEigenValues_[index];
-    const auto& minorEigenValue = minorEigenValues_[index];
+    auto newMetaData = std::make_shared<DataFrame>(*metaData_);
 
-    const auto& majorEigenVector = majorEigenVectors_[index];
-    const auto& minorEigenVector = minorEigenVectors_[index];
+    auto func = [](const matN& tensor) -> std::array<std::pair<value_type, vecN>, 2> {
+        if (tensor == matN(0)) {
+            return {std::make_pair(value_type{0}, vecN{0}), std::make_pair(value_type{0}, vecN{0})};
+        }
 
-    std::array<std::pair<double, dvec2>, 2> ret;
-    ret[0] = {majorEigenValue, majorEigenVector};
-    ret[1] = {minorEigenValue, minorEigenVector};
+        Eigen::EigenSolver<Eigen::Matrix2f> solver(util::glm2eigen(tensor));
+        const auto eigenValues = util::eigen2glm<value_type, 2, 1>(solver.eigenvalues().real());
+        const auto eigenVectors = util::eigen2glm<value_type, 2, 2>(solver.eigenvectors().real());
 
-    return ret;
-}
+        const auto range =
+            util::as_range(glm::value_ptr(eigenValues), glm::value_ptr(eigenValues) + 2);
 
-std::array<std::pair<double, dvec2>, 2> TensorField2D::getSortedEigenValuesAndEigenVectorsForTensor(
-    const size2_t& pos) const {
-    auto index = indexMapper_(pos);
+        const auto ordering = util::ordering(range, std::greater<float>());
 
-    const auto& majorEigenValue = majorEigenValues_[index];
-    const auto& minorEigenValue = minorEigenValues_[index];
-
-    const auto& majorEigenVector = majorEigenVectors_[index];
-    const auto& minorEigenVector = minorEigenVectors_[index];
-
-    std::array<std::pair<double, dvec2>, 2> ret;
-    ret[0] = {majorEigenValue, majorEigenVector};
-    ret[1] = {minorEigenValue, minorEigenVector};
-
-    return ret;
-}
-
-std::array<double, 2> TensorField2D::getSortedEigenValuesForTensor(const size_t index) const {
-    auto ret = std::array<double, 2>();
-    ret[0] = majorEigenValues_[index];
-    ret[1] = minorEigenValues_[index];
-    return ret;
-}
-
-std::array<double, 2> TensorField2D::getSortedEigenValuesForTensor(const size2_t& pos) const {
-    auto index = indexMapper_(pos);
-
-    auto ret = std::array<double, 2>();
-    ret[0] = majorEigenValues_[index];
-    ret[1] = minorEigenValues_[index];
-    return ret;
-}
-
-std::array<dvec2, 2> TensorField2D::getSortedEigenVectorsForTensor(const size_t index) const {
-    auto ret = std::array<dvec2, 2>();
-    ret[0] = majorEigenVectors_[index];
-    ret[1] = minorEigenVectors_[index];
-    return ret;
-}
-
-std::array<dvec2, 2> TensorField2D::getSortedEigenVectorsForTensor(const size2_t& pos) const {
-    auto index = indexMapper_(pos);
-
-    auto ret = std::array<dvec2, 2>();
-    ret[0] = majorEigenVectors_[index];
-    ret[1] = minorEigenVectors_[index];
-    return ret;
-}
-
-void TensorField2D::computeEigenValuesAndEigenVectors() {
-    auto func = [](const dmat2& tensor) -> std::array<std::pair<double, dvec2>, 2> {
-        Eigen::EigenSolver<Eigen::Matrix<double, 2, 2>> solver(util::glm2eigen(tensor));
-
-        auto lambda1 = solver.eigenvalues().col(0)[0].real();
-        auto lambda2 = solver.eigenvalues().col(0)[1].real();
-
-        auto ev1 =
-            dvec2(solver.eigenvectors().col(0).real()[0], solver.eigenvectors().col(0).real()[1]);
-        auto ev2 =
-            dvec2(solver.eigenvectors().col(1).real()[0], solver.eigenvectors().col(1).real()[1]);
-
-        std::array<std::pair<double, dvec2>, 2> sortable;
-        sortable[0] = {lambda1, ev1};
-        sortable[1] = {lambda2, ev2};
-
-        std::sort(sortable.begin(), sortable.end(),
-                  [](const std::pair<double, dvec2>& pairA, const std::pair<double, dvec2>& pairB) {
-                      return pairA.first > pairB.first;
-                  });
-
-        return sortable;
+        return {{std::make_pair(eigenValues[ordering[0]], eigenVectors[ordering[0]]),
+                 std::make_pair(eigenValues[ordering[1]], eigenVectors[ordering[1]])}};
     };
 
-    majorEigenValues_.resize(size_);
-    minorEigenValues_.resize(size_);
-    majorEigenVectors_.resize(size_);
-    minorEigenVectors_.resize(size_);
+    std::vector<value_type> majorEigenValues;
+    std::vector<value_type> minorEigenValues;
+
+    std::vector<vecN> majorEigenVectors;
+    std::vector<vecN> intermediateEigenVectors;
+    std::vector<vecN> minorEigenVectors;
+
+    majorEigenValues.resize(size_);
+    minorEigenValues.resize(size_);
+
+    majorEigenVectors.resize(size_);
+    minorEigenVectors.resize(size_);
+
+    const auto& t_ref = *tensors_;
 
 #pragma omp parallel for
-    for (int i = 0; i < static_cast<int>(tensors_.size()); i++) {
-        auto tensor = tensors_[i];
-
+    for (int i = 0; i < static_cast<int>(tensors_->size()); i++) {
+        auto tensor = t_ref[i];
         auto eigenValuesAndEigenVectors = func(tensor);
 
-        majorEigenVectors_[i] = eigenValuesAndEigenVectors[0].second;
-        minorEigenVectors_[i] = eigenValuesAndEigenVectors[1].second;
+        majorEigenVectors[i] = eigenValuesAndEigenVectors[0].second;
+        minorEigenVectors[i] = eigenValuesAndEigenVectors[1].second;
 
-        majorEigenValues_[i] = eigenValuesAndEigenVectors[0].first;
-        minorEigenValues_[i] = eigenValuesAndEigenVectors[1].first;
+        majorEigenValues[i] = eigenValuesAndEigenVectors[0].first;
+        minorEigenValues[i] = eigenValuesAndEigenVectors[1].first;
     }
+
+    addIfNotPresent<attributes::MajorEigenValue>(newMetaData, majorEigenValues);
+    addIfNotPresent<attributes::MinorEigenValue>(newMetaData, minorEigenValues);
+    addIfNotPresent<attributes::MajorEigenVector2D>(newMetaData, majorEigenVectors);
+    addIfNotPresent<attributes::MinorEigenVector2D>(newMetaData, minorEigenVectors);
+
+    newMetaData->updateIndexBuffer();
+
+    metaData_ = newMetaData;
+}
+
+void TensorField2D::computeDataMaps() {
+    const auto& majorEigenValues = this->majorEigenValues();
+    const auto& minorEigenValues = this->minorEigenValues();
+
+    dataMapEigenValues_[0].dataRange.x = dataMapEigenValues_[0].valueRange.x =
+        *std::min_element(majorEigenValues.begin(), majorEigenValues.end());
+    dataMapEigenValues_[0].dataRange.y = dataMapEigenValues_[0].valueRange.y =
+        *std::max_element(majorEigenValues.begin(), majorEigenValues.end());
+    dataMapEigenValues_[1].dataRange.x = dataMapEigenValues_[1].valueRange.x =
+        *std::min_element(minorEigenValues.begin(), minorEigenValues.end());
+    dataMapEigenValues_[1].dataRange.y = dataMapEigenValues_[1].valueRange.y =
+        *std::max_element(minorEigenValues.begin(), minorEigenValues.end());
+
+    auto min_f = [](const vecN& vec) -> value_type { return std::min(vec.x, vec.y); };
+    auto max_f = [](const vecN& vec) -> value_type { return std::max(vec.x, vec.y); };
+
+    auto min = std::numeric_limits<value_type>::max();
+    auto max = std::numeric_limits<value_type>::lowest();
+
+    for (const auto& v : this->majorEigenVectors()) {
+        min = std::min(min_f(v), min);
+        max = std::max(max_f(v), max);
+    }
+
+    dataMapEigenVectors_[0].dataRange.x = dataMapEigenVectors_[0].valueRange.x = min;
+    dataMapEigenVectors_[0].dataRange.y = dataMapEigenVectors_[0].valueRange.y = max;
+
+    min = std::numeric_limits<value_type>::max();
+    max = std::numeric_limits<value_type>::lowest();
+    for (const auto& v : this->minorEigenVectors()) {
+        min = std::min(min_f(v), min);
+        max = std::max(max_f(v), max);
+    }
+    dataMapEigenVectors_[1].dataRange.x = dataMapEigenVectors_[1].valueRange.x = min;
+    dataMapEigenVectors_[1].dataRange.y = dataMapEigenVectors_[1].valueRange.y = max;
 }
 
 void TensorField2D::computeNormalizedScreenCoordinates() {

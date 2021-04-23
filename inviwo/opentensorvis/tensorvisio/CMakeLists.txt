@@ -1,62 +1,23 @@
 #--------------------------------------------------------------------
-# Inviwo TensorVisIO Module
-ivw_module(TensorVisIO)
+# Inviwo OpenTensorVisIO Module
+ivw_module(OpenTensorVisIO)
 
 #--------------------------------------------------------------------
 # Add header files
 set(HEADER_FILES
-<<<<<<< HEAD
-    include/modules/tensorvisio/processors/amiratensorreader.h
-    include/modules/tensorvisio/processors/flowguifilereader.h
-    include/modules/tensorvisio/processors/nrrdreader.h
-    include/modules/tensorvisio/processors/tensorfield2dexport.h
-    include/modules/tensorvisio/processors/tensorfield2dimport.h
-    include/modules/tensorvisio/processors/tensorfield2dtovtk.h
-    include/modules/tensorvisio/processors/tensorfield3dexport.h
-    include/modules/tensorvisio/processors/tensorfield3dimport.h
-<<<<<<< HEAD
-=======
-    include/modules/tensorvisio/processors/vtkdatasettotensorfield3d.h
-<<<<<<< HEAD
-<<<<<<< HEAD
-    include/modules/tensorvisio/processors/vtkdatasetinformation.h
-    include/modules/tensorvisio/processors/vtkreader.h
-<<<<<<< HEAD
->>>>>>> 9f90ef3... Generic VTK reader: Basic version working
-    include/modules/tensorvisio/processors/vtkrectilineargridreader.h
-    include/modules/tensorvisio/processors/vtkstructuredgridreader.h
-    include/modules/tensorvisio/processors/vtkstructuredpointsreader.h
-    include/modules/tensorvisio/processors/vtktotensorfield3d.h
-    include/modules/tensorvisio/processors/vtkunstructuredgridtorectilineargrid.h
-    include/modules/tensorvisio/processors/vtkvolumereader.h
-    include/modules/tensorvisio/processors/vtkxmlrectilineargridreader.h
-    include/modules/tensorvisio/processors/witofilereader.h
-=======
-    include/modules/tensorvisio/processors/vtkunstructuredgridtorectilineargrid.h
-    include/modules/tensorvisio/processors/vtkwriter.h
-=======
->>>>>>> eedd932... Move VTK-only code to VTK module
-    include/modules/tensorvisio/processors/flowguifilereader.h
->>>>>>> 66b7c02... Basic VTK pipeline in place
-=======
-    include/modules/tensorvisio/processors/vtktotensorfield2d.h
->>>>>>> 60d78da... TensorVisIO: Added VTK to Tensor Field 2D processor
-    include/modules/tensorvisio/tensorvisiomodule.h
-    include/modules/tensorvisio/tensorvisiomoduledefine.h
-=======
-    include/inviwo/tensorvisio/processors/amiratensorreader.h
-    include/inviwo/tensorvisio/processors/flowguifilereader.h
-    include/inviwo/tensorvisio/processors/nrrdreader.h
-    include/inviwo/tensorvisio/processors/tensorfield2dexport.h
-    include/inviwo/tensorvisio/processors/tensorfield2dimport.h
-    include/inviwo/tensorvisio/processors/tensorfield2dtovtk.h
-    include/inviwo/tensorvisio/processors/tensorfield3dexport.h
-    include/inviwo/tensorvisio/processors/tensorfield3dimport.h
-    include/inviwo/tensorvisio/processors/vtkdatasettotensorfield3d.h
-    include/inviwo/tensorvisio/processors/vtktotensorfield2d.h
-    include/inviwo/tensorvisio/tensorvisiomodule.h
-    include/inviwo/tensorvisio/tensorvisiomoduledefine.h
->>>>>>> ad0038d... TensorVis: Refactor include directory
+    include/inviwo/opentensorvisio/processors/amiratensorreader.h
+    include/inviwo/opentensorvisio/processors/flowguifilereader.h
+    include/inviwo/opentensorvisio/processors/nrrdreader.h
+    include/inviwo/opentensorvisio/processors/tensorfield2dexport.h
+    include/inviwo/opentensorvisio/processors/tensorfield2dimport.h
+    include/inviwo/opentensorvisio/processors/tensorfield2dtovtk.h
+    include/inviwo/opentensorvisio/processors/tensorfield3dexport.h
+    include/inviwo/opentensorvisio/processors/tensorfield3dimport.h
+    include/inviwo/opentensorvisio/processors/vtkdatasettotensorfield3d.h
+    include/inviwo/opentensorvisio/processors/vtktotensorfield2d.h
+    include/inviwo/opentensorvisio/opentensorvisiomodule.h
+    include/inviwo/opentensorvisio/opentensorvisiomoduledefine.h
+    include/inviwo/opentensorvisio/util/util.h
 )
 ivw_group("Header Files" ${HEADER_FILES})
 
@@ -71,34 +32,9 @@ set(SOURCE_FILES
     src/processors/tensorfield2dtovtk.cpp
     src/processors/tensorfield3dexport.cpp
     src/processors/tensorfield3dimport.cpp
-<<<<<<< HEAD
-=======
     src/processors/vtkdatasettotensorfield3d.cpp
-<<<<<<< HEAD
-<<<<<<< HEAD
-    src/processors/vtkdatasetinformation.cpp
-    src/processors/vtkreader.cpp
-<<<<<<< HEAD
->>>>>>> 9f90ef3... Generic VTK reader: Basic version working
-    src/processors/vtkrectilineargridreader.cpp
-    src/processors/vtkstructuredgridreader.cpp
-    src/processors/vtkstructuredpointsreader.cpp
-    src/processors/vtktotensorfield3d.cpp
-    src/processors/vtkunstructuredgridtorectilineargrid.cpp
-    src/processors/vtkvolumereader.cpp
-    src/processors/vtkxmlrectilineargridreader.cpp
-    src/processors/witofilereader.cpp
-=======
-    src/processors/vtkunstructuredgridtorectilineargrid.cpp
-    src/processors/vtkwriter.cpp
-=======
->>>>>>> eedd932... Move VTK-only code to VTK module
-    src/processors/flowguifilereader.cpp
->>>>>>> 66b7c02... Basic VTK pipeline in place
-=======
     src/processors/vtktotensorfield2d.cpp
->>>>>>> 60d78da... TensorVisIO: Added VTK to Tensor Field 2D processor
-    src/tensorvisiomodule.cpp
+    src/opentensorvisiomodule.cpp
 )
 ivw_group("Source Files" ${SOURCE_FILES})
 
@@ -112,7 +48,7 @@ ivw_group("Shader Files" ${SHADER_FILES})
 #--------------------------------------------------------------------
 # Add Unittests
 set(TEST_FILES
-	#${CMAKE_CURRENT_SOURCE_DIR}/tests/unittests/tensorvisio-test.cpp
+	#${CMAKE_CURRENT_SOURCE_DIR}/tests/unittests/opentensorvisio-unittest-main.cpp
 )
 ivw_add_unittest(${TEST_FILES})
 

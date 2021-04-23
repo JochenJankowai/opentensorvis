@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2016-2018 Inviwo Foundation
+ * Copyright (c) 2016-2020 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,9 @@
  *
  *********************************************************************************/
 
-#include <inviwo/tensorvisbase/processors/tensorglyphprocessor.h>
-#include <inviwo/tensorvisbase/util/tensorutil.h>
+#include <inviwo/opentensorvisbase/processors/tensorglyphprocessor.h>
+#include <inviwo/opentensorvisbase/util/tensorutil.h>
+#include <inviwo/opentensorvisbase/opentensorvisbasemodule.h>
 
 namespace inviwo {
 
@@ -38,7 +39,7 @@ const ProcessorInfo TensorGlyphProcessor::processorInfo_{
     "Tensor Glyphs",                    // Display name
     "Tensor visualization",             // Category
     CodeState::Stable,                  // Code state
-    Tags::CPU,                          // Tags
+    tag::OpenTensorVis | Tag::CPU,      // Tags
 };
 
 const ProcessorInfo TensorGlyphProcessor::getProcessorInfo() const { return processorInfo_; }
@@ -65,7 +66,7 @@ void TensorGlyphProcessor::process() {
 
     util::IndexMapper3D indexMapper(dimensions);
 
-    auto comp = glm::zero<dmat3>();
+    auto comp = glm::zero<mat3>();
 
     auto meshes = new std::vector<std::shared_ptr<Mesh>>();
 
@@ -75,12 +76,12 @@ void TensorGlyphProcessor::process() {
     for (size_t z = 0; z < dimensions.z; z++) {
         for (size_t y = 0; y < dimensions.y; y++) {
             for (size_t x = 0; x < dimensions.x; x++) {
-                const auto& tensor = tensorField->at(size3_t(x, y, z)).second;
-                                               if (tensor == comp) continue;
+                const auto& tensor = tensorField->at(size3_t(x, y, z));
+                if (tensor == comp) continue;
                 const auto index = indexMapper(size3_t(x, y, z));
 
-                //const auto dpos = tensorField->getNormalizedVolumePosition(index);
-                //const auto pos = vec3(dpos);
+                // const auto dpos = tensorField->getNormalizedVolumePosition(index);
+                // const auto pos = vec3(dpos);
 
                 const vec3 pos{voxelDist * vec3{x, y, z} + offset};
 

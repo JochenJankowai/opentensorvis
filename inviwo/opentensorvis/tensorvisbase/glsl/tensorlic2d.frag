@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2013-2018 Inviwo Foundation
+ * Copyright (c) 2013-2020 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,6 @@
 uniform sampler2D tensorFieldColor;
 uniform sampler2D noiseTextureColor;
 uniform sampler2D imageInportColor;
-uniform sampler2D tf;
 uniform ImageParameters tensorFieldParameters;
 uniform ImageParameters noiseTextureParameters;
 
@@ -130,7 +129,7 @@ void main() {
     finalColor = clamp(finalColor, 0.0, 1.0);
 
     if (hasInputImage) {
-        finalColor = finalColor * texture(imageInportColor, texCoord_.xy);
+        finalColor = finalColor * texture(imageInportColor, newTexForTensorFieldSampling);
     }
 
     FragData0 = finalColor;

@@ -1,7 +1,8 @@
-#include <inviwo/tensorvisio/processors/amiratensorreader.h>
+#include <inviwo/opentensorvisio/processors/amiratensorreader.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <inviwo/opentensorvisbase/opentensorvisbasemodule.h>
 
 namespace inviwo {
 
@@ -9,18 +10,19 @@ namespace inviwo {
 const ProcessorInfo AmiraTensorReader::processorInfo_{
     "org.inviwo.AmiraTensorReader",  // Class identifier
     "Amira Tensor Reader",           // Display name
-    "Tensor Field IO",                   // Category
-    CodeState::Experimental,       // Code state
-    Tags::CPU,                    // Tags
+    "Tensor Field IO",               // Category
+    CodeState::Experimental,         // Code state
+    tag::OpenTensorVis | Tag::CPU,   // Tags
 };
 const ProcessorInfo AmiraTensorReader::getProcessorInfo() const { return processorInfo_; }
 
 AmiraTensorReader::AmiraTensorReader()
-    : Processor(), inFile_("inFile", "File", "")
+    : Processor()
+    , inFile_("inFile", "File", "")
     //, outport3D_("outport3D")
-    , outport_("outportRaw"){
+    , outport_("outportRaw") {
     addProperty(inFile_);
-    //addPort(outport3D_);
+    // addPort(outport3D_);
     addPort(outport_);
 }
 
@@ -40,7 +42,7 @@ void AmiraTensorReader::process() {
     // We read the first 2k bytes into memory to parse the header.
     // The fixed buffer size looks a bit like a hack, and it is one, but it gets the job done.
     char buffer[2048];
-    if(fread(buffer, sizeof(char), 2047, fp)!=2047) return;
+    if (fread(buffer, sizeof(char), 2047, fp) != 2047) return;
     buffer[2047] = '\0';  // The following string routines prefer null-terminated strings
 
     if (!strstr(buffer, "# AmiraMesh BINARY-LITTLE-ENDIAN 2.1")) {
@@ -63,7 +65,7 @@ void AmiraTensorReader::process() {
     LogInfo("BoundingBox in y-Direction: [" << ymin << " ... " << ymax << "]\n");
     LogInfo("BoundingBox in z-Direction: [" << zmin << " ... " << zmax << "]\n");
 
-    auto extents = dvec3(xmax - xmin, ymax - ymin, zmax - zmin);
+    auto extents = vec3(xmax - xmin, ymax - ymin, zmax - zmin);
 
     // Type of the field: scalar, vector
     int NumComponents(0);
@@ -82,9 +84,9 @@ void AmiraTensorReader::process() {
         // Set the file pointer to the beginning of "# Data section follows"
         fseek(fp, idxStartData, SEEK_SET);
         // Consume this line, which is "# Data section follows"
-        if(!fgets(buffer, 2047, fp))return;
+        if (!fgets(buffer, 2047, fp)) return;
         // Consume the next line, which is "@1"
-        if(!fgets(buffer, 2047, fp))return;
+        if (!fgets(buffer, 2047, fp)) return;
 
         // Read the data
         // - how much to read
@@ -109,8 +111,7 @@ void AmiraTensorReader::process() {
             printf("\nPrinting all values in the same order in which they are in memory:\n");
             int Idx(0);
 
-            std::vector<dmat3> data;
-            std::vector<double> rawData_;
+            std::vector<mat3> data;
 
             for (int z = 0; z < zDim; z++) {
                 for (int y = 0; y < yDim; y++) {
@@ -122,21 +123,9 @@ void AmiraTensorReader::process() {
                         auto dataPoint5 = pData[Idx * NumComponents + 4];
                         auto dataPoint6 = pData[Idx * NumComponents + 5];
 
-                        auto tensor = dmat3(dvec3(dataPoint1, dataPoint2, dataPoint3),
-                                            dvec3(dataPoint2, dataPoint4, dataPoint5),
-                                            dvec3(dataPoint3, dataPoint5, dataPoint6));
-
-                        rawData_.push_back(dataPoint1);
-                        rawData_.push_back(dataPoint2);
-                        rawData_.push_back(dataPoint3);
-
-                        rawData_.push_back(dataPoint2);
-                        rawData_.push_back(dataPoint4);
-                        rawData_.push_back(dataPoint5);
-
-                        rawData_.push_back(dataPoint3);
-                        rawData_.push_back(dataPoint5);
-                        rawData_.push_back(dataPoint6);
+                        auto tensor = mat3(vec3(dataPoint1, dataPoint2, dataPoint3),
+                                           vec3(dataPoint2, dataPoint4, dataPoint5),
+                                           vec3(dataPoint3, dataPoint5, dataPoint6));
 
                         data.push_back(tensor);
 
@@ -146,12 +135,15 @@ void AmiraTensorReader::process() {
             }
 
             delete[] pData;
-            
-            outport_.setData(std::make_shared<TensorField3D>(xDim, yDim, zDim, rawData_, extents));
+
+            auto newTF = std::make_shared<TensorField3D>(size3_t(xDim, yDim, zDim), data);
+            newTF->setExtents(extents);
+
+            outport_.setData(newTF);
         }
     }
 
     fclose(fp);
 }
 
-}  // namespace
+}  // namespace inviwo

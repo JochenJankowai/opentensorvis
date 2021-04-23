@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2017-2018 Inviwo Foundation
+ * Copyright (c) 2017-2020 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,8 @@
  *
  *********************************************************************************/
 
-#include <inviwo/tensorvisbase/processors/tensorfield3dsubset.h>
+#include <inviwo/opentensorvisbase/processors/tensorfield3dsubset.h>
+#include <inviwo/opentensorvisbase/opentensorvisbasemodule.h>
 
 namespace inviwo {
 
@@ -37,7 +38,7 @@ const ProcessorInfo TensorField3DSubset::processorInfo_{
     "Tensor Field 3D Subset",          // Display name
     "Tensor visualization",            // Category
     CodeState::Stable,                 // Code state
-    Tags::CPU,                         // Tags
+    tag::OpenTensorVis | Tag::CPU,     // Tags
 };
 const ProcessorInfo TensorField3DSubset::getProcessorInfo() const { return processorInfo_; }
 
@@ -56,7 +57,7 @@ TensorField3DSubset::TensorField3DSubset()
     addProperty(offset_);
 
     inport_.onChange([&]() {
-        auto dimensions = inport_.getData()->getDimensions<size_t>();
+        auto dimensions = inport_.getData()->getDimensions();
         origin_.setMaxValue(dimensions - size3_t(1));
         origin_.setMinValue(ivec3(0));
 
@@ -68,21 +69,20 @@ TensorField3DSubset::TensorField3DSubset()
 
         auto maxOffset = offset_.getMaxValue();
 
-        if (offset.x > maxOffset.x)
-            newOffset.x = maxOffset.x;
-        if (offset.y > maxOffset.y)
-            newOffset.y = maxOffset.y;
-        if (offset.z > maxOffset.z)
-            newOffset.z = maxOffset.z;
+        if (offset.x > maxOffset.x) newOffset.x = maxOffset.x;
+        if (offset.y > maxOffset.y) newOffset.y = maxOffset.y;
+        if (offset.z > maxOffset.z) newOffset.z = maxOffset.z;
 
         offset_.set(newOffset);
     });
 
     origin_.onChange([this]() {
         if (!inport_.hasData()) return;
-        auto origin = origin_.get();
+        const auto origin = origin_.get();
+        const auto maxVal = inport_.getData()->getDimensions() - origin - size3_t(1);
 
-        offset_.setMaxValue(inport_.getData()->getDimensions<size_t>() - origin - size3_t(1));
+        offset_.setMaxValue(maxVal);
+        offset_.set(maxVal);
     });
 }
 
@@ -91,20 +91,27 @@ void TensorField3DSubset::process() {
 
     auto dimensions = size3_t(offset_.get() + size3_t(1));
 
-    auto spacing = tensorField->getSpacing();
+    auto spacing = tensorField->getSpacing<float>();
 
-    std::vector<dmat3> rawData;
+    std::vector<mat3> rawData;
 
     for (size_t z = origin_.get().z; z <= origin_.get().z + offset_.get().z; ++z) {
         for (size_t y = origin_.get().y; y <= origin_.get().y + offset_.get().y; ++y) {
             for (size_t x = origin_.get().x; x <= origin_.get().x + offset_.get().x; ++x) {
-                rawData.push_back(tensorField->at(size3_t(x, y, z)).second);
+                rawData.push_back(tensorField->at(size3_t(x, y, z)));
             }
         }
     }
 
-    auto outField = std::make_shared<TensorField3D>(dimensions, rawData, spacing * dvec3(dimensions));
-    outField->setOffset(tensorField->getOffset() + dvec3(origin_.get())*spacing);
+    auto outField = std::make_shared<TensorField3D>(dimensions, rawData);
+
+    const auto extents = spacing * vec3(dimensions - size3_t(1));
+
+    outField->setExtents(extents);
+
+    const auto offset = tensorField->getOffset() + (vec3(origin_.get()) * spacing);
+
+    outField->setOffset(offset);
 
     outport_.setData(outField);
 }

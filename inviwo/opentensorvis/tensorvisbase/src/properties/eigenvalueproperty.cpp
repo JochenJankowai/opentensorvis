@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2015-2018 Inviwo Foundation
+ * Copyright (c) 2015-2020 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,9 @@
  *
  *********************************************************************************/
 
-#include <inviwo/tensorvisbase/properties/eigenvalueproperty.h>
-#include <inviwo/tensorvisbase/util/tensorutil.h>
-#include <inviwo/tensorvisbase/properties/eigenvalueproperty.h>
+#include <inviwo/opentensorvisbase/properties/eigenvalueproperty.h>
+#include <inviwo/opentensorvisbase/util/tensorutil.h>
+#include <inviwo/opentensorvisbase/properties/eigenvalueproperty.h>
 
 namespace inviwo {
 

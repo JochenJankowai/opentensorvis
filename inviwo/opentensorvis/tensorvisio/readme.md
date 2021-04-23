@@ -1,4 +1,4 @@
-# TensorVisIO module
+# OpenTensorVisIO module
 
 This module handles IO for tensorvis.
 

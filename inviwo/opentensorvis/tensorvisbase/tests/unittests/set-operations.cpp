@@ -2,8 +2,14 @@
 #include <warn/ignore/all>
 #include <gtest/gtest.h>
 #include <warn/pop>
+#include <list>
 
-#include <inviwo/tensorvisbase/util/misc.h>
+#include <inviwo/opentensorvisbase/util/setoperations.h>
+
+#include <vector>
+#include <list>
+#include <algorithm>
+#include <numeric>
 
 namespace inviwo {
 TEST(TensorUtilTests, concatenateVectorSuccess) {
@@ -18,8 +24,8 @@ TEST(TensorUtilTests, concatenateVectorSuccess) {
     std::iota(vec2.begin(), vec2.end(), 3);
     std::iota(vec3.begin(), vec3.end(), 0);
 
-    EXPECT_EQ(vec3, tensorutil::concatenate(vec1, vec2));
-    EXPECT_EQ(vec4, tensorutil::concatenate(vec2, vec1));
+    EXPECT_EQ(vec3, util::set::concatenate(vec1, vec2));
+    EXPECT_EQ(vec4, util::set::concatenate(vec2, vec1));
 }
 
 TEST(TensorUtilTests, concatenateListSuccess) {
@@ -34,8 +40,8 @@ TEST(TensorUtilTests, concatenateListSuccess) {
     std::iota(list2.begin(), list2.end(), 3);
     std::iota(list3.begin(), list3.end(), 0);
 
-    EXPECT_EQ(list3, tensorutil::concatenate(list1, list2));
-    EXPECT_EQ(list4, tensorutil::concatenate(list2, list1));
+    EXPECT_EQ(list3, util::set::concatenate(list1, list2));
+    EXPECT_EQ(list4, util::set::concatenate(list2, list1));
 }
 
 TEST(TensorUtilTests, unionSuccess) {
@@ -47,20 +53,20 @@ TEST(TensorUtilTests, unionSuccess) {
     std::iota(vec1.begin(), vec1.end(), 0);
     std::iota(vec2.begin(), vec2.end(), 3);
 
-    EXPECT_EQ(vec3, tensorutil::union_set(vec1, vec2));
+    EXPECT_EQ(vec3, util::set::union_set(vec1, vec2));
 }
 
 TEST(TensorUtilTests, unionSuccessVectorized) {
     std::vector<std::vector<int>> vecs{{0, 1, 2, 3}, {2, 3, 4, 5}};
     std::vector<int> res{0, 1, 2, 3, 4, 5};
 
-    EXPECT_EQ(res, tensorutil::union_set(vecs));
+    EXPECT_EQ(res, util::set::union_set(vecs));
 }
 
 TEST(TensorUtilTests, intersectionSuccessVectorized) {
     std::vector<std::vector<int>> vecs{{0, 1, 2, 3}, {2, 3, 4}};
     const std::vector<int> res{2, 3};
 
-    EXPECT_EQ(res, tensorutil::intersection(vecs));
+    EXPECT_EQ(res, util::set::intersection(vecs));
 }
 }  // namespace inviwo

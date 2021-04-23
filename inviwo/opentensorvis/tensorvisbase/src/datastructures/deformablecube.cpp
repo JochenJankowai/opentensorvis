@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2016-2018 Inviwo Foundation
+ * Copyright (c) 2016-2020 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  *
  *********************************************************************************/
 
-#include <inviwo/tensorvisbase/datastructures/deformablecube.h>
+#include <inviwo/opentensorvisbase/datastructures/deformablecube.h>
 
 namespace inviwo {
 DeformableCube::DeformableCube(const vec4& color) {

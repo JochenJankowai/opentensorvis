@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2019 Inviwo Foundation
+ * Copyright (c) 2019-2020 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  *
  *********************************************************************************/
 
-#include <inviwo/tensorvisio/processors/tensorfield2dtovtk.h>
+#include <inviwo/opentensorvisio/processors/tensorfield2dtovtk.h>
 
 #include <warn/push>
 #include <warn/ignore/all>
@@ -36,19 +36,22 @@
 #include <vtkPoints.h>
 #include <vtkPointData.h>
 #include <vtkDoubleArray.h>
+#include <vtkAOSDataArrayTemplate.h>
 #include <warn/pop>
 
-#include <inviwo/tensorvisbase/util/misc.h>
+#include <inviwo/opentensorvisbase/util/misc.h>
+#include <inviwo/opentensorvisbase/opentensorvisbasemodule.h>
+#include <inviwo/vtk/vtkmodule.h>
 
 namespace inviwo {
 
 // The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
 const ProcessorInfo TensorField2DToVTK::processorInfo_{
-    "org.inviwo.TensorField2DToVTK",  // Class identifier
-    "Tensor Field 2D To VTK",         // Display name
-    "VTK",                            // Category
-    CodeState::Experimental,          // Code state
-    "VTK",                            // Tags
+    "org.inviwo.TensorField2DToVTK",             // Class identifier
+    "Tensor Field 2D To VTK",                    // Display name
+    "VTK",                                       // Category
+    CodeState::Experimental,                     // Code state
+    tag::OpenTensorVis | Tag::CPU | Tag("VTK"),  // Tags
 };
 const ProcessorInfo TensorField2DToVTK::getProcessorInfo() const { return processorInfo_; }
 
@@ -63,8 +66,8 @@ TensorField2DToVTK::TensorField2DToVTK()
 
 void TensorField2DToVTK::process() {
     const auto tensorField = tensorFieldInport_.getData();
-    const auto dimensions = ivec3{tensorField->getDimensions<int>(), 1};
-    const auto &tensors = tensorField->tensors();
+    const auto dimensions = ivec3{tensorField->getDimensionsAs<int>(), 1};
+    const auto &tensors = *tensorField->tensors();
 
     auto structuredGrid = vtkSmartPointer<vtkStructuredGrid>::New();
     auto points = vtkSmartPointer<vtkPoints>::New();
@@ -80,19 +83,59 @@ void TensorField2DToVTK::process() {
 
     auto pointData = structuredGrid->GetPointData();
 
-    auto tensorArray = vtkSmartPointer<vtkDoubleArray>::New();
-    tensorArray->SetNumberOfComponents(4);
-    tensorArray->SetNumberOfTuples(tensors.size());
+    auto tensor2DArray =
+        vtkSmartPointer<vtkAOSDataArrayTemplate<typename TensorField2D::value_type>>::New();
+    tensor2DArray->SetNumberOfComponents(4);
+    tensor2DArray->SetNumberOfTuples(tensors.size());
 
-    tensorArray->SetComponentName(0, "xx");
-    tensorArray->SetComponentName(1, "xy");
-    tensorArray->SetComponentName(2, "yx");
-    tensorArray->SetComponentName(3, "yy");
-    tensorArray->SetName("Tensors");
+    tensor2DArray->SetComponentName(0, "xx");
+    tensor2DArray->SetComponentName(1, "xy");
+    tensor2DArray->SetComponentName(2, "yx");
+    tensor2DArray->SetComponentName(3, "yy");
+    tensor2DArray->SetName("Tensors 2D");
 
-    std::memcpy(tensorArray->GetPointer(0), tensors.data(), sizeof(double) * 4 * tensors.size());
+    std::memcpy(tensor2DArray->GetPointer(0), tensors.data(),
+                sizeof(typename TensorField2D::matN) * tensors.size());
 
-    pointData->SetTensors(tensorArray);
+    pointData->AddArray(tensor2DArray);
+
+    if (auto eigenvectorColumn = tensorField->getMetaData<attributes::MajorEigenVector2D>()) {
+        auto typedColumn =
+            std::dynamic_pointer_cast<const TemplateColumn<typename TensorField2D::vecN>>(
+                *eigenvectorColumn);
+
+        const auto dataPointer =
+            typedColumn->getTypedBuffer()->getRAMRepresentation()->getDataContainer().data();
+
+        auto eigenvector2DArray =
+            vtkSmartPointer<vtkAOSDataArrayTemplate<typename TensorField2D::value_type>>::New();
+        eigenvector2DArray->SetNumberOfComponents(2);
+        eigenvector2DArray->SetNumberOfTuples(tensors.size());
+        eigenvector2DArray->SetComponentName(0, "x");
+        eigenvector2DArray->SetComponentName(1, "y");
+        eigenvector2DArray->SetName("Eigenvectors 2D");
+
+        std::memcpy(eigenvector2DArray->GetPointer(0), dataPointer,
+                    sizeof(typename TensorField2D::vecN) * tensors.size());
+
+        pointData->AddArray(eigenvector2DArray);
+
+        auto eigenvector3DArray =
+            vtkSmartPointer<vtkAOSDataArrayTemplate<typename TensorField2D::value_type>>::New();
+        eigenvector3DArray->SetNumberOfComponents(3);
+        eigenvector3DArray->SetNumberOfTuples(tensors.size());
+        eigenvector3DArray->SetComponentName(0, "x");
+        eigenvector3DArray->SetComponentName(1, "y");
+        eigenvector3DArray->SetComponentName(2, "z");
+        eigenvector3DArray->SetName("Eigenvectors 3D");
+
+        std::memset(eigenvector3DArray->GetPointer(0), 0, sizeof(typename TensorField2D::value_type) * tensors.size());
+
+        for (size_t i{0}; i < tensors.size(); i+=2) {
+            std::memcpy(eigenvector3DArray->GetPointer(i + i / 2), dataPointer + i,
+                        sizeof(typename TensorField2D::vecN) * 2);
+        }
+    }
 
     vtkDataSetOutport_.setData(std::make_shared<VTKDataSet>(structuredGrid));
 }

@@ -1,15 +1,19 @@
-#include <inviwo/tensorvisio/processors/flowguifilereader.h>
+#include <inviwo/opentensorvisio/processors/flowguifilereader.h>
 #include <inviwo/core/datastructures/volume/volumeram.h>
+#include <inviwo/opentensorvisbase/opentensorvisbasemodule.h>
+#include <fstream>
+
+#include <fstream>
 
 namespace inviwo {
 
 // The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
 const ProcessorInfo FlowGUIFileReader::processorInfo_{
     "org.inviwo.FlowGUIFileReader",  // Class identifier
-    "Wito File Reader",           // Display name
-    "Tensor",                     // Category
-    CodeState::Experimental,      // Code state
-    Tags::CPU,                    // Tags
+    "Wito File Reader",              // Display name
+    "Tensor",                        // Category
+    CodeState::Experimental,         // Code state
+    tag::OpenTensorVis | Tag::CPU,   // Tags
 };
 const ProcessorInfo FlowGUIFileReader::getProcessorInfo() const { return processorInfo_; }
 

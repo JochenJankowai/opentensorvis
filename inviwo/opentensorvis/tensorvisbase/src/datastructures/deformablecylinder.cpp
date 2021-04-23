@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2016-2018 Inviwo Foundation
+ * Copyright (c) 2016-2020 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  *
  *********************************************************************************/
 
-#include <inviwo/tensorvisbase/datastructures/deformablecylinder.h>
+#include <inviwo/opentensorvisbase/datastructures/deformablecylinder.h>
 
 namespace inviwo {
 DeformableCylinder::DeformableCylinder(const size_t& numTheta, const vec4& color) {
@@ -48,7 +48,7 @@ void DeformableCylinder::createCylinder(const size_t& numTheta, const vec4& colo
 
     const auto frac = static_cast<float>((2. * M_PI) / static_cast<float>(numTheta));
 
-    const auto top_center = vec3(0.5f)-vec3(0.5f);
+    const auto top_center = vec3(0.5f) - vec3(0.5f);
     const auto bot_center = vec3(0.5f, -0.5f, 0.5f) - vec3(0.5f);
     const auto top_start = vec3(0.5f, 0.5f, 1.0f) - vec3(0.5f);
     const auto bot_start = vec3(0.5f, -0.5f, 1.0f) - vec3(0.5f);
@@ -202,7 +202,6 @@ void DeformableCylinder::calculateNormals() {
         normals[face.z] += faceNormal;
     }
 
-    for (auto& normal : normals)
-        normal = -glm::normalize(normal);
+    for (auto& normal : normals) normal = -glm::normalize(normal);
 }
 }  // namespace inviwo

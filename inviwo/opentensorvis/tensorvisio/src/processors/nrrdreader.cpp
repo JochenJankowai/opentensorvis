@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2017-2018 Inviwo Foundation
+ * Copyright (c) 2017-2020 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,20 +27,21 @@
  *
  *********************************************************************************/
 
-#include <inviwo/tensorvisio/processors/nrrdreader.h>
+#include <inviwo/opentensorvisio/processors/nrrdreader.h>
 #include <inviwo/core/datastructures/volume/volume.h>
 #include <inviwo/core/datastructures/volume/volumeram.h>
 #include <inviwo/core/util/filesystem.h>
+#include <inviwo/opentensorvisbase/opentensorvisbasemodule.h>
 
 namespace inviwo {
 
 // The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
 const ProcessorInfo NRRDReader::processorInfo_{
-    "org.inviwo.NRRDReader",  // Class identifier
-    "NRRDReader",             // Display name
-    "Tensor Field IO",        // Category
-    CodeState::Experimental,  // Code state
-    Tags::None,               // Tags
+    "org.inviwo.NRRDReader",        // Class identifier
+    "NRRDReader",                   // Display name
+    "Tensor Field IO",              // Category
+    CodeState::Experimental,        // Code state
+    tag::OpenTensorVis | Tag::CPU,  // Tags
 };
 const ProcessorInfo NRRDReader::getProcessorInfo() const { return processorInfo_; }
 
@@ -138,7 +139,7 @@ void NRRDReader::process() {
 
     auto numberOfTensors = dimensions.x * dimensions.y * dimensions.z;
 
-    std::vector<dmat3> dataForTensorField;
+    std::vector<mat3> dataForTensorField;
 
     dataForTensorField.resize(numberOfTensors);
 
@@ -195,11 +196,11 @@ void NRRDReader::process() {
                     weight = 1.;
                 }
 
-                dvec3 col1(xx, xy, xz);
-                dvec3 col2(xy, yy, yz);
-                dvec3 col3(xz, yz, zz);
+                vec3 col1(xx, xy, xz);
+                vec3 col2(xy, yy, yz);
+                vec3 col3(xz, yz, zz);
 
-                dataForTensorField[index] = dmat3(col1, col2, col3) * weight;
+                dataForTensorField[index] = mat3(col1, col2, col3) * weight;
                 volRamData[index] = confidence;
             }
         }
@@ -211,7 +212,10 @@ void NRRDReader::process() {
     vol->dataMap_.valueRange = vec2(0, 1);
     volumeOutport_.setData(vol);
 
-    outport3D_.setData(std::make_shared<TensorField3D>(dimensions, dataForTensorField));
+    auto outField = std::make_shared<TensorField3D>(dimensions, dataForTensorField);
+    outField->setBasis(vol->getBasis());
+    outField->setOffset(vol->getOffset());
+    outport3D_.setData(outField);
 }
 
 }  // namespace inviwo

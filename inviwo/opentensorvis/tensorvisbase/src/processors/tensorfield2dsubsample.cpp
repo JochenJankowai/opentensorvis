@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2016-2018 Inviwo Foundation
+ * Copyright (c) 2016-2020 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,8 @@
  *
  *********************************************************************************/
 
-#include <inviwo/tensorvisbase/processors/tensorfield2dsubsample.h>
+#include <inviwo/opentensorvisbase/processors/tensorfield2dsubsample.h>
+#include <inviwo/opentensorvisbase/opentensorvisbasemodule.h>
 
 namespace inviwo {
 
@@ -37,7 +38,7 @@ const ProcessorInfo TensorField2DSubsample::processorInfo_{
     "Tensor Field 2D Subsample",          // Display name
     "Tensor visualization",               // Category
     CodeState::Experimental,              // Code state
-    Tags::GL,                             // Tags
+    tag::OpenTensorVis | Tag::CPU,        // Tags
 };
 
 const ProcessorInfo TensorField2DSubsample::getProcessorInfo() const { return processorInfo_; }
@@ -46,12 +47,11 @@ TensorField2DSubsample::TensorField2DSubsample()
     : Processor()
     , inport_("inport")
     , outport_("outport")
-    , resolutionMultiplier_("resolutionMultiplier", "Resolution multiplier", 1.0f, 0.1f, 10.0f,
-                            0.1f)
+    , resolutionMultiplier_("resolutionMultiplier", "Resolution multiplier", 1, 1, 10, 1)
     , interpolationMethod_(
           "interpolationMethod", "Interpolation method",
           {{"linear", "Linear", tensorutil::InterpolationMethod::Linear},
-          { "nearest", "Nearest neighbour", tensorutil::InterpolationMethod::Nearest},
+           {"nearest", "Nearest neighbour", tensorutil::InterpolationMethod::Nearest},
            {"barycentric", "Barycentric", tensorutil::InterpolationMethod::Barycentric}},
           0) {
     addPort(inport_);
@@ -65,10 +65,11 @@ TensorField2DSubsample::TensorField2DSubsample()
 void TensorField2DSubsample::initializeResources() {}
 
 void TensorField2DSubsample::process() {
-    outport_.setData(tensorutil::subsample2D(
-        inport_.getData(),
-        size2_t(glm::round(vec2(inport_.getData()->getDimensions()) * resolutionMultiplier_.get())),
-        interpolationMethod_.get()));
+    auto subsampled = tensorutil::subsample2D(
+        inport_.getData(), inport_.getData()->getDimensions() * resolutionMultiplier_.get(),
+        interpolationMethod_.get());
+
+    outport_.setData(subsampled);
 }
 
 }  // namespace inviwo

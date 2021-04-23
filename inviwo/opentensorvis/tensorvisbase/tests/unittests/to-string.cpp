@@ -3,7 +3,7 @@
 #include <gtest/gtest.h>
 #include <warn/pop>
 
-#include <inviwo/tensorvisbase/util/misc.h>
+#include <inviwo/opentensorvisbase/util/misc.h>
 
 namespace inviwo {
 TEST(TensorUtilTests, vectorToStringSuccess) {

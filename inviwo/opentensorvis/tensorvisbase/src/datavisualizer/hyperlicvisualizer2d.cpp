@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2018-2019 Inviwo Foundation
+ * Copyright (c) 2018-2020 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,13 +27,13 @@
  *
  *********************************************************************************/
 
-#include <inviwo/tensorvisbase/datavisualizer/hyperlicvisualizer2d.h>
+#include <inviwo/opentensorvisbase/datavisualizer/hyperlicvisualizer2d.h>
 
 #include <modules/opengl/canvasprocessorgl.h>
 #include <modules/base/processors/noiseprocessor.h>
 #include <inviwo/core/processors/processorutils.h>
-#include <inviwo/tensorvisbase/ports/tensorfieldport.h>
-#include <inviwo/tensorvisbase/processors/tensorfieldlic.h>
+#include <inviwo/opentensorvisbase/ports/tensorfieldport.h>
+#include <inviwo/opentensorvisbase/processors/tensorfield2dlic.h>
 
 #include <inviwo/core/io/datareaderfactory.h>
 
@@ -72,7 +72,7 @@ std::vector<Processor*> HyperLICVisualizer2D::addVisualizerNetwork(Outport* outp
                                                                    ProcessorNetwork* net) const {
 
     auto noiser = net->addProcessor(util::makeProcessor<NoiseProcessor>(GP{1, 3}));
-    auto hlicer = net->addProcessor(util::makeProcessor<TensorFieldLIC>(GP{0, 6}));
+    auto hlicer = net->addProcessor(util::makeProcessor<TensorField2DLIC>(GP{0, 6}));
     auto canvas = net->addProcessor(util::makeProcessor<CanvasProcessorGL>(GP{0, 9}));
 
     net->addConnection(noiser->getOutports()[0], hlicer->getInports()[1]);
