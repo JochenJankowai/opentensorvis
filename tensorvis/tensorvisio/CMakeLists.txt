@@ -21,6 +21,7 @@ set(HEADER_FILES
     include/modules/tensorvisio/processors/vtkdatasettotensorfield3d.h
     include/modules/tensorvisio/processors/vtkdatasetinformation.h
     include/modules/tensorvisio/processors/vtkreader.h
+<<<<<<< HEAD
 >>>>>>> 9f90ef3... Generic VTK reader: Basic version working
     include/modules/tensorvisio/processors/vtkrectilineargridreader.h
     include/modules/tensorvisio/processors/vtkstructuredgridreader.h
@@ -30,6 +31,11 @@ set(HEADER_FILES
     include/modules/tensorvisio/processors/vtkvolumereader.h
     include/modules/tensorvisio/processors/vtkxmlrectilineargridreader.h
     include/modules/tensorvisio/processors/witofilereader.h
+=======
+    include/modules/tensorvisio/processors/vtkunstructuredgridtorectilineargrid.h
+    include/modules/tensorvisio/processors/vtkwriter.h
+    include/modules/tensorvisio/processors/flowguifilereader.h
+>>>>>>> 66b7c02... Basic VTK pipeline in place
     include/modules/tensorvisio/tensorvisiomodule.h
     include/modules/tensorvisio/tensorvisiomoduledefine.h
     include/modules/tensorvisio/util/vtkoutputlogger.h
@@ -52,6 +58,7 @@ set(SOURCE_FILES
     src/processors/vtkdatasettotensorfield3d.cpp
     src/processors/vtkdatasetinformation.cpp
     src/processors/vtkreader.cpp
+<<<<<<< HEAD
 >>>>>>> 9f90ef3... Generic VTK reader: Basic version working
     src/processors/vtkrectilineargridreader.cpp
     src/processors/vtkstructuredgridreader.cpp
@@ -61,6 +68,11 @@ set(SOURCE_FILES
     src/processors/vtkvolumereader.cpp
     src/processors/vtkxmlrectilineargridreader.cpp
     src/processors/witofilereader.cpp
+=======
+    src/processors/vtkunstructuredgridtorectilineargrid.cpp
+    src/processors/vtkwriter.cpp
+    src/processors/flowguifilereader.cpp
+>>>>>>> 66b7c02... Basic VTK pipeline in place
     src/tensorvisiomodule.cpp
     src/util/vtkoutputlogger.cpp
 )
