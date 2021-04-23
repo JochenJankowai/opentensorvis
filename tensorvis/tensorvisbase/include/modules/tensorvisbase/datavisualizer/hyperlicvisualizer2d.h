@@ -35,6 +35,7 @@
 
 namespace inviwo {
 
+<<<<<<< HEAD
     class IVW_MODULE_TENSORVISBASE_API HyperLICVisualizer2D : public DataVisualizer {
     public:
         HyperLICVisualizer2D (InviwoApplication* app);
@@ -57,5 +58,29 @@ namespace inviwo {
     private:
         InviwoApplication* app_;
     };
+=======
+class IVW_MODULE_TENSORVISBASE_API HyperLICVisualizer2D : public DataVisualizer {
+public:
+    HyperLICVisualizer2D(InviwoApplication* app);
+    virtual ~HyperLICVisualizer2D() = default;
+    virtual std::string getName() const override;
+    virtual Document getDescription() const override;
+    virtual std::vector<FileExtension> getSupportedFileExtensions() const override;
+    virtual bool isOutportSupported(const Outport* port) const override;
+
+    virtual bool hasSourceProcessor() const override;
+    virtual bool hasVisualizerNetwork() const override;
+
+    virtual std::pair<Processor*, Outport*> addSourceProcessor(
+        const std::string& filename, ProcessorNetwork* network) const override;
+    virtual std::vector<Processor*> addVisualizerNetwork(Outport* outport,
+                                                         ProcessorNetwork* network) const override;
+    virtual std::vector<Processor*> addSourceAndVisualizerNetwork(
+        const std::string& filename, ProcessorNetwork* network) const override;
+
+private:
+    [[maybe_unused]] InviwoApplication* app_;
+};
+>>>>>>> e220d31... TensorVis: warning fixes
 
 }  // namespace inviwo
