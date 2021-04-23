@@ -8,12 +8,20 @@ include(${VTK_USE_FILE})
 #--------------------------------------------------------------------
 # Add header files
 set(HEADER_FILES
+    include/modules/tensorvisio/datastructures/vtkdataset.h
+    include/modules/tensorvisio/ports/vtkdatasetport.h
     include/modules/tensorvisio/processors/amiratensorreader.h
     include/modules/tensorvisio/processors/nrrdreader.h
     include/modules/tensorvisio/processors/tensorfield2dexport.h
     include/modules/tensorvisio/processors/tensorfield2dimport.h
     include/modules/tensorvisio/processors/tensorfield3dexport.h
     include/modules/tensorvisio/processors/tensorfield3dimport.h
+<<<<<<< HEAD
+=======
+    include/modules/tensorvisio/processors/vtkdatasettotensorfield3d.h
+    include/modules/tensorvisio/processors/vtkdatasetinformation.h
+    include/modules/tensorvisio/processors/vtkreader.h
+>>>>>>> 9f90ef3... Generic VTK reader: Basic version working
     include/modules/tensorvisio/processors/vtkrectilineargridreader.h
     include/modules/tensorvisio/processors/vtkstructuredgridreader.h
     include/modules/tensorvisio/processors/vtkstructuredpointsreader.h
@@ -31,12 +39,20 @@ ivw_group("Header Files" ${HEADER_FILES})
 #--------------------------------------------------------------------
 # Add source files
 set(SOURCE_FILES
+    src/datastructures/vtkdataset.cpp
+    src/ports/vtkdatasetport.cpp
     src/processors/amiratensorreader.cpp
     src/processors/nrrdreader.cpp
     src/processors/tensorfield2dexport.cpp
     src/processors/tensorfield2dimport.cpp
     src/processors/tensorfield3dexport.cpp
     src/processors/tensorfield3dimport.cpp
+<<<<<<< HEAD
+=======
+    src/processors/vtkdatasettotensorfield3d.cpp
+    src/processors/vtkdatasetinformation.cpp
+    src/processors/vtkreader.cpp
+>>>>>>> 9f90ef3... Generic VTK reader: Basic version working
     src/processors/vtkrectilineargridreader.cpp
     src/processors/vtkstructuredgridreader.cpp
     src/processors/vtkstructuredpointsreader.cpp
