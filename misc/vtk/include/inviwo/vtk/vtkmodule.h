@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2017-2018 Inviwo Foundation
+ * Copyright (c) 2014-2019 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,29 +24,28 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
+ * 
  *********************************************************************************/
 
-#ifndef IVW_TENSORFIELDIOMODULE_H
-#define IVW_TENSORFIELDIOMODULE_H
+#ifndef IVW_VTKMODULE_H
+#define IVW_VTKMODULE_H
 
-#include <modules/tensorvisio/tensorvisiomoduledefine.h>
+#include <inviwo/vtk/vtkmoduledefine.h>
 #include <inviwo/core/common/inviwomodule.h>
+#include <inviwo/vtk/util/vtkoutputlogger.h>
+
 
 namespace inviwo {
 
-class VtkOutputLogger;
-
-class IVW_MODULE_TENSORVISIO_API TensorVisIOModule : public InviwoModule {
+class IVW_MODULE_VTK_API VTKModule : public InviwoModule {
 public:
-    TensorVisIOModule(InviwoApplication* app);
-    TensorVisIOModule(const TensorVisIOModule&) = delete;
-    TensorVisIOModule(TensorVisIOModule&&) = delete;
-    TensorVisIOModule& operator=(const TensorVisIOModule&) = delete;
-    TensorVisIOModule& operator=(TensorVisIOModule&&) = delete;
-    virtual ~TensorVisIOModule();
+    VTKModule(InviwoApplication* app);
+    virtual ~VTKModule() = default;
+
+    private:
+    std::unique_ptr<VtkOutputLogger> vtkoutput_;
 };
 
-}  // namespace inviwo
+} // namespace
 
-#endif  // IVW_TENSORFIELDIOMODULE_H
+#endif // IVW_VTKMODULE_H

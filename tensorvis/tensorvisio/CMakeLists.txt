@@ -38,7 +38,6 @@ set(HEADER_FILES
 >>>>>>> 66b7c02... Basic VTK pipeline in place
     include/modules/tensorvisio/tensorvisiomodule.h
     include/modules/tensorvisio/tensorvisiomoduledefine.h
-    include/modules/tensorvisio/util/vtkoutputlogger.h
 )
 ivw_group("Header Files" ${HEADER_FILES})
 
@@ -74,7 +73,6 @@ set(SOURCE_FILES
     src/processors/flowguifilereader.cpp
 >>>>>>> 66b7c02... Basic VTK pipeline in place
     src/tensorvisiomodule.cpp
-    src/util/vtkoutputlogger.cpp
 )
 ivw_group("Source Files" ${SOURCE_FILES})
 

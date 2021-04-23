@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2019 Inviwo Foundation
+ * Copyright (c) 2014-2019 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,52 +27,20 @@
  *
  *********************************************************************************/
 
-#include <modules/tensorvisio/util/vtkoutputlogger.h>
-
-#include <inviwo/core/util/logcentral.h>
+#include <inviwo/vtk/vtkmodule.h>
 
 #include <warn/push>
 #include <warn/ignore/all>
-#include <vtkOutputWindow.h>
-#include <vtkObjectFactory.h>
+#include <vtkVersion.h>
 #include <warn/pop>
 
 namespace inviwo {
 
-class InviwoVtkOutputWindow : public vtkOutputWindow {
-public:
-    InviwoVtkOutputWindow() = default;
-    virtual ~InviwoVtkOutputWindow() = default;
+VTKModule::VTKModule(InviwoApplication* app)
+    : InviwoModule(app, "VTK"), vtkoutput_{std::make_unique<VtkOutputLogger>()} {
 
-    static InviwoVtkOutputWindow* New();
-
-    virtual void DisplayText(const char*) override;
-
-    virtual void DisplayErrorText(const char*) override;
-
-    virtual void DisplayWarningText(const char*) override;
-
-    virtual void DisplayGenericWarningText(const char*) override;
-
-    virtual void DisplayDebugText(const char*) override;
-};
-
-vtkStandardNewMacro(InviwoVtkOutputWindow);
-
-void InviwoVtkOutputWindow::DisplayText(const char* msg) { LogInfoCustom("VTK", msg); }
-
-void InviwoVtkOutputWindow::DisplayErrorText(const char* msg) { LogErrorCustom("VTK (error)", msg); }
-
-void InviwoVtkOutputWindow::DisplayWarningText(const char* msg) { LogWarnCustom("VTK (warn)", msg); }
-
-void InviwoVtkOutputWindow::DisplayGenericWarningText(const char* msg) {
-    LogWarnCustom("VTK (generic)", msg);
-}
-
-void InviwoVtkOutputWindow::DisplayDebugText(const char* msg) { LogInfoCustom("VTK (debug)", msg); }
-
-VtkOutputLogger::VtkOutputLogger() : outputWindow_{vtkSmartPointer<InviwoVtkOutputWindow>::New()} {
-    vtkOutputWindow::SetInstance(outputWindow_);
+    LogInfo("VTK Version: " << vtkVersion::GetVTKVersion());
+    LogInfo("VTK Version: " << vtkVersion::GetVTKSourceVersion());
 }
 
 }  // namespace inviwo

@@ -52,16 +52,19 @@
 #include <modules/tensorvisio/processors/flowguifilereader.h>
 #include <modules/tensorvisio/processors/vtkwriter.h>
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> 66b7c02... Basic VTK pipeline in place
 =======
 #include <modules/tensorvisio/util/vtkoutputlogger.h>
 >>>>>>> 57758cd... TensorVisIO: Added missing include
+=======
+>>>>>>> fa193bd... TensorVis/VTK: Moved VTK Output Logger to the VTK module
 
 namespace inviwo {
 
 <<<<<<< HEAD
 TensorVisIOModule::TensorVisIOModule(InviwoApplication* app)
-    : InviwoModule{app, "TensorVisIO"}, vtkoutput_{std::make_unique<VtkOutputLogger>()} {
+    : InviwoModule{app, "TensorVisIO"}{
 
 =======
 TensorVisIOModule::TensorVisIOModule(InviwoApplication* app) : InviwoModule(app, "TensorVisIO") {
