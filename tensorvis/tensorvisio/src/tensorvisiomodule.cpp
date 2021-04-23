@@ -51,7 +51,11 @@
 =======
 #include <modules/tensorvisio/processors/flowguifilereader.h>
 #include <modules/tensorvisio/processors/vtkwriter.h>
+<<<<<<< HEAD
 >>>>>>> 66b7c02... Basic VTK pipeline in place
+=======
+#include <modules/tensorvisio/util/vtkoutputlogger.h>
+>>>>>>> 57758cd... TensorVisIO: Added missing include
 
 namespace inviwo {
 
