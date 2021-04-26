@@ -10,11 +10,8 @@ set(HEADER_FILES
     include/inviwo/opentensorvisio/processors/nrrdreader.h
     include/inviwo/opentensorvisio/processors/tensorfield2dexport.h
     include/inviwo/opentensorvisio/processors/tensorfield2dimport.h
-    include/inviwo/opentensorvisio/processors/tensorfield2dtovtk.h
     include/inviwo/opentensorvisio/processors/tensorfield3dexport.h
     include/inviwo/opentensorvisio/processors/tensorfield3dimport.h
-    include/inviwo/opentensorvisio/processors/vtkdatasettotensorfield3d.h
-    include/inviwo/opentensorvisio/processors/vtktotensorfield2d.h
     include/inviwo/opentensorvisio/opentensorvisiomodule.h
     include/inviwo/opentensorvisio/opentensorvisiomoduledefine.h
     include/inviwo/opentensorvisio/util/util.h
@@ -29,11 +26,8 @@ set(SOURCE_FILES
     src/processors/nrrdreader.cpp
     src/processors/tensorfield2dexport.cpp
     src/processors/tensorfield2dimport.cpp
-    src/processors/tensorfield2dtovtk.cpp
     src/processors/tensorfield3dexport.cpp
     src/processors/tensorfield3dimport.cpp
-    src/processors/vtkdatasettotensorfield3d.cpp
-    src/processors/vtktotensorfield2d.cpp
     src/opentensorvisiomodule.cpp
 )
 ivw_group("Source Files" ${SOURCE_FILES})

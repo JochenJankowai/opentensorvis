@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2017-2020 Inviwo Foundation
+ * Copyright (c) 2021 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,31 +26,17 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *********************************************************************************/
+#pragma once
 
-#include <inviwo/opentensorvisio/opentensorvisiomodule.h>
-
-#include <inviwo/opentensorvisio/processors/amiratensorreader.h>
-#include <inviwo/opentensorvisio/processors/nrrdreader.h>
-#include <inviwo/opentensorvisio/processors/tensorfield2dexport.h>
-#include <inviwo/opentensorvisio/processors/tensorfield2dimport.h>
-#include <inviwo/opentensorvisio/processors/tensorfield3dexport.h>
-#include <inviwo/opentensorvisio/processors/tensorfield3dimport.h>
-#include <inviwo/opentensorvisio/processors/flowguifilereader.h>
+#include <inviwo/opentensorvisvtk/opentensorvisvtkmoduledefine.h>
+#include <inviwo/core/common/inviwomodule.h>
 
 namespace inviwo {
 
-OpenTensorVisIOModule::OpenTensorVisIOModule(InviwoApplication* app)
-    : InviwoModule{app, "OpenTensorVisIO"} {
-
-    registerProcessor<AmiraTensorReader>();
-    registerProcessor<NRRDReader>();
-    registerProcessor<TensorField2DExport>();
-    registerProcessor<TensorField2DImport>();
-    registerProcessor<TensorField3DExport>();
-    registerProcessor<TensorField3DImport>();
-    registerProcessor<FlowGUIFileReader>();
-}
-
-OpenTensorVisIOModule::~OpenTensorVisIOModule() = default;
+class IVW_MODULE_OPENTENSORVISVTK_API OpenTensorVisVTKModule : public InviwoModule {
+public:
+    OpenTensorVisVTKModule(InviwoApplication* app);
+    virtual ~OpenTensorVisVTKModule() = default;
+};
 
 }  // namespace inviwo

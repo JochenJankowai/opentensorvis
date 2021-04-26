@@ -9,9 +9,6 @@ set(HEADER_FILES
     include/inviwo/opentensorvisbase/algorithm/tensorfieldslicing.h
     include/inviwo/opentensorvisbase/datastructures/attributes.h
     include/inviwo/opentensorvisbase/datastructures/attributes.inl
-    include/inviwo/opentensorvisbase/datastructures/deformablecube.h
-    include/inviwo/opentensorvisbase/datastructures/deformablecylinder.h
-    include/inviwo/opentensorvisbase/datastructures/deformablesphere.h
     include/inviwo/opentensorvisbase/datastructures/hyperstreamlinetracer.h
     include/inviwo/opentensorvisbase/datastructures/tensorfield.h
     include/inviwo/opentensorvisbase/datastructures/tensorfield2d.h
@@ -39,11 +36,8 @@ set(HEADER_FILES
     include/inviwo/opentensorvisbase/processors/tensorfield2dlic.h
     include/inviwo/opentensorvisbase/processors/tensorfield3dslice.h
     include/inviwo/opentensorvisbase/processors/tensorfield2dasrgba.h
-    include/inviwo/opentensorvisbase/processors/tensorglyphprocessor.h
-    include/inviwo/opentensorvisbase/processors/tensorglyphrenderer.h
     include/inviwo/opentensorvisbase/processors/volumeactualdataandvaluerange.h
     include/inviwo/opentensorvisbase/properties/eigenvalueproperty.h
-    include/inviwo/opentensorvisbase/properties/tensorglyphproperty.h
     include/inviwo/opentensorvisbase/opentensorvisbasemodule.h
     include/inviwo/opentensorvisbase/opentensorvisbasemoduledefine.h
     include/inviwo/opentensorvisbase/util/attributeutil.h
@@ -61,9 +55,6 @@ ivw_group("Header Files" ${HEADER_FILES})
 set(SOURCE_FILES
     src/algorithm/tensorfieldsampling.cpp
     src/algorithm/tensorfieldslicing.cpp
-    src/datastructures/deformablecube.cpp
-    src/datastructures/deformablecylinder.cpp
-    src/datastructures/deformablesphere.cpp
     src/datastructures/hyperstreamlinetracer.cpp
     src/datastructures/tensorfield2d.cpp
     src/datastructures/tensorfield3d.cpp
@@ -89,11 +80,8 @@ set(SOURCE_FILES
     src/processors/tensorfield2dlic.cpp
     src/processors/tensorfield3dslice.cpp
     src/processors/tensorfield2dasrgba.cpp
-    src/processors/tensorglyphprocessor.cpp
-    src/processors/tensorglyphrenderer.cpp
     src/processors/volumeactualdataandvaluerange.cpp
     src/properties/eigenvalueproperty.cpp
-    src/properties/tensorglyphproperty.cpp
     src/opentensorvisbasemodule.cpp
     src/util/tensorfieldutil.cpp
     src/util/tensorutil.cpp
@@ -110,7 +98,6 @@ set(SHADER_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/glsl/quadrender.frag
     ${CMAKE_CURRENT_SOURCE_DIR}/glsl/quadrender.vert
     ${CMAKE_CURRENT_SOURCE_DIR}/glsl/tensorfieldtorgba.frag
-    ${CMAKE_CURRENT_SOURCE_DIR}/glsl/tensorglyphpicking.frag
     ${CMAKE_CURRENT_SOURCE_DIR}/glsl/tensorlic2d.frag
     ${CMAKE_CURRENT_SOURCE_DIR}/glsl/tensorutil.glsl
 )

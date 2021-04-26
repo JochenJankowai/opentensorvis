@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2016-2020 Inviwo Foundation
+ * Copyright (c) 2021 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,54 +27,21 @@
  *
  *********************************************************************************/
 
-#pragma once
-
-#include <inviwo/core/common/inviwo.h>
-#include <inviwo/core/ports/imageport.h>
-#include <inviwo/core/processors/processor.h>
-#include <inviwo/opentensorvisbase/opentensorvisbasemoduledefine.h>
-#include <inviwo/core/ports/dataoutport.h>
-#include <inviwo/core/properties/compositeproperty.h>
-#include <inviwo/opentensorvisbase/ports/tensorfieldport.h>
-#include <inviwo/opentensorvisbase/properties/tensorglyphproperty.h>
+#include <inviwo/opentensorvisglyphs/opentensorvisglyphsmodule.h>
+#include <inviwo/opentensorvisglyphs/processors/tensorglyphprocessor.h>
+#include <inviwo/opentensorvisglyphs/processors/tensorglyphrenderer.h>
+#include <inviwo/opentensorvisglyphs/properties/tensorglyphproperty.h>
 
 namespace inviwo {
 
-/** \docpage{org.inviwo.TensorGlyphProcessor, Tensor Glyph Processor}
- * ![](org.inviwo.<name>.png?classIdentifier=org.inviwo.TensorGlyphProcessor)
- * Explanation of how to use the processor.
- *
- * ### Inports
- *   * __<Inport1>__ <description>.
- *
- * ### Outports
- *   * __<Outport1>__ <description>.
- *
- * ### Properties
- *   * __<Prop1>__ <description>.
- *   * __<Prop2>__ <description>
- */
+OpenTensorVisGlyphsModule::OpenTensorVisGlyphsModule(InviwoApplication* app) : InviwoModule(app, "OpenTensorVisGlyphs") {
+    // Add a directory to the search path of the Shadermanager
+    // ShaderManager::getPtr()->addShaderSearchPath(getPath(ModulePath::GLSL));
 
-/**
- * \class TensorGlyphProcessor
- * \brief VERY_BRIEFLY_DESCRIBE_THE_CLASS
- * DESCRIBE_THE_CLASS_FROM_A_DEVELOPER_PERSPECTIVE
- */
-class IVW_MODULE_OPENTENSORVISBASE_API TensorGlyphProcessor : public Processor {
-public:
-    TensorGlyphProcessor();
-    virtual ~TensorGlyphProcessor() = default;
+    registerProcessor<TensorGlyphProcessor>();
+    registerProcessor<TensorGlyphRenderer>();
 
-    virtual void process() override;
-
-    virtual const ProcessorInfo getProcessorInfo() const override;
-    static const ProcessorInfo processorInfo_;
-
-private:
-    TensorField3DInport inport_;
-    DataOutport<std::vector<std::shared_ptr<Mesh>>> outport_;
-
-    TensorGlyphProperty glyphParameters_;
-};
+    registerProperty<TensorGlyphProperty>();
+}
 
 }  // namespace inviwo

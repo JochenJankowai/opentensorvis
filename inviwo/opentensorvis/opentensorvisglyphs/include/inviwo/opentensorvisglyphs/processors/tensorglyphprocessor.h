@@ -30,34 +30,51 @@
 #pragma once
 
 #include <inviwo/core/common/inviwo.h>
-#include <inviwo/opentensorvisbase/opentensorvisbasemoduledefine.h>
-#include <inviwo/core/datastructures/geometry/basicmesh.h>
-#include <functional>
+#include <inviwo/core/ports/imageport.h>
+#include <inviwo/core/processors/processor.h>
+#include <inviwo/opentensorvisglyphs/opentensorvisglyphsmoduledefine.h>
+#include <inviwo/core/ports/dataoutport.h>
+#include <inviwo/core/properties/compositeproperty.h>
+#include <inviwo/opentensorvisbase/ports/tensorfieldport.h>
+#include <inviwo/opentensorvisglyphs/properties/tensorglyphproperty.h>
 
 namespace inviwo {
-/**
- * \class DeformableCube
- * \brief Data structure for a cube whose vertices can be manipulated by a supplied lambda
- * function
- */
-class IVW_MODULE_OPENTENSORVISBASE_API DeformableCube {
-public:
-    // DeformableCube() = delete;
-    DeformableCube(const vec4& color = vec4(1.f));
-    virtual ~DeformableCube() = default;
 
-    void deform(const std::function<void(vec3& vertex)>& lambda, const bool& normalize = true);
-    void deform(const std::function<void(vec3& vertex, vec4& color)>& lambda,
-                const bool& normalize = true);
-    void transform(const vec3& pos, const vec3& scale);
-    std::shared_ptr<BasicMesh> getGeometry();
+/** \docpage{org.inviwo.TensorGlyphProcessor, Tensor Glyph Processor}
+ * ![](org.inviwo.<name>.png?classIdentifier=org.inviwo.TensorGlyphProcessor)
+ * Explanation of how to use the processor.
+ *
+ * ### Inports
+ *   * __<Inport1>__ <description>.
+ *
+ * ### Outports
+ *   * __<Outport1>__ <description>.
+ *
+ * ### Properties
+ *   * __<Prop1>__ <description>.
+ *   * __<Prop2>__ <description>
+ */
+
+/**
+ * \class TensorGlyphProcessor
+ * \brief VERY_BRIEFLY_DESCRIBE_THE_CLASS
+ * DESCRIBE_THE_CLASS_FROM_A_DEVELOPER_PERSPECTIVE
+ */
+class IVW_MODULE_OPENTENSORVISGLYPHS_API TensorGlyphProcessor : public Processor {
+public:
+    TensorGlyphProcessor();
+    virtual ~TensorGlyphProcessor() = default;
+
+    virtual void process() override;
+
+    virtual const ProcessorInfo getProcessorInfo() const override;
+    static const ProcessorInfo processorInfo_;
 
 private:
-    std::vector<size3_t> faces_;
-    std::shared_ptr<BasicMesh> mesh_;
+    TensorField3DInport inport_;
+    DataOutport<std::vector<std::shared_ptr<Mesh>>> outport_;
 
-    void createCube(const vec4& color);
-    void calculateNormals();
+    TensorGlyphProperty glyphParameters_;
 };
 
 }  // namespace inviwo

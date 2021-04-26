@@ -27,7 +27,7 @@
  *
  *********************************************************************************/
 
-#include <inviwo/opentensorvisbase/datastructures/deformablecylinder.h>
+#include <inviwo/opentensorvisglyphs/datastructures/deformablecylinder.h>
 
 namespace inviwo {
 DeformableCylinder::DeformableCylinder(const size_t& numTheta, const vec4& color) {

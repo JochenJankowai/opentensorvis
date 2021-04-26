@@ -30,7 +30,6 @@
 #pragma once
 
 #include <inviwo/opentensorvisio/opentensorvisiomoduledefine.h>
-#include <inviwo/core/common/inviwo.h>
 #include <inviwo/core/processors/processor.h>
 #include <inviwo/vtk/ports/vtkdatasetport.h>
 #include <inviwo/opentensorvisbase/ports/tensorfieldport.h>

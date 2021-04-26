@@ -27,7 +27,7 @@
  *
  *********************************************************************************/
 
-#include <inviwo/opentensorvisbase/datastructures/deformablesphere.h>
+#include <inviwo/opentensorvisglyphs/datastructures/deformablesphere.h>
 
 namespace inviwo {
 DeformableSphere::DeformableSphere(const size_t& numTheta, const size_t& numPhi,

@@ -27,7 +27,7 @@
  *
  *********************************************************************************/
 
-#include <inviwo/opentensorvisbase/processors/tensorglyphprocessor.h>
+#include <inviwo/opentensorvisglyphs/processors/tensorglyphprocessor.h>
 #include <inviwo/opentensorvisbase/util/tensorutil.h>
 #include <inviwo/opentensorvisbase/opentensorvisbasemodule.h>
 

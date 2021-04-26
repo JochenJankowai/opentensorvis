@@ -29,8 +29,7 @@
 
 #pragma once
 
-#include <inviwo/core/common/inviwo.h>
-#include <inviwo/opentensorvisbase/opentensorvisbasemoduledefine.h>
+#include <inviwo/opentensorvisglyphs/opentensorvisglyphsmoduledefine.h>
 #include <inviwo/opentensorvisbase/datastructures/tensorfield3d.h>
 #include <inviwo/core/properties/compositeproperty.h>
 #include <inviwo/core/properties/optionproperty.h>
@@ -43,7 +42,7 @@ namespace inviwo {
  * \brief VERY_BRIEFLY_DESCRIBE_THE_CLASS
  * DESCRIBE_THE_CLASS
  */
-class IVW_MODULE_OPENTENSORVISBASE_API TensorGlyphProperty : public CompositeProperty {
+class IVW_MODULE_OPENTENSORVISGLYPHS_API TensorGlyphProperty : public CompositeProperty {
 public:
     virtual std::string getClassIdentifier() const override;
     static const std::string classIdentifier;

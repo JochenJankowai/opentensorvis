@@ -27,10 +27,10 @@
  *
  *********************************************************************************/
 
-#include <inviwo/opentensorvisbase/properties/tensorglyphproperty.h>
-#include <inviwo/opentensorvisbase/datastructures/deformablesphere.h>
-#include <inviwo/opentensorvisbase/datastructures/deformablecube.h>
-#include <inviwo/opentensorvisbase/datastructures/deformablecylinder.h>
+#include <inviwo/opentensorvisglyphs/properties/tensorglyphproperty.h>
+#include <inviwo/opentensorvisglyphs/datastructures/deformablesphere.h>
+#include <inviwo/opentensorvisglyphs/datastructures/deformablecube.h>
+#include <inviwo/opentensorvisglyphs/datastructures/deformablecylinder.h>
 #include <inviwo/opentensorvisbase/util/tensorfieldutil.h>
 
 namespace inviwo {

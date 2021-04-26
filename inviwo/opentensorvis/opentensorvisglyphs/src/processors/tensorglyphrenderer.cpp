@@ -31,7 +31,7 @@
 #include <inviwo/core/interaction/events/mouseevent.h>
 #include <inviwo/core/interaction/events/pickingevent.h>
 #include <inviwo/core/rendering/meshdrawerfactory.h>
-#include <inviwo/opentensorvisbase/processors/tensorglyphrenderer.h>
+#include <inviwo/opentensorvisglyphs/processors/tensorglyphrenderer.h>
 #include <modules/opengl/openglutils.h>
 
 namespace inviwo {

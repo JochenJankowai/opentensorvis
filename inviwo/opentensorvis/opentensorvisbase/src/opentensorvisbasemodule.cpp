@@ -54,12 +54,9 @@
 #include <inviwo/opentensorvisbase/processors/tensorfield3dslice.h>
 #include <inviwo/opentensorvisbase/processors/tensorfield2dasrgba.h>
 #include <inviwo/opentensorvisbase/processors/tensorfield3dtovolume.h>
-#include <inviwo/opentensorvisbase/processors/tensorglyphprocessor.h>
-#include <inviwo/opentensorvisbase/processors/tensorglyphrenderer.h>
 #include <inviwo/opentensorvisbase/processors/tensorfield3dinformation.h>
 #include <inviwo/opentensorvisbase/processors/volumeactualdataandvaluerange.h>
 #include <inviwo/opentensorvisbase/properties/eigenvalueproperty.h>
-#include <inviwo/opentensorvisbase/properties/tensorglyphproperty.h>
 
 namespace inviwo {
 
@@ -90,13 +87,10 @@ OpenTensorVisBaseModule::OpenTensorVisBaseModule(InviwoApplication* app)
     registerProcessor<TensorField3DSlice>();
     registerProcessor<TensorField2DAsRGBA>();
     registerProcessor<TensorField3DToVolume>();
-    registerProcessor<TensorGlyphProcessor>();
-    registerProcessor<TensorGlyphRenderer>();
     registerProcessor<TensorField3DInformation>();
     registerProcessor<VolumeActualDataAndValueRange>();
 
     registerProperty<EigenValueProperty>();
-    registerProperty<TensorGlyphProperty>();
 
     registerDataVisualizer(std::make_unique<HyperLICVisualizer2D>(app));
     registerDataVisualizer(std::make_unique<HyperLICVisualizer3D>(app));

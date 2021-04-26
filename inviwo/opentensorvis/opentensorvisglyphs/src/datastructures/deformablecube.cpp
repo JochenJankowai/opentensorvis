@@ -27,7 +27,7 @@
  *
  *********************************************************************************/
 
-#include <inviwo/opentensorvisbase/datastructures/deformablecube.h>
+#include <inviwo/opentensorvisglyphs/datastructures/deformablecube.h>
 
 namespace inviwo {
 DeformableCube::DeformableCube(const vec4& color) {

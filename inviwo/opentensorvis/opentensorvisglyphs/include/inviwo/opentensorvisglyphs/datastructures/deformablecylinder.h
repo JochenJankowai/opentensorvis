@@ -30,7 +30,7 @@
 #pragma once
 
 #include <inviwo/core/common/inviwo.h>
-#include <inviwo/opentensorvisbase/opentensorvisbasemoduledefine.h>
+#include <inviwo/opentensorvisglyphs/opentensorvisglyphsmoduledefine.h>
 #include <inviwo/core/datastructures/geometry/basicmesh.h>
 #include <functional>
 
@@ -40,7 +40,7 @@ namespace inviwo {
  * \brief Data structure for a cylinder whose vertices can be manipulated by a supplied lambda
  * function
  */
-class IVW_MODULE_OPENTENSORVISBASE_API DeformableCylinder {
+class IVW_MODULE_OPENTENSORVISGLYPHS_API DeformableCylinder {
 public:
     // DeformableCube() = delete;
     DeformableCylinder(const size_t& numTheta, const vec4& color = vec4(1.f));

@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2017-2020 Inviwo Foundation
+ * Copyright (c) 2021 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,30 +27,40 @@
  *
  *********************************************************************************/
 
-#include <inviwo/opentensorvisio/opentensorvisiomodule.h>
+#ifdef _MSC_VER
+#pragma comment(linker, "/SUBSYSTEM:CONSOLE")
+#ifdef IVW_ENABLE_MSVC_MEM_LEAK_TEST
+#include <vld.h>
+#endif
+#endif
 
-#include <inviwo/opentensorvisio/processors/amiratensorreader.h>
-#include <inviwo/opentensorvisio/processors/nrrdreader.h>
-#include <inviwo/opentensorvisio/processors/tensorfield2dexport.h>
-#include <inviwo/opentensorvisio/processors/tensorfield2dimport.h>
-#include <inviwo/opentensorvisio/processors/tensorfield3dexport.h>
-#include <inviwo/opentensorvisio/processors/tensorfield3dimport.h>
-#include <inviwo/opentensorvisio/processors/flowguifilereader.h>
+#include <inviwo/core/util/logcentral.h>
+#include <inviwo/core/util/consolelogger.h>
+#include <inviwo/testutil/configurablegtesteventlistener.h>
 
-namespace inviwo {
+#include <warn/push>
+#include <warn/ignore/all>
+#include <gtest/gtest.h>
+#include <warn/pop>
 
-OpenTensorVisIOModule::OpenTensorVisIOModule(InviwoApplication* app)
-    : InviwoModule{app, "OpenTensorVisIO"} {
+int main(int argc, char** argv) {
+    using namespace inviwo;
+    LogCentral::init();
+    auto logger = std::make_shared<ConsoleLogger>();
+    LogCentral::getPtr()->setVerbosity(LogVerbosity::Error);
+    LogCentral::getPtr()->registerLogger(logger);
 
-    registerProcessor<AmiraTensorReader>();
-    registerProcessor<NRRDReader>();
-    registerProcessor<TensorField2DExport>();
-    registerProcessor<TensorField2DImport>();
-    registerProcessor<TensorField3DExport>();
-    registerProcessor<TensorField3DImport>();
-    registerProcessor<FlowGUIFileReader>();
+    int ret = -1;
+    {
+#ifdef IVW_ENABLE_MSVC_MEM_LEAK_TEST
+        VLDDisable();
+        ::testing::InitGoogleTest(&argc, argv);
+        VLDEnable();
+#else
+        ::testing::InitGoogleTest(&argc, argv);
+#endif
+        inviwo::ConfigurableGTestEventListener::setup();
+        ret = RUN_ALL_TESTS();
+    }
+    return ret;
 }
-
-OpenTensorVisIOModule::~OpenTensorVisIOModule() = default;
-
-}  // namespace inviwo

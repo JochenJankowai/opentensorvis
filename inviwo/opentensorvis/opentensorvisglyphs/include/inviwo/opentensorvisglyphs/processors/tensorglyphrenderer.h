@@ -29,7 +29,6 @@
 
 #pragma once
 
-#include <inviwo/core/common/inviwo.h>
 #include <inviwo/core/datastructures/geometry/basicmesh.h>
 #include <inviwo/core/interaction/cameratrackball.h>
 #include <inviwo/core/interaction/pickingmapper.h>
@@ -42,11 +41,9 @@
 #include <inviwo/core/properties/simplelightingproperty.h>
 #include <inviwo/core/rendering/meshdrawer.h>
 #include <inviwo/opentensorvisbase/ports/tensorfieldport.h>
-#include <inviwo/opentensorvisbase/properties/tensorglyphproperty.h>
-#include <inviwo/opentensorvisbase/opentensorvisbasemoduledefine.h>
-#include <modules/basegl/processors/meshrenderprocessorgl.h>
+#include <inviwo/opentensorvisglyphs/properties/tensorglyphproperty.h>
+#include <inviwo/opentensorvisglyphs/opentensorvisglyphsmoduledefine.h>
 #include <modules/opengl/image/imagecompositor.h>
-#include <modules/opengl/inviwoopengl.h>
 #include <modules/opengl/shader/shader.h>
 
 #include <optional>
@@ -57,7 +54,7 @@ namespace inviwo {
  * ![](org.inviwo.TensorGlyphRenderer.png?classIdentifier=org.inviwo.TensorGlyphRenderer)
  */
 
-class IVW_MODULE_OPENTENSORVISBASE_API TensorGlyphRenderer : public Processor {
+class IVW_MODULE_OPENTENSORVISGLYPHS_API TensorGlyphRenderer : public Processor {
  public:
   TensorGlyphRenderer();
   virtual ~TensorGlyphRenderer() = default;
