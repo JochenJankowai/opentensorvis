@@ -28,45 +28,12 @@
  *********************************************************************************/
 
 #include <inviwo/opentensorvisplotting/opentensorvisplottingmodule.h>
+#include <inviwo/opentensorvisplotting/processors/tensorfield3dtodataframe.h>
 
 namespace inviwo {
 
 OpenTensorVisPlottingModule::OpenTensorVisPlottingModule(InviwoApplication* app) : InviwoModule(app, "OpenTensorVisPlotting") {
-    // Add a directory to the search path of the Shadermanager
-    // ShaderManager::getPtr()->addShaderSearchPath(getPath(ModulePath::GLSL));
-
-    // Register objects that can be shared with the rest of inviwo here:
-
-    // Processors
-    // registerProcessor<OpenTensorVisPlottingProcessor>();
-
-    // Properties
-    // registerProperty<OpenTensorVisPlottingProperty>();
-
-    // Readers and writes
-    // registerDataReader(std::make_unique<OpenTensorVisPlottingReader>());
-    // registerDataWriter(std::make_unique<OpenTensorVisPlottingWriter>());
-
-    // Data converters
-    // registerRepresentationConverter(std::make_unique<OpenTensorVisPlottingDisk2RAMConverter>());
-
-    // Ports
-    // registerPort<OpenTensorVisPlottingOutport>();
-    // registerPort<OpenTensorVisPlottingInport>();
-
-    // PropertyWidgets
-    // registerPropertyWidget<OpenTensorVisPlottingPropertyWidget, OpenTensorVisPlottingProperty>("Default");
-
-    // Dialogs
-    // registerDialog<OpenTensorVisPlottingDialog>(OpenTensorVisPlottingOutport);
-
-    // Other things
-    // registerCapabilities(std::make_unique<OpenTensorVisPlottingCapabilities>());
-    // registerSettings(std::make_unique<OpenTensorVisPlottingSettings>());
-    // registerMetaData(std::make_unique<OpenTensorVisPlottingMetaData>());
-    // registerPortInspector("OpenTensorVisPlottingOutport", "path/workspace.inv");
-    // registerProcessorWidget(std::string processorClassName, std::unique_ptr<ProcessorWidget> processorWidget); 
-    // registerDrawer(util::make_unique_ptr<OpenTensorVisPlottingDrawer>());
+    registerProcessor<TensorField3DToDataFrame>();
 }
 
 }  // namespace inviwo

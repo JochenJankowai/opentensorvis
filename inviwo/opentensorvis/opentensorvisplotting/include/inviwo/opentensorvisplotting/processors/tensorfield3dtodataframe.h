@@ -29,8 +29,7 @@
 
 #pragma once
 
-#include <inviwo/opentensorvisbase/opentensorvisbasemoduledefine.h>
-#include <inviwo/core/common/inviwo.h>
+#include <inviwo/opentensorvisplotting/opentensorvisplottingmoduledefine.h>
 #include <inviwo/core/processors/processor.h>
 #include <inviwo/dataframe/datastructures/dataframe.h>
 #include <inviwo/opentensorvisbase/ports/tensorfieldport.h>
@@ -48,7 +47,7 @@ namespace inviwo {
  *   * __dataFrameOutport___ Outputs the data frame.
  *
  */
-class IVW_MODULE_OPENTENSORVISBASE_API TensorField3DToDataFrame : public Processor {
+class IVW_MODULE_OPENTENSORVISPLOTTING_API TensorField3DToDataFrame : public Processor {
 public:
     TensorField3DToDataFrame();
     virtual ~TensorField3DToDataFrame() = default;

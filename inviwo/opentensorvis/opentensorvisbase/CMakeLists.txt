@@ -30,7 +30,6 @@ set(HEADER_FILES
     include/inviwo/opentensorvisbase/processors/tensorfield3dmetadata.h
     include/inviwo/opentensorvisbase/processors/tensorfield3dsubsample.h
     include/inviwo/opentensorvisbase/processors/tensorfield3dsubset.h
-    include/inviwo/opentensorvisbase/processors/tensorfield3dtodataframe.h
     include/inviwo/opentensorvisbase/processors/tensorfield3dtovolume.h
     include/inviwo/opentensorvisbase/processors/tensorfield2dgenerator.h
     include/inviwo/opentensorvisbase/processors/tensorfield2dlic.h
@@ -74,7 +73,6 @@ set(SOURCE_FILES
     src/processors/tensorfield3dmetadata.cpp
     src/processors/tensorfield3dsubsample.cpp
     src/processors/tensorfield3dsubset.cpp
-    src/processors/tensorfield3dtodataframe.cpp
     src/processors/tensorfield3dtovolume.cpp
     src/processors/tensorfield2dgenerator.cpp
     src/processors/tensorfield2dlic.cpp

@@ -48,7 +48,6 @@
 #include <inviwo/opentensorvisbase/processors/tensorfield3dmetadata.h>
 #include <inviwo/opentensorvisbase/processors/tensorfield3dsubsample.h>
 #include <inviwo/opentensorvisbase/processors/tensorfield3dsubset.h>
-#include <inviwo/opentensorvisbase/processors/tensorfield3dtodataframe.h>
 #include <inviwo/opentensorvisbase/processors/tensorfield2dgenerator.h>
 #include <inviwo/opentensorvisbase/processors/tensorfield2dlic.h>
 #include <inviwo/opentensorvisbase/processors/tensorfield3dslice.h>
@@ -81,7 +80,6 @@ OpenTensorVisBaseModule::OpenTensorVisBaseModule(InviwoApplication* app)
     registerProcessor<TensorField3DMetaData>();
     registerProcessor<TensorField3DSubsample>();
     registerProcessor<TensorField3DSubset>();
-    registerProcessor<TensorField3DToDataFrame>();
     registerProcessor<TensorField2DGenerator>();
     registerProcessor<TensorField2DLIC>();
     registerProcessor<TensorField3DSlice>();
