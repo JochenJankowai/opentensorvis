@@ -28,45 +28,16 @@
  *********************************************************************************/
 
 #include <inviwo/opentensorvisvtk/opentensorvisvtkmodule.h>
+#include <inviwo/opentensorvisvtk/processors/tensorfield2dtovtk.h>
+#include <inviwo/opentensorvisvtk/processors/vtkdatasettotensorfield2d.h>
+#include <inviwo/opentensorvisvtk/processors/vtkdatasettotensorfield3d.h>
 
 namespace inviwo {
 
 OpenTensorVisVTKModule::OpenTensorVisVTKModule(InviwoApplication* app) : InviwoModule(app, "OpenTensorVisVTK") {
-    // Add a directory to the search path of the Shadermanager
-    // ShaderManager::getPtr()->addShaderSearchPath(getPath(ModulePath::GLSL));
-
-    // Register objects that can be shared with the rest of inviwo here:
-
-    // Processors
-    // registerProcessor<OpenTensorVisVTKProcessor>();
-
-    // Properties
-    // registerProperty<OpenTensorVisVTKProperty>();
-
-    // Readers and writes
-    // registerDataReader(std::make_unique<OpenTensorVisVTKReader>());
-    // registerDataWriter(std::make_unique<OpenTensorVisVTKWriter>());
-
-    // Data converters
-    // registerRepresentationConverter(std::make_unique<OpenTensorVisVTKDisk2RAMConverter>());
-
-    // Ports
-    // registerPort<OpenTensorVisVTKOutport>();
-    // registerPort<OpenTensorVisVTKInport>();
-
-    // PropertyWidgets
-    // registerPropertyWidget<OpenTensorVisVTKPropertyWidget, OpenTensorVisVTKProperty>("Default");
-
-    // Dialogs
-    // registerDialog<OpenTensorVisVTKDialog>(OpenTensorVisVTKOutport);
-
-    // Other things
-    // registerCapabilities(std::make_unique<OpenTensorVisVTKCapabilities>());
-    // registerSettings(std::make_unique<OpenTensorVisVTKSettings>());
-    // registerMetaData(std::make_unique<OpenTensorVisVTKMetaData>());
-    // registerPortInspector("OpenTensorVisVTKOutport", "path/workspace.inv");
-    // registerProcessorWidget(std::string processorClassName, std::unique_ptr<ProcessorWidget> processorWidget); 
-    // registerDrawer(util::make_unique_ptr<OpenTensorVisVTKDrawer>());
+  registerProcessor<TensorField2DToVTK>();
+  registerProcessor<VTKDataSetToTensorField2D>();
+  registerProcessor<VTKDataSetToTensorField3D>();
 }
 
 }  // namespace inviwo

@@ -27,7 +27,7 @@
  *
  *********************************************************************************/
 
-#include <inviwo/opentensorvisio/processors/tensorfield2dtovtk.h>
+#include <inviwo/opentensorvisvtk/processors/tensorfield2dtovtk.h>
 
 #include <warn/push>
 #include <warn/ignore/all>
@@ -39,7 +39,6 @@
 #include <vtkAOSDataArrayTemplate.h>
 #include <warn/pop>
 
-#include <inviwo/opentensorvisbase/util/misc.h>
 #include <inviwo/opentensorvisbase/opentensorvisbasemodule.h>
 #include <inviwo/vtk/vtkmodule.h>
 

@@ -31,12 +31,13 @@
 #include <inviwo/opentensorvisglyphs/processors/tensorglyphprocessor.h>
 #include <inviwo/opentensorvisglyphs/processors/tensorglyphrenderer.h>
 #include <inviwo/opentensorvisglyphs/properties/tensorglyphproperty.h>
+#include <modules/opengl/shader/shadermanager.h>
 
 namespace inviwo {
 
 OpenTensorVisGlyphsModule::OpenTensorVisGlyphsModule(InviwoApplication* app) : InviwoModule(app, "OpenTensorVisGlyphs") {
     // Add a directory to the search path of the Shadermanager
-    // ShaderManager::getPtr()->addShaderSearchPath(getPath(ModulePath::GLSL));
+     ShaderManager::getPtr()->addShaderSearchPath(getPath(ModulePath::GLSL));
 
     registerProcessor<TensorGlyphProcessor>();
     registerProcessor<TensorGlyphRenderer>();

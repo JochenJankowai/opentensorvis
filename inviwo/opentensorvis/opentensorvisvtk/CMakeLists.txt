@@ -3,11 +3,18 @@ ivw_module(OpenTensorVisVTK)
 set(HEADER_FILES
     include/inviwo/opentensorvisvtk/opentensorvisvtkmodule.h
     include/inviwo/opentensorvisvtk/opentensorvisvtkmoduledefine.h
+    include/inviwo/opentensorvisvtk/processors/tensorfield2dtovtk.h
+    include/inviwo/opentensorvisvtk/processors/vtkdatasettotensorfield2d.h
+    include/inviwo/opentensorvisvtk/processors/vtkdatasettotensorfield3d.h
+    include/inviwo/opentensorvisvtk/util/util.h
 )
 ivw_group("Header Files" ${HEADER_FILES})
 
 set(SOURCE_FILES
     src/opentensorvisvtkmodule.cpp
+    src/processors/tensorfield2dtovtk.cpp
+    src/processors/vtkdatasettotensorfield2d.cpp
+    src/processors/vtkdatasettotensorfield3d.cpp
 )
 ivw_group("Source Files" ${SOURCE_FILES})
 

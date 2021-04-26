@@ -29,7 +29,7 @@
 
 #pragma once
 
-#include <inviwo/opentensorvisio/opentensorvisiomoduledefine.h>
+#include <inviwo/opentensorvisvtk/opentensorvisvtkmoduledefine.h>
 #include <inviwo/core/common/inviwo.h>
 #include <inviwo/core/processors/processor.h>
 #include <inviwo/core/ports/datainport.h>
@@ -57,7 +57,7 @@ namespace inviwo {
  *   * __<Prop1>__ <description>.
  *   * __<Prop2>__ <description>
  */
-class IVW_MODULE_OPENTENSORVISIO_API VTKDataSetToTensorField3D : public Processor,
+class IVW_MODULE_OPENTENSORVISVTK_API VTKDataSetToTensorField3D : public Processor,
                                                              public ActivityIndicatorOwner {
 public:
     VTKDataSetToTensorField3D();

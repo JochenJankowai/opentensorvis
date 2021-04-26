@@ -29,8 +29,7 @@
 
 #pragma once
 
-#include <inviwo/opentensorvisio/opentensorvisiomoduledefine.h>
-#include <inviwo/core/common/inviwo.h>
+#include <inviwo/opentensorvisvtk/opentensorvisvtkmoduledefine.h>
 #include <inviwo/core/processors/processor.h>
 #include <inviwo/opentensorvisbase/ports/tensorfieldport.h>
 #include <inviwo/vtk/ports/vtkdatasetport.h>
@@ -55,7 +54,7 @@ namespace inviwo {
  * This processor creates a VTK structured grid and memcpys the data from the input field to the VTK
  * data set.
  */
-class IVW_MODULE_OPENTENSORVISIO_API TensorField2DToVTK : public Processor {
+class IVW_MODULE_OPENTENSORVISVTK_API TensorField2DToVTK : public Processor {
 public:
     TensorField2DToVTK();
     virtual ~TensorField2DToVTK() = default;

@@ -27,7 +27,7 @@
  *
  *********************************************************************************/
 
-#include <inviwo/opentensorvisio/processors/vtktotensorfield2d.h>
+#include <inviwo/opentensorvisvtk/processors/vtkdatasettotensorfield2d.h>
 
 #include <warn/push>
 #include <warn/ignore/all>
@@ -42,7 +42,7 @@
 #include <fmt/format.h>
 #include <inviwo/opentensorvisbase/opentensorvisbasemodule.h>
 #include <inviwo/vtk/vtkmodule.h>
-#include <inviwo/opentensorvisio/util/util.h>
+#include <inviwo/opentensorvisvtk/util/util.h>
 #include <inviwo/core/network/networklock.h>
 
 namespace inviwo {
