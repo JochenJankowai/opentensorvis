@@ -27,7 +27,7 @@
  *
  *********************************************************************************/
 
-#include <inviwo/featurelevelsetsgl/algorithm/gpureduction.h>
+#include <inviwo/opentensorviscompute/algorithm/gpureduction.h>
 
 #include <modules/opengl/volume/volumegl.h>
 #include <modules/opengl/shader/shaderutils.h>

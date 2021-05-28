@@ -3,7 +3,6 @@ ivw_module(FeatureLevelSetsGL)
 set(HEADER_FILES
     include/inviwo/featurelevelsetsgl/featurelevelsetsglmodule.h
     include/inviwo/featurelevelsetsgl/featurelevelsetsglmoduledefine.h
-    include/inviwo/featurelevelsetsgl/algorithm/gpureduction.h
     include/inviwo/featurelevelsetsgl/processors/featurelevelsetprocessorgl.h
     include/inviwo/featurelevelsetsgl/properties/traitproperty.h
     include/inviwo/featurelevelsetsgl/properties/pointtraitproperty.h
@@ -14,7 +13,6 @@ ivw_group("Header Files" ${HEADER_FILES})
 
 set(SOURCE_FILES
     src/featurelevelsetsglmodule.cpp
-    src/algorithm/gpureduction.cpp
     src/processors/featurelevelsetprocessorgl.cpp
     src/properties/traitproperty.cpp
     src/properties/pointtraitproperty.cpp
@@ -26,7 +24,6 @@ set(SHADER_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/glsl/featurelevelsets.comp
     ${CMAKE_CURRENT_SOURCE_DIR}/glsl/pointtrait.glsl
     ${CMAKE_CURRENT_SOURCE_DIR}/glsl/rangetrait.glsl
-    ${CMAKE_CURRENT_SOURCE_DIR}/glsl/reduction.comp
 )
 ivw_group("Shader Files" ${SHADER_FILES})
 

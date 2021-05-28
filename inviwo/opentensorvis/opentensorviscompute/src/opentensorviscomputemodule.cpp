@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2016-2021 Inviwo Foundation
+ * Copyright (c) 2021 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,46 +27,16 @@
  *
  *********************************************************************************/
 
-#pragma once
-
-#include <inviwo/featurelevelsetsgl/featurelevelsetsglmoduledefine.h>
-#include <inviwo/core/common/inviwo.h>
-#include <modules/opengl/shader/shader.h>
-#include <inviwo/core/datastructures/volume/volume.h>
-#include <modules/opengl/buffer/framebufferobject.h>
+#include <inviwo/opentensorviscompute/opentensorviscomputemodule.h>
+#include <modules/opengl/shader/shadermanager.h>
+#include <inviwo/opentensorviscompute/processors/volumenormalizationprocessor.h>
 
 namespace inviwo {
-enum class ReductionOperator { Min = 0, Max = 1, Sum = 2, None = 3};
 
-/** \class GPUReduction
- *
- * GL implementation of add, min, and max reductions for 1, 2, and 3D textures.
- */
-class IVW_MODULE_FEATURELEVELSETSGL_API GPUReduction {
-public:
-    template <typename Callback>
-    GPUReduction(Callback C) : GPUReduction() {
-        shader_.onReload(C);
-    }
-
-    GPUReduction();
-
-    virtual ~GPUReduction() = default;
-
-    std::shared_ptr<Volume> reduce(std::shared_ptr<const Volume> volume,
-                                   ReductionOperator op);
-    dvec4 reduce_v(std::shared_ptr<const Volume> volume,
-                   ReductionOperator op);
-
-    void setReductionOperator(ReductionOperator op);
-
-protected:
-    Shader shader_;
-    FrameBufferObject fbo_;
-    ReductionOperator activeReductionOperator_;
-
-private:
-    static void gpuDispatch(GLuint x, GLuint y, GLuint z);
-};
+OpenTensorVisComputeModule::OpenTensorVisComputeModule(InviwoApplication* app) : InviwoModule(app, "OpenTensorVisCompute") {
+    ShaderManager::getPtr()->addShaderSearchPath(getPath(ModulePath::GLSL));
+    
+    registerProcessor<VolumeNormalizationProcessor>();
+}
 
 }  // namespace inviwo

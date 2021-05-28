@@ -36,8 +36,8 @@
 #include <modules/opengl/shader/shader.h>
 #include <inviwo/core/properties/listproperty.h>
 #include <inviwo/core/properties/propertyownerobserver.h>
-#include <inviwo/featurelevelsetsgl/algorithm/gpureduction.h>
-#include <modules/basegl/algorithm/volumenormalization.h>
+#include <inviwo/opentensorviscompute/algorithm/gpureduction.h>
+#include <inviwo/opentensorviscompute/algorithm/volumenormalization.h>
 
 namespace inviwo {
 
