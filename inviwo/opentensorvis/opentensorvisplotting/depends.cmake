@@ -3,6 +3,10 @@
 set(dependencies
     InviwoDataFrameModule
     InviwoOpenTensorVisBaseModule
+    InviwoNanoVGUtilsModule
+    InviwoPlottingModule
+    InviwoPlottingGLModule
+    InviwoFontRenderingModule
 )
 
 # Add an alias for this module. Several modules can share an alias. 
