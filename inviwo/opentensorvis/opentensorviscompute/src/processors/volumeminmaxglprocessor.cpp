@@ -27,23 +27,32 @@
  *
  *********************************************************************************/
 
-#include <inviwo/featurelevelsetsgl/featurelevelsetsglmodule.h>
-#include <inviwo/featurelevelsetsgl/processors/featurelevelsetprocessorgl.h>
-#include <inviwo/featurelevelsetsgl/properties/implicitfunctiontraitproperty.h>
-#include <inviwo/featurelevelsetsgl/properties/pointtraitproperty.h>
-#include <inviwo/featurelevelsetsgl/properties/rangetraitproperty.h>
-#include <modules/opengl/shader/shadermanager.h>
+#include <inviwo/opentensorviscompute/processors/volumeminmaxglprocessor.h>
 
 namespace inviwo {
 
-FeatureLevelSetsGLModule::FeatureLevelSetsGLModule(InviwoApplication* app)
-    : InviwoModule(app, "FeatureLevelSetsGL") {
-    ShaderManager::getPtr()->addShaderSearchPath(getPath(ModulePath::GLSL));
+// The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
+const ProcessorInfo VolumeMinMaxGLProcessor::processorInfo_{
+    "org.inviwo.VolumeMinMaxGLProcessor",  // Class identifier
+    "Volume Min Max GLProcessor",          // Display name
+    "OpenTensorVis",                       // Category
+    CodeState::Experimental,               // Code state
+    Tags::GL,                              // Tags
+};
+const ProcessorInfo VolumeMinMaxGLProcessor::getProcessorInfo() const { return processorInfo_; }
 
-    registerProcessor<FeatureLevelSetProcessorGL>();
-    registerProperty<ImplicitFunctionTraitProperty>();
-    registerProperty<PointTraitProperty>();
-    registerProperty<RangeTraitProperty>();
+VolumeMinMaxGLProcessor::VolumeMinMaxGLProcessor()
+    : Processor(), volumeInport_("volumeInport"), volumeOutport_("volumeOutport") {
+
+    addPorts(volumeInport_, volumeOutport_);
+}
+
+void VolumeMinMaxGLProcessor::process() {
+    auto outVolume = std::shared_ptr<Volume>(volumeInport_.getData()->clone());
+    outVolume->dataMap_.dataRange = outVolume->dataMap_.valueRange =
+        volumeMinMaxGl_.minmax(volumeInport_.getData());
+
+    volumeOutport_.setData(outVolume);
 }
 
 }  // namespace inviwo

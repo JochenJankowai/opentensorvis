@@ -161,6 +161,8 @@ private:
 
     CompositeProperty probeProperties_;
     BoolProperty useProbe_;
+    BoolProperty xProbe_;
+    BoolProperty yProbe_;
     FloatProperty probeWidth_;
     FloatVec4Property probeColor_;
     BoolProperty probeDashed_;

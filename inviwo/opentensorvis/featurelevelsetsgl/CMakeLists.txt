@@ -5,6 +5,7 @@ set(HEADER_FILES
     include/inviwo/featurelevelsetsgl/featurelevelsetsglmoduledefine.h
     include/inviwo/featurelevelsetsgl/processors/featurelevelsetprocessorgl.h
     include/inviwo/featurelevelsetsgl/properties/traitproperty.h
+    include/inviwo/featurelevelsetsgl/properties/implicitfunctiontraitproperty.h
     include/inviwo/featurelevelsetsgl/properties/pointtraitproperty.h
     include/inviwo/featurelevelsetsgl/properties/rangetraitproperty.h
     include/inviwo/featurelevelsetsgl/util/util.h
@@ -15,6 +16,7 @@ set(SOURCE_FILES
     src/featurelevelsetsglmodule.cpp
     src/processors/featurelevelsetprocessorgl.cpp
     src/properties/traitproperty.cpp
+    src/properties/implicitfunctiontraitproperty.cpp
     src/properties/pointtraitproperty.cpp
     src/properties/rangetraitproperty.cpp
 )

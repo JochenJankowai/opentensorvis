@@ -28,15 +28,21 @@
  *********************************************************************************/
 
 #include <inviwo/opentensorviscompute/opentensorviscomputemodule.h>
+#include <inviwo/opentensorviscompute/processors/volumechannelsplitglprocessor.h>
+#include <inviwo/opentensorviscompute/processors/volumeminmaxglprocessor.h>
+#include <inviwo/opentensorviscompute/processors/volumereductionglprocessor.h>
 #include <modules/opengl/shader/shadermanager.h>
-#include <inviwo/opentensorviscompute/processors/volumenormalizationprocessor.h>
+#include <inviwo/opentensorviscompute/processors/volumenormalizationglprocessor.h>
 
 namespace inviwo {
 
 OpenTensorVisComputeModule::OpenTensorVisComputeModule(InviwoApplication* app) : InviwoModule(app, "OpenTensorVisCompute") {
     ShaderManager::getPtr()->addShaderSearchPath(getPath(ModulePath::GLSL));
     
-    registerProcessor<VolumeNormalizationProcessor>();
+    registerProcessor<VolumeChannelSplitGLProcessor>();
+    registerProcessor<VolumeMinMaxGLProcessor>();
+    registerProcessor<VolumeNormalizationGLProcessor>();
+    registerProcessor<VolumeReductionGLProcessor>();
 }
 
 }  // namespace inviwo

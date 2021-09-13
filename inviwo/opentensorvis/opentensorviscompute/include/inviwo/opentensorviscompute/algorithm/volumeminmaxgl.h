@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2021 Inviwo Foundation
+ * Copyright (c) 2016-2021 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,23 +27,37 @@
  *
  *********************************************************************************/
 
-#include <inviwo/featurelevelsetsgl/featurelevelsetsglmodule.h>
-#include <inviwo/featurelevelsetsgl/processors/featurelevelsetprocessorgl.h>
-#include <inviwo/featurelevelsetsgl/properties/implicitfunctiontraitproperty.h>
-#include <inviwo/featurelevelsetsgl/properties/pointtraitproperty.h>
-#include <inviwo/featurelevelsetsgl/properties/rangetraitproperty.h>
-#include <modules/opengl/shader/shadermanager.h>
+#pragma once
+
+#include <inviwo/opentensorviscompute/opentensorviscomputemoduledefine.h>
+#include <modules/opengl/shader/shader.h>
+#include <inviwo/core/datastructures/volume/volume.h>
+#include <inviwo/opentensorviscompute/algorithm/volumereductiongl.h>
 
 namespace inviwo {
 
-FeatureLevelSetsGLModule::FeatureLevelSetsGLModule(InviwoApplication* app)
-    : InviwoModule(app, "FeatureLevelSetsGL") {
-    ShaderManager::getPtr()->addShaderSearchPath(getPath(ModulePath::GLSL));
+/** \class VolumeMinMaxGL
+ *
+ * GL implementation of min-max computation for inviwo volumes.
+ */
+class IVW_MODULE_OPENTENSORVISCOMPUTE_API VolumeMinMaxGL {
+public:
+    VolumeMinMaxGL() = default;
 
-    registerProcessor<FeatureLevelSetProcessorGL>();
-    registerProperty<ImplicitFunctionTraitProperty>();
-    registerProperty<PointTraitProperty>();
-    registerProperty<RangeTraitProperty>();
-}
+    virtual ~VolumeMinMaxGL() = default;
+
+    /**
+     * This method calculates aggregated min and max values of a volume. If you need min/max per
+     * channel you should look at VolumeReductionGL.
+     *
+     * @param volume Input volume.
+     *
+     * @returns Aggregated min/max values.
+     */
+    dvec2 minmax(std::shared_ptr<const Volume> volume);
+
+protected:
+    VolumeReductionGL volumeReductionGL_;
+};
 
 }  // namespace inviwo

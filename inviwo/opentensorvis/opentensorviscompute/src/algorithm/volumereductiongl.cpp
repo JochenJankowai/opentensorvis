@@ -27,7 +27,7 @@
  *
  *********************************************************************************/
 
-#include <inviwo/opentensorviscompute/algorithm/gpureduction.h>
+#include <inviwo/opentensorviscompute/algorithm/volumereductiongl.h>
 
 #include <modules/opengl/volume/volumegl.h>
 #include <modules/opengl/shader/shaderutils.h>
@@ -37,13 +37,13 @@
 
 namespace inviwo {
 
-GPUReduction::GPUReduction()
-    : shader_({{ShaderType::Compute, utilgl::findShaderResource("reduction.comp")}},
+VolumeReductionGL::VolumeReductionGL()
+    : shader_({{ShaderType::Compute, utilgl::findShaderResource("volumereduction.comp")}},
               Shader::Build::Yes)
     , activeReductionOperator_(ReductionOperator::None) {}
 
-std::shared_ptr<Volume> GPUReduction::reduce(std::shared_ptr<const Volume> volume,
-                                             const ReductionOperator op) {
+std::shared_ptr<Volume> VolumeReductionGL::reduce(std::shared_ptr<const Volume> volume,
+                                                  const ReductionOperator op) {
     setReductionOperator(op);
 
     shader_.activate();
@@ -112,13 +112,14 @@ std::shared_ptr<Volume> GPUReduction::reduce(std::shared_ptr<const Volume> volum
     return output;
 }
 
-dvec4 GPUReduction::reduce_v(std::shared_ptr<const Volume> volume, const ReductionOperator op) {
+double VolumeReductionGL::reduce_v(std::shared_ptr<const Volume> volume,
+                                   const ReductionOperator op) {
     auto res = reduce(volume, op);
 
-    return res->getRepresentation<VolumeRAM>()->getAsDVec4(size3_t{0, 0, 0});
+    return res->getRepresentation<VolumeRAM>()->getAsDouble(size3_t{0, 0, 0});
 }
 
-void GPUReduction::setReductionOperator(ReductionOperator op) {
+void VolumeReductionGL::setReductionOperator(ReductionOperator op) {
     if (op == activeReductionOperator_) return;
 
     auto computeShader = shader_.getShaderObject(ShaderType::Compute);
@@ -131,7 +132,7 @@ void GPUReduction::setReductionOperator(ReductionOperator op) {
     shader_.build();
 }
 
-void GPUReduction::gpuDispatch(const GLuint x, const GLuint y, const GLuint z) {
+void VolumeReductionGL::gpuDispatch(const GLuint x, const GLuint y, const GLuint z) {
     glDispatchCompute(x, y, z);
 
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);

@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2021 Inviwo Foundation
+ * Copyright (c) 2016-2021 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,23 +27,14 @@
  *
  *********************************************************************************/
 
-#include <inviwo/featurelevelsetsgl/featurelevelsetsglmodule.h>
-#include <inviwo/featurelevelsetsgl/processors/featurelevelsetprocessorgl.h>
-#include <inviwo/featurelevelsetsgl/properties/implicitfunctiontraitproperty.h>
-#include <inviwo/featurelevelsetsgl/properties/pointtraitproperty.h>
-#include <inviwo/featurelevelsetsgl/properties/rangetraitproperty.h>
-#include <modules/opengl/shader/shadermanager.h>
+#include <inviwo/opentensorviscompute/algorithm/volumeminmaxgl.h>
 
 namespace inviwo {
+dvec2 VolumeMinMaxGL::minmax(std::shared_ptr<const Volume> volume) {
+    const auto min = volumeReductionGL_.reduce_v(volume, ReductionOperator::Min);
+    const auto max = volumeReductionGL_.reduce_v(volume, ReductionOperator::Max);
 
-FeatureLevelSetsGLModule::FeatureLevelSetsGLModule(InviwoApplication* app)
-    : InviwoModule(app, "FeatureLevelSetsGL") {
-    ShaderManager::getPtr()->addShaderSearchPath(getPath(ModulePath::GLSL));
-
-    registerProcessor<FeatureLevelSetProcessorGL>();
-    registerProperty<ImplicitFunctionTraitProperty>();
-    registerProperty<PointTraitProperty>();
-    registerProperty<RangeTraitProperty>();
+    return dvec2{min, max};
 }
 
 }  // namespace inviwo

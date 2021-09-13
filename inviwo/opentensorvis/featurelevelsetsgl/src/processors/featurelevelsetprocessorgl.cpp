@@ -40,6 +40,7 @@
 #include <modules/base/algorithm/dataminmax.h>
 #include <algorithm>
 #include <inviwo/featurelevelsetsgl/util/util.h>
+#include <inviwo/featurelevelsetsgl/properties/implicitfunctiontraitproperty.h>
 #include <inviwo/featurelevelsetsgl/properties/pointtraitproperty.h>
 #include <inviwo/featurelevelsetsgl/properties/rangetraitproperty.h>
 
@@ -88,13 +89,15 @@ FeatureLevelSetProcessorGL::FeatureLevelSetProcessorGL()
         std::make_unique<PointTraitProperty>("pointTrait", "Point Trait"));
     traitPropertiesContainer_.addPrefab(
         std::make_unique<RangeTraitProperty>("rangeTrait", "Range Trait"));
+    traitPropertiesContainer_.addPrefab(
+        std::make_unique<ImplicitFunctionTraitProperty>("implicitFunction", "Implicit function"));
 
     addPorts(volumes_, distanceVolumeOutport_);
     addProperties(divisor_, squaredDistance_, useVolumesDataMap_, useNormalizedValues_,
                   traitPropertiesContainer_);
 
     traitPropertiesContainer_.PropertyOwnerObservable::addObserver(this);
-
+    
     shader_.onReload([this]() { invalidate(InvalidationLevel::InvalidOutput); });
     {
         auto computeShader = shader_.getShaderObject(ShaderType::Compute);
@@ -104,6 +107,11 @@ FeatureLevelSetProcessorGL::FeatureLevelSetProcessorGL()
         computeShader->addShaderDefine("TRAIT_ALLOCATION", StrBuffer{"{}", traitAllocation_});
     }
     shader_.build();
+    
+    implicitFunctionSegment_.name = "FLS implicit function";
+    implicitFunctionSegment_.placeholder = ShaderSegment::Placeholder{"###IMPLICIT_FUNCTION###","FLS implicit function"};
+    
+    shader_.getShaderObject(ShaderType::Compute)->addSegment(implicitFunctionSegment_);
 
     divisor_.onChange([this]() {
         auto computeShader = shader_.getShaderObject(ShaderType::Compute);
@@ -291,11 +299,11 @@ void FeatureLevelSetProcessorGL::process() {
 
     shader_.deactivate();
 
-    const auto minVec = reduction_.reduce_v(outputTexture, ReductionOperator::Min);
-    const auto maxVec = reduction_.reduce_v(outputTexture, ReductionOperator::Max);
+    const auto min = reduction_.reduce_v(outputTexture, ReductionOperator::Min);
+    const auto max = reduction_.reduce_v(outputTexture, ReductionOperator::Max);
 
     outputTexture->dataMap_.valueRange = outputTexture->dataMap_.dataRange =
-        dvec2(minVec.x, std::min(maxVec.x, maxDist_));
+        dvec2(min, std::min(max, maxDist_));
 
     distanceVolumeOutport_.setData(outputTexture);
 }
@@ -554,6 +562,14 @@ void FeatureLevelSetProcessorGL::onWillAddProperty(Property* property, size_t) {
         }
 
         traitProperty->setSerializationMode(PropertySerializationMode::All);
+
+        if (auto implicitFunctionTraitProperty = dynamic_cast<ImplicitFunctionTraitProperty*>(traitProperty)) {
+            implicitFunctionTraitProperty->onChange([this]()
+            {
+                // Add or replace shader segment
+
+            });
+        }
     }
 
     if (traitPropertiesContainer_.getProperties().size() > traitAllocation_) {

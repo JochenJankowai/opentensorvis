@@ -62,6 +62,7 @@ ContourExplorerProcessor::ContourExplorerProcessor()
     , inport_{"volume"}
     , backgroundPort_{"background"}
     , outport_{"outport"}
+    , brushingAndLinkingInport_{"brushingAndLinkingInport"}
     , shader_{"embeddedvolumeslice.vert", "embeddedvolumeslice.frag", Shader::Build::No}
     , planeNormal_{"planeNormal",          "Plane Normal",      vec3(1.f, 0.f, 0.f),
                    vec3(-1.f, -1.f, -1.f), vec3(1.f, 1.f, 1.f), vec3(0.01f, 0.01f, 0.01f)}
@@ -72,6 +73,7 @@ ContourExplorerProcessor::ContourExplorerProcessor()
     , picking_{this, 1, [this](PickingEvent* e) { handlePicking(e); }} {
     addPort(inport_);
     addPort(backgroundPort_).setOptional(true);
+    addPort(brushingAndLinkingInport_);
     addPort(outport_);
 
     addProperties(planeNormal_, planePosition_, transferFunction_, camera_, trackball_);
@@ -115,7 +117,7 @@ void ContourExplorerProcessor::planeSettingsChanged() {
 void ContourExplorerProcessor::handlePicking(PickingEvent* p) {
     if (inport_.hasData() && p->getPressItems().contains(PickingPressItem::Primary) &&
         p->getHoverState() == PickingHoverState::None) {
-        
+
         const auto data = inport_.getData();
 
         const Plane plane{*planePosition_, glm::normalize(*planeNormal_)};
@@ -138,12 +140,16 @@ void ContourExplorerProcessor::handlePicking(PickingEvent* p) {
 
             const auto worldPos = vec3{ct.getDataToWorldMatrix() * vec4{*dataPoint, 1.0f}};
 
-            LogInfo(fmt::format("Value: {}", value))
+            std::unordered_set<size_t> selection;
+            selection.insert(value.x);
+
+            
+            brushingAndLinkingInport_.sendSelectionEvent(selection);
         }
 
         p->markAsUsed();
     }
-}    
+}
 
 void ContourExplorerProcessor::process() {
     if (backgroundPort_.hasData() &&

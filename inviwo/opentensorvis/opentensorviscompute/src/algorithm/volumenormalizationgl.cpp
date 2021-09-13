@@ -27,7 +27,7 @@
  *
  *********************************************************************************/
 
-#include <inviwo/opentensorviscompute/algorithm/volumenormalization.h>
+#include <inviwo/opentensorviscompute/algorithm/volumenormalizationgl.h>
 
 #include <modules/opengl/volume/volumegl.h>
 #include <modules/opengl/shader/shaderutils.h>
@@ -39,7 +39,7 @@
 
 namespace inviwo {
 
-VolumeNormalization::VolumeNormalization()
+VolumeNormalizationGL::VolumeNormalizationGL()
     : shader_({{ShaderType::Compute, utilgl::findShaderResource("volumenormalization.comp")}},
               Shader::Build::No)
     , needsCompilation_(false) {
@@ -47,7 +47,7 @@ VolumeNormalization::VolumeNormalization()
     shader_.build();
 }
 
-void VolumeNormalization::setNormalizeChannel(const size_t channel, const bool normalize) {
+void VolumeNormalizationGL::setNormalizeChannel(const size_t channel, const bool normalize) {
     needsCompilation_ = true;
 
     if (normalize) {
@@ -59,16 +59,16 @@ void VolumeNormalization::setNormalizeChannel(const size_t channel, const bool n
     }
 }
 
-void VolumeNormalization::setNormalizeChannels(bvec4 normalize) {
+void VolumeNormalizationGL::setNormalizeChannels(bvec4 normalize) {
     setNormalizeChannel(0, normalize[0]);
     setNormalizeChannel(1, normalize[1]);
     setNormalizeChannel(2, normalize[2]);
     setNormalizeChannel(3, normalize[3]);
 }
 
-void VolumeNormalization::reset() { setNormalizeChannels({true, false, false, false}); }
+void VolumeNormalizationGL::reset() { setNormalizeChannels({true, false, false, false}); }
 
-std::shared_ptr<Volume> VolumeNormalization::normalize(const Volume& volume) {
+std::shared_ptr<Volume> VolumeNormalizationGL::normalize(const Volume& volume) {
     std::shared_ptr<Volume> outVolume;
 
     // Don't dispatch if we don't have to

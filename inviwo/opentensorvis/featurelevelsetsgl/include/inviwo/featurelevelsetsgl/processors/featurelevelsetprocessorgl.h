@@ -36,8 +36,8 @@
 #include <modules/opengl/shader/shader.h>
 #include <inviwo/core/properties/listproperty.h>
 #include <inviwo/core/properties/propertyownerobserver.h>
-#include <inviwo/opentensorviscompute/algorithm/gpureduction.h>
-#include <inviwo/opentensorviscompute/algorithm/volumenormalization.h>
+#include <inviwo/opentensorviscompute/algorithm/volumereductiongl.h>
+#include <inviwo/opentensorviscompute/algorithm/volumenormalizationgl.h>
 
 namespace inviwo {
 
@@ -45,7 +45,7 @@ namespace inviwo {
  * ![](org.inviwo.FeatureLevelSetProcessorGL.png?classIdentifier=org.inviwo.FeatureLevelSetProcessorGL)
  */
 class IVW_MODULE_FEATURELEVELSETSGL_API FeatureLevelSetProcessorGL : public Processor,
-                                                                        public PropertyOwnerObserver
+                                                                     public PropertyOwnerObserver
 
 {
 public:
@@ -83,9 +83,10 @@ private:
 
     // Members
     Shader shader_;
+    ShaderSegment implicitFunctionSegment_;
     const size_t maxVolumes_{4};
-    VolumeNormalization normalization_;
-    GPUReduction reduction_;
+    VolumeNormalizationGL normalization_;
+    VolumeReductionGL reduction_;
 
     // Helpers
     std::vector<vec4> gatherPointTraits() const;

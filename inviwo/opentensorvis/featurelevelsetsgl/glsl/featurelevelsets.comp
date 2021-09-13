@@ -30,7 +30,6 @@
 #include "utils/structs.glsl"
 #include "pointtrait.glsl"
 #include "rangetrait.glsl"
-#include "pointnormalization.glsl"
 
 uniform VolumeParameters volumeParameters[NUM_VOLUMES];
 

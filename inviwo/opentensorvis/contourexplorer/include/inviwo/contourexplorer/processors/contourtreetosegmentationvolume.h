@@ -31,7 +31,6 @@
 
 #include <inviwo/contourexplorer/contourexplorermoduledefine.h>
 #include <inviwo/core/processors/processor.h>
-#include <inviwo/topologytoolkit/ports/contourtreeport.h>
 #include <inviwo/core/ports/volumeport.h>
 
 namespace inviwo {
@@ -51,7 +50,6 @@ public:
     static const ProcessorInfo processorInfo_;
 
 private:
-    topology::ContourTreeInport contourTreeInport_;
     VolumeInport volumeInport_;
     VolumeOutport volumeOutport_;
 };

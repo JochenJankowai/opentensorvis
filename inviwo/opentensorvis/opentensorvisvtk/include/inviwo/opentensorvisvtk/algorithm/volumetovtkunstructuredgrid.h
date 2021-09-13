@@ -20,11 +20,11 @@ struct AllButHalvsies
 }  // namespace filter
 }  // namespace dispatching
 
-class IVW_MODULE_OPENTENSORVISVTK_API VolumeToUnstructuredGrid {
+class IVW_MODULE_OPENTENSORVISVTK_API VolumeToVTKUnstructuredGrid {
 public:
-    VolumeToUnstructuredGrid() = default;
+    VolumeToVTKUnstructuredGrid() = default;
 
-    virtual ~VolumeToUnstructuredGrid() = default;
+    virtual ~VolumeToVTKUnstructuredGrid() = default;
 
     vtkSmartPointer<vtkUnstructuredGrid> convert(std::shared_ptr<const Volume> volume,
                                                  const std::string& name = "Volume data") const;

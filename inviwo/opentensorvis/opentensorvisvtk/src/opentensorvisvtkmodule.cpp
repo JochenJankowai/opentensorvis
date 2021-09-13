@@ -29,15 +29,20 @@
 
 #include <inviwo/opentensorvisvtk/opentensorvisvtkmodule.h>
 #include <inviwo/opentensorvisvtk/processors/tensorfield2dtovtk.h>
+#include <inviwo/opentensorvisvtk/processors/volumetovtkimagedataprocessor.h>
+#include <inviwo/opentensorvisvtk/processors/volumetovtkunstructuredgridprocessor.h>
 #include <inviwo/opentensorvisvtk/processors/vtkdatasettotensorfield2d.h>
 #include <inviwo/opentensorvisvtk/processors/vtkdatasettotensorfield3d.h>
 
 namespace inviwo {
 
-OpenTensorVisVTKModule::OpenTensorVisVTKModule(InviwoApplication* app) : InviwoModule(app, "OpenTensorVisVTK") {
-  registerProcessor<TensorField2DToVTK>();
-  registerProcessor<VTKDataSetToTensorField2D>();
-  registerProcessor<VTKDataSetToTensorField3D>();
+OpenTensorVisVTKModule::OpenTensorVisVTKModule(InviwoApplication* app)
+    : InviwoModule(app, "OpenTensorVisVTK") {
+    registerProcessor<TensorField2DToVTK>();
+    registerProcessor<VTKDataSetToTensorField2D>();
+    registerProcessor<VTKDataSetToTensorField3D>();
+    registerProcessor<VolumeToVTKImageDataProcessor>();
+    registerProcessor<VolumeToVTKUnstructuredGridProcessor>();
 }
 
 }  // namespace inviwo

@@ -27,23 +27,42 @@
  *
  *********************************************************************************/
 
-#include <inviwo/featurelevelsetsgl/featurelevelsetsglmodule.h>
-#include <inviwo/featurelevelsetsgl/processors/featurelevelsetprocessorgl.h>
-#include <inviwo/featurelevelsetsgl/properties/implicitfunctiontraitproperty.h>
-#include <inviwo/featurelevelsetsgl/properties/pointtraitproperty.h>
-#include <inviwo/featurelevelsetsgl/properties/rangetraitproperty.h>
-#include <modules/opengl/shader/shadermanager.h>
+#pragma once
+
+#include <inviwo/opentensorvisvtk/opentensorvisvtkmoduledefine.h>
+#include <inviwo/core/processors/processor.h>
+#include <inviwo/core/ports/volumeport.h>
+#include <inviwo/vtk/ports/vtkdatasetport.h>
 
 namespace inviwo {
 
-FeatureLevelSetsGLModule::FeatureLevelSetsGLModule(InviwoApplication* app)
-    : InviwoModule(app, "FeatureLevelSetsGL") {
-    ShaderManager::getPtr()->addShaderSearchPath(getPath(ModulePath::GLSL));
+/** \docpage{org.inviwo.VolumeToVTKImageDataProcessor, Volume To VTKImage Data Processor}
+ * ![](org.inviwo.VolumeToVTKImageDataProcessor.png?classIdentifier=org.inviwo.VolumeToVTKImageDataProcessor)
+ * Explanation of how to use the processor.
+ *
+ * ### Inports
+ *   * __<Inport1>__ <description>.
+ *
+ * ### Outports
+ *   * __<Outport1>__ <description>.
+ *
+ * ### Properties
+ *   * __<Prop1>__ <description>.
+ *   * __<Prop2>__ <description>
+ */
+class IVW_MODULE_OPENTENSORVISVTK_API VolumeToVTKImageDataProcessor : public Processor {
+public:
+    VolumeToVTKImageDataProcessor();
+    virtual ~VolumeToVTKImageDataProcessor() = default;
 
-    registerProcessor<FeatureLevelSetProcessorGL>();
-    registerProperty<ImplicitFunctionTraitProperty>();
-    registerProperty<PointTraitProperty>();
-    registerProperty<RangeTraitProperty>();
-}
+    virtual void process() override;
+
+    virtual const ProcessorInfo getProcessorInfo() const override;
+    static const ProcessorInfo processorInfo_;
+
+private:
+    VolumeInport volumeInport_;
+    VTKDataSetOutport vtkDataSetOutport_;
+};
 
 }  // namespace inviwo

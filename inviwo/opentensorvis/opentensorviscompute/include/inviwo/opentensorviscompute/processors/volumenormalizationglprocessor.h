@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2016-2021 Inviwo Foundation
+ * Copyright (c) 2021 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,64 +30,60 @@
 #pragma once
 
 #include <inviwo/opentensorviscompute/opentensorviscomputemoduledefine.h>
-#include <modules/opengl/shader/shader.h>
-#include <inviwo/core/datastructures/volume/volume.h>
+#include <inviwo/core/processors/processor.h>
+#include <inviwo/core/properties/compositeproperty.h>
+#include <inviwo/core/properties/boolproperty.h>
+#include <inviwo/core/ports/volumeport.h>
+#include <inviwo/opentensorviscompute/algorithm/volumenormalizationgl.h>
 
 namespace inviwo {
-/** \class VolumeNormalization
+
+/** \docpage{org.inviwo.VolumeNormalizationGLProcessor, Volume Normalization Processor}
+ * ![](org.inviwo.VolumeNormalizationGLProcessor.png?classIdentifier=org.inviwo.VolumeNormalizationGLProcessor)
  *
- * GL implementation of volume normalization. The algorithm takes in a volume and normalized its
- * data in the selected channels to range [0,1].
+ * Normalizes the selected channels of the input volume to range [0,1].
+ * Note that this algorithm normalizes channels independently, it does not normalize a multi-channel
+ * volume in terms of vector norms!
+ *
+ * ### Inputs
+ *   * __Volume inport__ Input Volume
+ *
+ * ### Outports
+ *   * __Volume outport__ Normalized volume (if so selected)
+ *
+ * ### Properties
+ *   * __Channels__ Check the boxes for those channels you wish to normalize to range [0,1]
+ */
+
+/**
+ * \class VolumeNormalizationGLProcessor
+ *
+ * Enables the usage of the %VolumeNormalization algorithm. For details about the algorithm,
+ * please see VolumeNormalization.
  * Note that this algorithm normalizes channels independently, it does not normalize a multi-channel
  * volume in terms of vector norms!
  */
-class IVW_MODULE_OPENTENSORVISCOMPUTE_API VolumeNormalization {
+class IVW_MODULE_OPENTENSORVISCOMPUTE_API VolumeNormalizationGLProcessor : public Processor {
 public:
-    template <typename Callback>
-    VolumeNormalization(Callback C) : VolumeNormalization() {
-        shader_.onReload(C);
-    }
+    VolumeNormalizationGLProcessor();
+    virtual ~VolumeNormalizationGLProcessor() = default;
 
-    VolumeNormalization();
+    virtual void process() override;
 
-    virtual ~VolumeNormalization() = default;
-
-    /**
-     * Performs the normalization on the GPU.
-     *
-     * @param volume Input volume to be normalized.
-     * @return A volume whose selected channels have been normalized.
-     */
-    std::shared_ptr<Volume> normalize(const Volume& volume);
-
-    /**
-     * Sets the channel that are to be normalized. In practice, this method in-/ejects shader
-     * defines for every channel.
-     *
-     * @param channel Channel for which the normalization should be set to true or false.
-     * @param normalize Boolean value indicating whether or not the selected channel should be
-     * normalized.
-     */
-    void setNormalizeChannel(size_t channel, bool normalize);
-
-    /**
-     * Sets the channels that are to be normalized. In practice, this method in-/ejects shader
-     * defines for every channel.
-     *
-     * @param normalize Set of boolean values indicating which channels to normalize.
-     */
-    void setNormalizeChannels(bvec4 normalize);
-
-    /**
-     * Resets the normalization settings. Channel 0 is set to true, rest to false.
-     */
-    void reset();
-
-protected:
-    Shader shader_;
+    virtual const ProcessorInfo getProcessorInfo() const override;
+    static const ProcessorInfo processorInfo_;
 
 private:
-    bool needsCompilation_;
+    VolumeInport volumeInport_;
+    VolumeOutport volumeOutport_;
+
+    CompositeProperty channels_;
+    BoolProperty normalizeChannel0_;
+    BoolProperty normalizeChannel1_;
+    BoolProperty normalizeChannel2_;
+    BoolProperty normalizeChannel3_;
+
+    VolumeNormalizationGL volumeNormalization_;
 };
 
 }  // namespace inviwo

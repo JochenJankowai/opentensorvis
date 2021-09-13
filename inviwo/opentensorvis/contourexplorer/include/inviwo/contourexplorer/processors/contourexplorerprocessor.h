@@ -40,6 +40,7 @@
 #include <inviwo/core/properties/cameraproperty.h>
 #include <modules/opengl/shader/shader.h>
 #include <inviwo/core/interaction/pickingmapper.h>
+#include <modules/brushingandlinking/ports/brushingandlinkingports.h>
 
 namespace inviwo {
 
@@ -83,6 +84,8 @@ public:
     VolumeInport inport_;
     ImageInport backgroundPort_;
     ImageOutport outport_;
+    BrushingAndLinkingInport brushingAndLinkingInport_;
+
     Shader shader_;
 
     FloatVec3Property planeNormal_;

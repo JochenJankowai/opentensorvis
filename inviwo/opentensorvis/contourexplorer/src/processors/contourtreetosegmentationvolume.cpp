@@ -48,15 +48,23 @@ const ProcessorInfo ContourTreeToSegmentationVolume::getProcessorInfo() const {
 
 ContourTreeToSegmentationVolume::ContourTreeToSegmentationVolume()
     : Processor()
-    , contourTreeInport_("contourTreeInport")
     , volumeInport_("volumeInport")
     , volumeOutport_("volumeOutport") {
 
-    addPorts(volumeInport_, contourTreeInport_, volumeOutport_);
+    addPorts(volumeInport_,  volumeOutport_);
 }
 
 void ContourTreeToSegmentationVolume::process() {
-    auto contourTree = contourTreeInport_.getData()->tree;
+    /*auto tree = treeInport_.getData();
+    auto ttkTree = tree->tree;
+
+    if (tree->type != topology::TreeType::Split) {
+        LogError("Not a split tree.");
+        return;
+    }
+
+    auto splitTree = ttkTree->getSplitTree();
+
     auto inputVolume = volumeInport_.getData();
 
     const auto dimensions = inputVolume->getDimensions();
@@ -71,17 +79,22 @@ void ContourTreeToSegmentationVolume::process() {
 
     std::vector<ttk::ftm::idSuperArc> ids(numberOfVoxels);
 
-    for (ttk::SimplexId i{0}; i < static_cast<ttk::SimplexId>(numberOfVoxels); ++i) {
-        ids[i] = contourTree->getCorrespondingSuperArcId(i);
+    LogInfo(fmt::format("Number of voxels: {}", numberOfVoxels));
+
+    for (size_t i{0}; i < numberOfVoxels; ++i) {
+        ids[i] = splitTree->getCorrespondingSuperArcId(i);
     }
 
-    std::vector<ttk::ftm::idSuperArc> uids(ids);
+    std::vector uids(ids);
 
-    std::unique(std::begin(uids), std::end(uids));
+    std::sort(std::begin(uids), std::end(uids));
+    uids.erase(std::unique(std::begin(uids), std::end(uids)), std::end(uids));
+
+    LogInfo(fmt::format("Unique ids: {}", uids.size()));
 
     std::map<ttk::ftm::idSuperArc, ttk::ftm::idSuperArc> mapping;
 
-    for (size_t u{0}; u < uids.size(); ++u) {
+    for (ttk::ftm::idSuperArc u{0}; u < uids.size(); ++u) {
         mapping.insert_or_assign(uids[u], u);
     }
 
@@ -94,7 +107,10 @@ void ContourTreeToSegmentationVolume::process() {
 
     std::copy(std::begin(ids), std::end(ids), data);
 
-    volumeOutport_.setData(outputVolume);
+    outputVolume->dataMap_.dataRange = outputVolume->dataMap_.valueRange =
+        dvec2(0, uids.size() - 1);
+
+    volumeOutport_.setData(outputVolume);*/
 }
 
 }  // namespace inviwo

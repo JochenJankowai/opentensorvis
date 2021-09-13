@@ -27,23 +27,33 @@
  *
  *********************************************************************************/
 
-#include <inviwo/featurelevelsetsgl/featurelevelsetsglmodule.h>
-#include <inviwo/featurelevelsetsgl/processors/featurelevelsetprocessorgl.h>
-#include <inviwo/featurelevelsetsgl/properties/implicitfunctiontraitproperty.h>
-#include <inviwo/featurelevelsetsgl/properties/pointtraitproperty.h>
-#include <inviwo/featurelevelsetsgl/properties/rangetraitproperty.h>
-#include <modules/opengl/shader/shadermanager.h>
+#include <inviwo/opentensorvisvtk/processors/volumetovtkimagedataprocessor.h>
+#include <inviwo/opentensorvisvtk/algorithm/volumetovtkimagedata.h>
 
 namespace inviwo {
 
-FeatureLevelSetsGLModule::FeatureLevelSetsGLModule(InviwoApplication* app)
-    : InviwoModule(app, "FeatureLevelSetsGL") {
-    ShaderManager::getPtr()->addShaderSearchPath(getPath(ModulePath::GLSL));
+// The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
+const ProcessorInfo VolumeToVTKImageDataProcessor::processorInfo_{
+    "org.inviwo.VolumeToVTKImageDataProcessor",  // Class identifier
+    "Volume To VTK Image Data Processor",        // Display name
+    "OpenTensorVis",                             // Category
+    CodeState::Experimental,                     // Code state
+    Tags::CPU,                                   // Tags
+};
+const ProcessorInfo VolumeToVTKImageDataProcessor::getProcessorInfo() const {
+    return processorInfo_;
+}
 
-    registerProcessor<FeatureLevelSetProcessorGL>();
-    registerProperty<ImplicitFunctionTraitProperty>();
-    registerProperty<PointTraitProperty>();
-    registerProperty<RangeTraitProperty>();
+VolumeToVTKImageDataProcessor::VolumeToVTKImageDataProcessor()
+    : Processor(), volumeInport_("volumeInport"), vtkDataSetOutport_("vtkDataSetOutport") {
+
+    addPorts(volumeInport_, vtkDataSetOutport_);
+}
+
+void VolumeToVTKImageDataProcessor::process() {
+    VolumeToVTKImageData converter;
+    vtkDataSetOutport_.setData(
+        std::make_shared<VTKDataSet>(converter.convert(volumeInport_.getData())));
 }
 
 }  // namespace inviwo

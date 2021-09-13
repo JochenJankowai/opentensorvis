@@ -27,23 +27,42 @@
  *
  *********************************************************************************/
 
-#include <inviwo/featurelevelsetsgl/featurelevelsetsglmodule.h>
-#include <inviwo/featurelevelsetsgl/processors/featurelevelsetprocessorgl.h>
-#include <inviwo/featurelevelsetsgl/properties/implicitfunctiontraitproperty.h>
-#include <inviwo/featurelevelsetsgl/properties/pointtraitproperty.h>
-#include <inviwo/featurelevelsetsgl/properties/rangetraitproperty.h>
-#include <modules/opengl/shader/shadermanager.h>
+#include <inviwo/opentensorviscompute/processors/volumereductionglprocessor.h>
 
 namespace inviwo {
 
-FeatureLevelSetsGLModule::FeatureLevelSetsGLModule(InviwoApplication* app)
-    : InviwoModule(app, "FeatureLevelSetsGL") {
-    ShaderManager::getPtr()->addShaderSearchPath(getPath(ModulePath::GLSL));
+// The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
+const ProcessorInfo VolumeReductionGLProcessor::processorInfo_{
+    "org.inviwo.VolumeReductionGLProcessor",  // Class identifier
+    "Volume Reduction Processor",             // Display name
+    "OpenTensorVis",                          // Category
+    CodeState::Experimental,                  // Code state
+    Tags::GL,                                 // Tags
+};
+const ProcessorInfo VolumeReductionGLProcessor::getProcessorInfo() const { return processorInfo_; }
 
-    registerProcessor<FeatureLevelSetProcessorGL>();
-    registerProperty<ImplicitFunctionTraitProperty>();
-    registerProperty<PointTraitProperty>();
-    registerProperty<RangeTraitProperty>();
+VolumeReductionGLProcessor::VolumeReductionGLProcessor()
+    : Processor()
+    , volumeInport_("volumeInport")
+    , volumeOutport_("volumeOutport")
+    , reductionOperator_("", "",
+                         {{"min", "Min", ReductionOperator::Min},
+                          {"max", "Max", ReductionOperator::Max},
+                          {"sum", "Sum", ReductionOperator::Sum}}) {
+
+    addPorts(volumeInport_, volumeOutport_);
+
+    addProperties(reductionOperator_);
+}
+
+void VolumeReductionGLProcessor::process() {
+    const auto reduced = gpuReduction_.reduce(volumeInport_.getData(), reductionOperator_.get());
+
+    const auto val = reduced->getRepresentation<VolumeRAM>()->getAsDouble(size3_t{0});
+
+    LogInfo(fmt::format("Reduced value: {}", val));
+
+    volumeOutport_.setData(reduced);
 }
 
 }  // namespace inviwo

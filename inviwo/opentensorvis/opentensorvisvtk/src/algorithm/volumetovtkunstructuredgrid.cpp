@@ -8,23 +8,25 @@
 #include <vtkSmartPointer.h>
 #include <vtkAOSDataArrayTemplate.h>
 #include <vtkPointData.h>
+#include <vtkDelaunay3D.h>
 #include <warn/pop>
 
+#include <inviwo/core/datastructures/volume/volumeramprecision.h>
+#include <inviwo/core/util/formatdispatching.h>
+
 namespace inviwo {
-vtkSmartPointer<vtkUnstructuredGrid> VolumeToUnstructuredGrid::convert(
+vtkSmartPointer<vtkUnstructuredGrid> VolumeToVTKUnstructuredGrid::convert(
     std::shared_ptr<const Volume> volume, const std::string& name) const {
     const auto volumeRAM = volume->getRepresentation<VolumeRAM>();
 
     const auto dimensions = volume->getDimensions();
     const auto basis = volume->getBasis();
-    const auto basisVectors =
-        mat3{glm::normalize(basis[0]), glm::normalize(basis[1]), glm::normalize(basis[2])};
-
+    
     auto getExtents = [basis]() {
-        return vec3{glm::length(basis[0]), glm::length(basis[1]), glm::length(basis[2])};
+        return dvec3{glm::length(basis[0]), glm::length(basis[1]), glm::length(basis[2])};
     };
 
-    auto getBounds = [dimensions]() { return vec3(dimensions - size3_t{1}); };
+    auto getBounds = [dimensions]() { return dvec3(dimensions - size3_t{1}); };
 
     auto getSpacing = [getExtents, getBounds]() { return getExtents() / getBounds(); };
 
@@ -32,23 +34,30 @@ vtkSmartPointer<vtkUnstructuredGrid> VolumeToUnstructuredGrid::convert(
 
     auto unstructuredGrid = volumeRAM->dispatch<vtkSmartPointer<vtkUnstructuredGrid>,
                                                 dispatching::filter::AllButHalvsies>(
-        [dimensions, spacing, basisVectors, name](auto vrprecision) {
-            using Type = typename util::PrecisionValueType<decltype(vrprecision)>::type;
+        [dimensions, spacing, name](auto vrprecision) {
+            /*
+             * This gives the template argument type for VolumeRamPrecision, e.g. vec3
+             */
+            using Type = util::PrecisionValueType<decltype(vrprecision)>;
+            /*
+             * This extracts the template argument type for glm types, e.g. float for vec3
+             */
             using Precision = typename util::value_type<Type>::type;
 
             constexpr auto numberOfComponents = util::extent<Type>::value;
 
             auto unstructuredGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
             auto points = vtkSmartPointer<vtkPoints>::New();
-
-            const auto fBounds = dvec3(dimensions - size3_t{1});
-
+            
+            /*
+             * For now I am always assuming an axis-aligned orthogonal basis
+             */
             for (size_t z{0}; z < dimensions.z; ++z) {
                 for (size_t y{0}; y < dimensions.y; ++y) {
                     for (size_t x{0}; x < dimensions.x; ++x) {
-                        points->InsertNextPoint(static_cast<double>(x) / fBounds.x,
-                                                static_cast<double>(y) / fBounds.y,
-                                                static_cast<double>(z) / fBounds.z);
+                        points->InsertNextPoint(static_cast<double>(x) * spacing.x,
+                                                static_cast<double>(y) * spacing.y,
+                                                static_cast<double>(z) * spacing.z);
                     }
                 }
             }
@@ -59,8 +68,10 @@ vtkSmartPointer<vtkUnstructuredGrid> VolumeToUnstructuredGrid::convert(
             dataArray->SetNumberOfComponents(numberOfComponents);
             dataArray->SetNumberOfTuples(glm::compMul(dimensions));
 
+            StrBuffer buf;
+
             for (vtkIdType i{0}; i < numberOfComponents; ++i) {
-                dataArray->SetComponentName(i, StrBuffer{"Channel {}", i}.c_str());
+                dataArray->SetComponentName(i, buf.replace("Channel {}", i).c_str());
             }
 
             dataArray->SetName(name.c_str());
@@ -75,6 +86,14 @@ vtkSmartPointer<vtkUnstructuredGrid> VolumeToUnstructuredGrid::convert(
 
             return unstructuredGrid;
         });
+
+    auto delaunay3DFilter = vtkSmartPointer<vtkDelaunay3D>::New();
+
+    delaunay3DFilter->SetInputDataObject(0, unstructuredGrid);
+    delaunay3DFilter->Update();
+    auto triangulatedDomain = delaunay3DFilter->GetOutput();
+
+    unstructuredGrid->CopyStructure(triangulatedDomain);
 
     return unstructuredGrid;
 }

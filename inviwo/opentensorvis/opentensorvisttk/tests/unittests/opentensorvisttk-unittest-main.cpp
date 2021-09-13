@@ -27,23 +27,40 @@
  *
  *********************************************************************************/
 
-#include <inviwo/featurelevelsetsgl/featurelevelsetsglmodule.h>
-#include <inviwo/featurelevelsetsgl/processors/featurelevelsetprocessorgl.h>
-#include <inviwo/featurelevelsetsgl/properties/implicitfunctiontraitproperty.h>
-#include <inviwo/featurelevelsetsgl/properties/pointtraitproperty.h>
-#include <inviwo/featurelevelsetsgl/properties/rangetraitproperty.h>
-#include <modules/opengl/shader/shadermanager.h>
+#ifdef _MSC_VER
+#pragma comment(linker, "/SUBSYSTEM:CONSOLE")
+#ifdef IVW_ENABLE_MSVC_MEM_LEAK_TEST
+#include <vld.h>
+#endif
+#endif
 
-namespace inviwo {
+#include <inviwo/core/util/logcentral.h>
+#include <inviwo/core/util/consolelogger.h>
+#include <inviwo/testutil/configurablegtesteventlistener.h>
 
-FeatureLevelSetsGLModule::FeatureLevelSetsGLModule(InviwoApplication* app)
-    : InviwoModule(app, "FeatureLevelSetsGL") {
-    ShaderManager::getPtr()->addShaderSearchPath(getPath(ModulePath::GLSL));
+#include <warn/push>
+#include <warn/ignore/all>
+#include <gtest/gtest.h>
+#include <warn/pop>
 
-    registerProcessor<FeatureLevelSetProcessorGL>();
-    registerProperty<ImplicitFunctionTraitProperty>();
-    registerProperty<PointTraitProperty>();
-    registerProperty<RangeTraitProperty>();
+int main(int argc, char** argv) {
+    using namespace inviwo;
+    LogCentral::init();
+    auto logger = std::make_shared<ConsoleLogger>();
+    LogCentral::getPtr()->setVerbosity(LogVerbosity::Error);
+    LogCentral::getPtr()->registerLogger(logger);
+
+    int ret = -1;
+    {
+#ifdef IVW_ENABLE_MSVC_MEM_LEAK_TEST
+        VLDDisable();
+        ::testing::InitGoogleTest(&argc, argv);
+        VLDEnable();
+#else
+        ::testing::InitGoogleTest(&argc, argv);
+#endif
+        inviwo::ConfigurableGTestEventListener::setup();
+        ret = RUN_ALL_TESTS();
+    }
+    return ret;
 }
-
-}  // namespace inviwo

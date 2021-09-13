@@ -26,24 +26,24 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *********************************************************************************/
-#include <inviwo/opentensorviscompute/processors/volumenormalizationprocessor.h>
+#include <inviwo/opentensorviscompute/processors/volumenormalizationglprocessor.h>
 #include <inviwo/core/network/networklock.h>
 
 namespace inviwo {
 
 // The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
-const ProcessorInfo VolumeNormalizationProcessor::processorInfo_{
-    "org.inviwo.VolumeNormalizationProcessor",  // Class identifier
-    "Volume Normalization",                     // Display name
-    "Volume Operation",                         // Category
-    CodeState::Stable,                          // Code state
-    Tags::GL,                                   // Tags
+const ProcessorInfo VolumeNormalizationGLProcessor::processorInfo_{
+    "org.inviwo.VolumeNormalizationGLProcessor",  // Class identifier
+    "Volume Normalization",                       // Display name
+    "Volume Operation",                           // Category
+    CodeState::Stable,                            // Code state
+    Tags::GL,                                     // Tags
 };
-const ProcessorInfo VolumeNormalizationProcessor::getProcessorInfo() const {
+const ProcessorInfo VolumeNormalizationGLProcessor::getProcessorInfo() const {
     return processorInfo_;
 }
 
-VolumeNormalizationProcessor::VolumeNormalizationProcessor()
+VolumeNormalizationGLProcessor::VolumeNormalizationGLProcessor()
     : Processor()
     , volumeInport_("volumeInport")
     , volumeOutport_("volumeOutport")
@@ -96,7 +96,7 @@ VolumeNormalizationProcessor::VolumeNormalizationProcessor()
         [this]() { volumeNormalization_.setNormalizeChannel(3, normalizeChannel3_.get()); });
 }
 
-void VolumeNormalizationProcessor::process() {
+void VolumeNormalizationGLProcessor::process() {
     auto inputVolume = volumeInport_.getData();
     auto channelProperties = channels_.getProperties();
 

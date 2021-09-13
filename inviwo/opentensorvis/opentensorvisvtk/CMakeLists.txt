@@ -1,10 +1,13 @@
 ivw_module(OpenTensorVisVTK)
 
 set(HEADER_FILES
+    include/inviwo/opentensorvisvtk/algorithm/volumetovtkimagedata.h
+    include/inviwo/opentensorvisvtk/algorithm/volumetovtkunstructuredgrid.h
     include/inviwo/opentensorvisvtk/opentensorvisvtkmodule.h
     include/inviwo/opentensorvisvtk/opentensorvisvtkmoduledefine.h
-    include/inviwo/opentensorvisvtk/algorithm/volumetovtkunstructuredgrid.h
     include/inviwo/opentensorvisvtk/processors/tensorfield2dtovtk.h
+    include/inviwo/opentensorvisvtk/processors/volumetovtkimagedataprocessor.h
+    include/inviwo/opentensorvisvtk/processors/volumetovtkunstructuredgridprocessor.h
     include/inviwo/opentensorvisvtk/processors/vtkdatasettotensorfield2d.h
     include/inviwo/opentensorvisvtk/processors/vtkdatasettotensorfield3d.h
     include/inviwo/opentensorvisvtk/util/util.h
@@ -12,9 +15,12 @@ set(HEADER_FILES
 ivw_group("Header Files" ${HEADER_FILES})
 
 set(SOURCE_FILES
-    src/opentensorvisvtkmodule.cpp
+    src/algorithm/volumetovtkimagedata.cpp
     src/algorithm/volumetovtkunstructuredgrid.cpp
+    src/opentensorvisvtkmodule.cpp
     src/processors/tensorfield2dtovtk.cpp
+    src/processors/volumetovtkimagedataprocessor.cpp
+    src/processors/volumetovtkunstructuredgridprocessor.cpp
     src/processors/vtkdatasettotensorfield2d.cpp
     src/processors/vtkdatasettotensorfield3d.cpp
 )

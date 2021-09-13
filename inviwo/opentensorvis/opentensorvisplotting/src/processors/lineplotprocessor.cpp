@@ -150,6 +150,8 @@ LinePlotProcessor::LinePlotProcessor()
     , splitColumn_{"splitColumn", "Split Column", dataFramePort_, true}
     , probeProperties_{"probeProperties", "Probe properties"}
     , useProbe_{"useProbe", "Enable probe", true}
+    , xProbe_{"xProbe", "X probe", true}
+    , yProbe_{"yProbe", "Y probe", true}
     , probeWidth_{"probeWidth", "Width", 1.0f, 0.1f, 4.0f, 0.1f}
     , probeColor_{"probeColor", "Color", vec4{0, 0, 0, 1}}
     , probeDashed_{"probeDashed", "Dash probe", true}
@@ -189,8 +191,9 @@ LinePlotProcessor::LinePlotProcessor()
     lineSettings_.setCollapsed(true);
     lineSettings_.setCurrentStateAsDefault();
 
-    probeProperties_.addProperties(useProbe_, probeWidth_, probeColor_, probeDashed_,
-                                   probeDashWidth_, probeGapWidth_, probeFontProperties_);
+    probeProperties_.addProperties(useProbe_, xProbe_, yProbe_, probeWidth_, probeColor_,
+                                   probeDashed_, probeDashWidth_, probeGapWidth_,
+                                   probeFontProperties_);
 
     addProperties(axisStyle_, xAxis_, yAxisList_, syncColorsWithCaptions_, dataPoints_, hoverColor_,
                   selectionColor_, margins_, axisMargin_, axisSpacing_, hovering_, lineSettings_,
@@ -337,10 +340,6 @@ void inviwo::LinePlotProcessor::drawProbe(const ivec2& dims) {
         nvgContext_.lineTo(to);
     };
 
-    auto calculateValues = []() -> vec2 {
-
-    };
-
     auto drawValues = [this](const vec2& at, const vec2& values) {
         auto text = std::string{fmt::format("[{:03.4f}, {:03.4f}]", values.x, values.y)};
         auto bounds = nvgContext_.textBounds(at, text);
@@ -373,9 +372,9 @@ void inviwo::LinePlotProcessor::drawProbe(const ivec2& dims) {
         static_cast<float>(howFarInY) / static_cast<float>(height)};
 
     if (denormalizedMousePositionX > upperRight.x - padding ||
-        denormalizedMousePositionX < lowerLeft.x+padding ||
+        denormalizedMousePositionX < lowerLeft.x + padding ||
         denormalizedMousePositionY > upperRight.y - padding ||
-        denormalizedMousePositionY < lowerLeft.y+padding) {
+        denormalizedMousePositionY < lowerLeft.y + padding) {
         return;
     }
 
@@ -384,36 +383,43 @@ void inviwo::LinePlotProcessor::drawProbe(const ivec2& dims) {
     auto from = vec2{lowerLeft.x, dims.y - denormalizedMousePositionY};
     auto to = vec2{upperRight.x - padding, dims.y - denormalizedMousePositionY};
 
-    nvgContext_.beginPath();
-    if (probeDashed_.get()) {
-        drawDashedX(from, to);
-    } else {
-        drawSolid(from, to);
+    if (yProbe_.get()) {
+        nvgContext_.beginPath();
+        if (probeDashed_.get()) {
+            drawDashedX(from, to);
+        } else {
+            drawSolid(from, to);
+        }
+        nvgContext_.strokeColor(probeColor_.get());
+        nvgContext_.strokeWidth(probeWidth_.get());
+        nvgContext_.stroke();
+        nvgContext_.closePath();
     }
-    nvgContext_.strokeColor(probeColor_.get());
-    nvgContext_.strokeWidth(probeWidth_.get());
-    nvgContext_.stroke();
-    nvgContext_.closePath();
 
-    from = vec2{denormalizedMousePositionX, dims.y - lowerLeft.y};
-    to = vec2{denormalizedMousePositionX, dims.y - upperRight.y + padding};
+    if (xProbe_.get()) {
+        from = vec2{denormalizedMousePositionX, dims.y - lowerLeft.y};
+        to = vec2{denormalizedMousePositionX, dims.y - upperRight.y + padding};
 
-    nvgContext_.beginPath();
-    if (probeDashed_.get()) {
-        drawDashedY(to, from);
-    } else {
-        drawSolid(from, to);
+        nvgContext_.beginPath();
+        if (probeDashed_.get()) {
+            drawDashedY(to, from);
+        } else {
+            drawSolid(from, to);
+        }
+        nvgContext_.strokeColor(probeColor_.get());
+        nvgContext_.strokeWidth(probeWidth_.get());
+        nvgContext_.stroke();
+        nvgContext_.closePath();
     }
-    nvgContext_.strokeColor(probeColor_.get());
-    nvgContext_.strokeWidth(probeWidth_.get());
-    nvgContext_.stroke();
-    nvgContext_.closePath();
 
     const auto xRange = vec2(xAxis_.style_.getRange());
     const auto xVal = xRange.y * normalizedMouseCoordsRelativeToViewport.x;
 
-    const auto yRange = vec2(dynamic_cast<plot::LineAxisProperty*>(yAxisList_.getProperties().front())->style_.getRange());
-    const auto yVal = ((yRange.y-yRange.x) * normalizedMouseCoordsRelativeToViewport.y)+yRange.x;
+    const auto yRange =
+        vec2(dynamic_cast<plot::LineAxisProperty*>(yAxisList_.getProperties().front())
+                 ->style_.getRange());
+    const auto yVal =
+        ((yRange.y - yRange.x) * normalizedMouseCoordsRelativeToViewport.y) + yRange.x;
 
     drawValues(vec2{denormalizedMousePositionX, dims.y - denormalizedMousePositionY},
                vec2{xVal, yVal});
