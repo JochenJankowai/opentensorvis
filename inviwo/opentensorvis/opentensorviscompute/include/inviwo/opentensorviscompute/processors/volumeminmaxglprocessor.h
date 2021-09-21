@@ -32,7 +32,7 @@
 #include <inviwo/opentensorviscompute/opentensorviscomputemoduledefine.h>
 #include <inviwo/core/processors/processor.h>
 #include <inviwo/core/ports/volumeport.h>
-#include <inviwo/opentensorviscompute/algorithm/volumereductiongl.h>
+#include <inviwo/opentensorviscompute/algorithm/volumeminmaxgl.h>
 
 namespace inviwo {
 
@@ -64,7 +64,7 @@ private:
     VolumeInport volumeInport_;
     VolumeOutport volumeOutport_;
 
-    VolumeReductionGL volumeReductionGl_;
+    VolumeMinMaxGL volumeMinMaxGl_;
 };
 
 }  // namespace inviwo

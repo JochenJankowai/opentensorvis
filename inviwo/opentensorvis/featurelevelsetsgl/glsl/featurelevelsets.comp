@@ -43,11 +43,26 @@ uniform mat4 rangeTraits[TRAIT_ALLOCATION];
 uniform int numPointTraits;
 uniform int numRangeTraits;
 
-layout (local_size_x = DIVISOR, local_size_y = DIVISOR, local_size_z = DIVISOR) in;
+layout(local_size_x = DIVISOR, local_size_y = DIVISOR, local_size_z = DIVISOR) in;
+
+// #define ENABLE_IMPLICIT_FUNCTION_1
+void implicitFunction1(in float point[NUM_VOLUMES], out float result) {
+    // #IMPLICIT_FUNCTION_1
+}
+
+// #define ENABLE_IMPLICIT_FUNCTION_2
+void implicitFunction2(in float point[NUM_VOLUMES], out float result) {
+    // #IMPLICIT_FUNCTION_2
+}
+
+// #define ENABLE_IMPLICIT_FUNCTION_3
+void implicitFunction3(in float point[NUM_VOLUMES], out float result) {
+    // #IMPLICIT_FUNCTION_3
+}
 
 void main() {
     ivec3 storePos = ivec3(gl_GlobalInvocationID);
-    
+
     ivec3 dims = textureSize(volume[0], 0);
 
     float point[NUM_VOLUMES];
@@ -61,5 +76,25 @@ void main() {
     float pointDist = minDistanceToSetOfPointTraits(point, pointTraits, numPointTraits);
     float rangeDist = minDistanceToSetOfRangeTraits(point, rangeTraits, numRangeTraits);
 
-    imageStore (dest, storePos, vec4(min(pointDist, rangeDist)));
+    float result = min(pointDist, rangeDist);
+
+#ifdef ENABLE_IMPLICIT_FUNCTION_1
+    float res = 1.0 / 0.0;
+    implicitFunction1(point, res);
+    result = min(result, res);
+#endif
+
+#ifdef ENABLE_IMPLICIT_FUNCTION_2
+    float res = 1.0 / 0.0;
+    implicitFunction2(point, res);
+    result = min(result, res);
+#endif
+
+#ifdef ENABLE_IMPLICIT_FUNCTION_3
+    float res = 1.0 / 0.0;
+    implicitFunction3(point, res);
+    result = min(result, res);
+#endif
+
+    imageStore(dest, storePos, vec4(result));
 }

@@ -76,7 +76,9 @@ FeatureLevelSetProcessorGL::FeatureLevelSetProcessorGL()
     , squaredDistance_("squaredDistance", "Use squared distance", false)
     , useVolumesDataMap_("useVolumesDataMap", "Use volume's data map", true)
     , useNormalizedValues_("useNormalizedValues", "Use normalized values", false)
+    , capMaxDistance_("capMaxDistance", "Cap max distance", true)
     , traitPropertiesContainer_("traitProperties", "Traits")
+    , injectButton_("injectButton", "Inject")
     , prevNumberOfVolumes_(1)
     , prevDivisor_(1)
     , dataRangesCache_(std::array<vec2, 4>{vec2(0), vec2(0), vec2(0), vec2(0)})
@@ -94,10 +96,10 @@ FeatureLevelSetProcessorGL::FeatureLevelSetProcessorGL()
 
     addPorts(volumes_, distanceVolumeOutport_);
     addProperties(divisor_, squaredDistance_, useVolumesDataMap_, useNormalizedValues_,
-                  traitPropertiesContainer_);
+                  capMaxDistance_, traitPropertiesContainer_, injectButton_);
 
     traitPropertiesContainer_.PropertyOwnerObservable::addObserver(this);
-    
+
     shader_.onReload([this]() { invalidate(InvalidationLevel::InvalidOutput); });
     {
         auto computeShader = shader_.getShaderObject(ShaderType::Compute);
@@ -107,11 +109,6 @@ FeatureLevelSetProcessorGL::FeatureLevelSetProcessorGL()
         computeShader->addShaderDefine("TRAIT_ALLOCATION", StrBuffer{"{}", traitAllocation_});
     }
     shader_.build();
-    
-    implicitFunctionSegment_.name = "FLS implicit function";
-    implicitFunctionSegment_.placeholder = ShaderSegment::Placeholder{"###IMPLICIT_FUNCTION###","FLS implicit function"};
-    
-    shader_.getShaderObject(ShaderType::Compute)->addSegment(implicitFunctionSegment_);
 
     divisor_.onChange([this]() {
         auto computeShader = shader_.getShaderObject(ShaderType::Compute);
@@ -281,6 +278,15 @@ FeatureLevelSetProcessorGL::FeatureLevelSetProcessorGL()
          */
         initializeAllProperties();
     });
+
+    injectButton_.onChange([this]() {
+        for (auto property : traitPropertiesContainer_.getProperties()) {
+            if (auto implicitFunctionTraitProperty =
+                    dynamic_cast<ImplicitFunctionTraitProperty*>(property)) {
+                implicitFunctionTraitProperty->inject(shader_);
+            }
+        }
+    });
 }
 
 void FeatureLevelSetProcessorGL::process() {
@@ -299,11 +305,15 @@ void FeatureLevelSetProcessorGL::process() {
 
     shader_.deactivate();
 
-    const auto min = reduction_.reduce_v(outputTexture, ReductionOperator::Min);
+    auto min = reduction_.reduce_v(outputTexture, ReductionOperator::Min);
     const auto max = reduction_.reduce_v(outputTexture, ReductionOperator::Max);
 
+    if (std::abs(max - min) < std::numeric_limits<double>::epsilon()) {
+        min = min - max;
+    }
+
     outputTexture->dataMap_.valueRange = outputTexture->dataMap_.dataRange =
-        dvec2(min, std::min(max, maxDist_));
+        dvec2(min, capMaxDistance_.get() ? std::min(max, maxDist_) : max);
 
     distanceVolumeOutport_.setData(outputTexture);
 }
@@ -339,8 +349,8 @@ std::vector<vec4> FeatureLevelSetProcessorGL::gatherPointTraits() const {
 void FeatureLevelSetProcessorGL::normalizePointTraits(std::vector<vec4>& pointTraits) const {
     for (auto& pointTrait : pointTraits) {
         for (size_t i{0}; i < 4; i++) {
-            pointTrait[i] = util::normalizeValue(pointTrait[i], dataRangesCache_[i].x,
-                                                       dataRangesCache_[i].y);
+            pointTrait[i] =
+                util::normalizeValue(pointTrait[i], dataRangesCache_[i].x, dataRangesCache_[i].y);
         }
     }
 }
@@ -562,14 +572,6 @@ void FeatureLevelSetProcessorGL::onWillAddProperty(Property* property, size_t) {
         }
 
         traitProperty->setSerializationMode(PropertySerializationMode::All);
-
-        if (auto implicitFunctionTraitProperty = dynamic_cast<ImplicitFunctionTraitProperty*>(traitProperty)) {
-            implicitFunctionTraitProperty->onChange([this]()
-            {
-                // Add or replace shader segment
-
-            });
-        }
     }
 
     if (traitPropertiesContainer_.getProperties().size() > traitAllocation_) {

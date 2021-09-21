@@ -38,6 +38,7 @@
 #include <inviwo/core/properties/propertyownerobserver.h>
 #include <inviwo/opentensorviscompute/algorithm/volumereductiongl.h>
 #include <inviwo/opentensorviscompute/algorithm/volumenormalizationgl.h>
+#include <inviwo/core/properties/buttonproperty.h>
 
 namespace inviwo {
 
@@ -70,7 +71,9 @@ private:
     BoolProperty squaredDistance_;
     BoolProperty useVolumesDataMap_;
     BoolProperty useNormalizedValues_;
+    BoolProperty capMaxDistance_;
     ListProperty traitPropertiesContainer_;
+    ButtonProperty injectButton_;
 
     // Caches
     size_t prevNumberOfVolumes_;
