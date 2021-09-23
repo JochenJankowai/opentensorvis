@@ -17,7 +17,7 @@ void ImplicitFunctionTraitProperty::inject(Shader& shader) {
     if (number.empty()) number = "1";
 
     if (originalShader_.empty()) {
-        originalShader_ = shader.getShaderObject(ShaderType::Compute)->getResource()->source();
+        originalShader_ = shader.getComputeShaderObject()->getResource()->source();
     }
 
     auto content = originalShader_;
@@ -25,7 +25,10 @@ void ImplicitFunctionTraitProperty::inject(Shader& shader) {
     replaceInString(content, "// #define ENABLE_IMPLICIT_FUNCTION_" + number,
                     "#define ENABLE_IMPLICIT_FUNCTION_" + number);
 
-    replaceInString(content, "// #IMPLICIT_FUNCTION_" + number, shaderInjection_.get());
+    auto functionCode = shaderInjection_.get();
+    replaceInString(functionCode, "\n", "\n    ");
+
+    replaceInString(content, "// #IMPLICIT_FUNCTION_" + number, functionCode);
 
     auto shaderResource = std::make_shared<StringShaderResource>("featurelevelsets.comp", content);
 
@@ -34,8 +37,8 @@ void ImplicitFunctionTraitProperty::inject(Shader& shader) {
                          shaderResource,
                      }},
                      Shader::Build::No};
-    newShader.getShaderObject(ShaderType::Compute)
-        ->setShaderDefines(shader.getShaderObject(ShaderType::Compute)->getShaderDefines());
+    newShader.getComputeShaderObject()->setShaderDefines(
+        shader.getComputeShaderObject()->getShaderDefines());
 
     shader = newShader;
 

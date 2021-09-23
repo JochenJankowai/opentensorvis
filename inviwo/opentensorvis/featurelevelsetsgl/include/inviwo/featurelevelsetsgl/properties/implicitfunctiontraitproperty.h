@@ -3,18 +3,21 @@
 #include <inviwo/featurelevelsetsgl/featurelevelsetsglmoduledefine.h>
 #include <inviwo/featurelevelsetsgl/properties/traitproperty.h>
 #include <inviwo/core/properties/stringproperty.h>
-#include <inviwo/core/properties/buttonproperty.h>
+#include <modules/opengl/shader/shader.h>
+#include <inviwo/core/datastructures/volume/volume.h>
 
 namespace inviwo {
 class IVW_MODULE_FEATURELEVELSETSGL_API ImplicitFunctionTraitProperty : public TraitProperty {
 public:
+    static constexpr std::string_view stub{"// in:  <float> point[NUM_VOLUMES]\n// out: <float> result\nresult = point[0];"};
+
     ImplicitFunctionTraitProperty() = delete;
     ImplicitFunctionTraitProperty(const ImplicitFunctionTraitProperty& p)
         : ImplicitFunctionTraitProperty(p.getIdentifier(), p.getDisplayName()) {}
 
     ImplicitFunctionTraitProperty(const std::string& identifier, const std::string& displayName)
         : TraitProperty(identifier, displayName)
-        , shaderInjection_("shaderInjection", "Implicit function", "return 0.0;",
+        , shaderInjection_("shaderInjection", "Implicit function", std::string(stub),
                            InvalidationLevel::InvalidOutput, PropertySemantics::ShaderEditor) {
         addProperties(shaderInjection_);
     }
