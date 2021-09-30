@@ -390,17 +390,22 @@ void FeatureLevelSetProcessorGL::setUniforms() {
     TextureUnitContainer cont;
 
     if (!useNormalizedValues_.get()) {
-        for (auto&& [index, vol] : util::enumerate(volumes_)) {
-            if (index >= maxVolumes_) break;
+        size_t idx{0};
+
+        for (auto& [outport, volume] : volumes_.getSourceVectorData()) {
+            if (idx >= maxVolumes_) break;
+            LogInfo("Binding " + outport->getProcessor()->getDisplayName() + " at index " +
+                    std::to_string(idx));
             TextureUnit unit;
-            utilgl::bindTexture(*vol, unit);
-            shader_.setUniform(StrBuffer{"volume[{}]", index}, unit.getUnitNumber());
-            utilgl::setShaderUniforms(shader_, *vol, StrBuffer{"volumeParameters[{}]", index});
+            utilgl::bindTexture(*volume, unit);
+            shader_.setUniform(StrBuffer{"volume[{}]", idx}, unit.getUnitNumber());
+            utilgl::setShaderUniforms(shader_, *volume, StrBuffer{"volumeParameters[{}]", idx++});
             cont.push_back(std::move(unit));
         }
     } else {
         for (auto&& [index, volume] : util::enumerate(normalizedVolumesCache_)) {
             if (index >= maxVolumes_) break;
+            LogInfo("Binding " + volume.first + " at index " + std::to_string(index));
             auto vol = volume.second;
             TextureUnit unit;
             utilgl::bindTexture(*vol, unit);

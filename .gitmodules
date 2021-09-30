@@ -1,0 +1,3 @@
+[submodule "inviwo/opentensorvis/contourtree/ext/contour-tree"]
+	path = inviwo/opentensorvis/contourtree/ext/contour-tree
+	url = https://github.com/JochenJankowai/contour-tree.git

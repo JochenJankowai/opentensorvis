@@ -30,7 +30,8 @@ void ImplicitFunctionTraitProperty::inject(Shader& shader) {
 
     replaceInString(content, "// #IMPLICIT_FUNCTION_" + number, functionCode);
 
-    auto shaderResource = std::make_shared<StringShaderResource>("featurelevelsets.comp", content);
+    auto shaderResource =
+        std::make_shared<StringShaderResource>("featurelevelsets" + number + ".comp", content);
 
     Shader newShader{{{
                          ShaderType::Compute,
