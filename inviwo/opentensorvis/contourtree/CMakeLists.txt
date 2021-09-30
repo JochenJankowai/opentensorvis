@@ -9,9 +9,9 @@ add_subdirectory(ext/contour-tree)
 #--------------------------------------------------------------------
 # Add header files
 set(HEADER_FILES
-    include/modules/contourtree/contourtreemodule.h
-    include/modules/contourtree/contourtreemoduledefine.h
-    include/modules/contourtree/processors/contourtree.h
+    include/inviwo/contourtree/contourtreemodule.h
+    include/inviwo/contourtree/contourtreemoduledefine.h
+    include/inviwo/contourtree/processors/contourtree.h
 )
 ivw_group("Header Files" ${HEADER_FILES})
 

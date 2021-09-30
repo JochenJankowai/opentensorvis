@@ -29,10 +29,14 @@
 
 #pragma once
 
-#include <modules/contourtree/contourtreemoduledefine.h>
+#include <inviwo/contourtree/contourtreemoduledefine.h>
 #include <inviwo/core/processors/processor.h>
 #include <inviwo/core/properties/ordinalproperty.h>
 #include <inviwo/core/ports/volumeport.h>
+#include <inviwo/core/properties/templateproperty.h>
+#include <ContourTreeData.h>
+#include <SimplifyCT.h>
+#include <constants.h>
 
 namespace inviwo {
 
@@ -67,12 +71,27 @@ public:
     static const ProcessorInfo processorInfo_;
 
 private:
-    VolumeInport volumeInport_;
+    enum class FeatureType { Arc, PartitionedExtrema };
 
-    VolumeOutport fieldOutport_;
-    VolumeOutport segmentationOutport_;
+    enum class SimplificationCriterion { TopKFeatures, Threshold };
+
+    VolumeInport volumeInport_;
     
-    FloatProperty simplification_;
+    VolumeOutport segmentationOutport_;
+
+    TemplateOptionProperty<contourtree::TreeType> treeType_;
+    TemplateOptionProperty<FeatureType> featureType_;
+    TemplateOptionProperty<SimplificationCriterion> simplificationCriterion_;
+
+    IntProperty topKFeatures_;
+    FloatProperty threshold_;
+
+    bool hasData_;
+    contourtree::ContourTreeData contourTreeData_;
+    contourtree::SimplifyCT simplifyCt_;
+    std::vector<uint32_t> arcMap_;
+    
+    void computeTree();
 };
 
 }  // namespace inviwo

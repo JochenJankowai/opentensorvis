@@ -27,8 +27,8 @@
  *
  *********************************************************************************/
 
-#include <modules/contourtree/contourtreemodule.h>
-#include <modules/contourtree/processors/contourtree.h>
+#include <inviwo/contourtree/contourtreemodule.h>
+#include <inviwo/contourtree/processors/contourtree.h>
 
 namespace inviwo {
 

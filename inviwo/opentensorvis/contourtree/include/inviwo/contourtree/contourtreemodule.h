@@ -28,7 +28,7 @@
  *********************************************************************************/
 #pragma once
 
-#include <modules/contourtree/contourtreemoduledefine.h>
+#include <inviwo//contourtree/contourtreemoduledefine.h>
 #include <inviwo/core/common/inviwomodule.h>
 
 namespace inviwo {

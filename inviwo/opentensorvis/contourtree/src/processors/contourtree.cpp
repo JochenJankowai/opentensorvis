@@ -27,14 +27,15 @@
  *
  *********************************************************************************/
 
-#include <modules/contourtree/processors/contourtree.h>
+#include <inviwo/contourtree/processors/contourtree.h>
 #include <inviwo/core/datastructures/volume/volumeram.h>
 #include <inviwo/core/datastructures/volume/volumeramprecision.h>
-#include <Grid3D.hpp>
-#include <MergeTree.hpp>
-#include <ContourTreeData.hpp>
-#include <SimplifyCT.hpp>
-#include <Persistence.hpp>
+#include <Grid3D.h>
+#include <MergeTree.h>
+#include <Persistence.h>
+#include <TopologicalFeatures.h>
+#include <inviwo/core/network/networklock.h>
+#include <tuple>
 
 namespace inviwo {
 
@@ -42,70 +43,151 @@ namespace inviwo {
 const ProcessorInfo ContourTree::processorInfo_{
     "org.inviwo.ContourTree",  // Class identifier
     "Contour Tree",            // Display name
-    "Undefined",               // Category
+    "OpenTensorVis",           // Category
     CodeState::Experimental,   // Code state
-    Tags::None,                // Tags
+    Tags::CPU,                 // Tags
 };
 const ProcessorInfo ContourTree::getProcessorInfo() const { return processorInfo_; }
 
 ContourTree::ContourTree()
     : Processor()
     , volumeInport_("volumeInport")
-    , fieldOutport_("scalar_field")
     , segmentationOutport_("segmentation")
-    , simplification_("simplification", "Simplification Threshold", 0.0f, 0.0f, 1.0f) {
+    , treeType_("treeType", "Tree type",
+                {{"join", "Join", contourtree::TreeType::JoinTree},
+                 {"split", "Split", contourtree::TreeType::SplitTree},
+                 {"contour", "Contour", contourtree::TreeType::ContourTree}},
+                0)
+    , featureType_("featureType", "Feature type",
+                   {{"arc", "Arc", FeatureType::Arc},
+                    {"partitionedExtrema", "Partitioned extrema", FeatureType::PartitionedExtrema}},
+                   1)
+    , simplificationCriterion_("simplificationCriterion", "Simplification criterion",
+                               {{"topk", "Top k features", SimplificationCriterion::TopKFeatures},
+                                {"threshold", "Threshold", SimplificationCriterion::Threshold}},
+                               0)
+    , topKFeatures_("topKFeatures", "Top k features", 1, 0)
+    , threshold_("threshold", "Threshold", 0.0f, 0.0f, 1.0f, 0.0001f)
+    , hasData_(false) {
 
-    addPorts(volumeInport_, fieldOutport_, segmentationOutport_);
+    addPorts(volumeInport_, segmentationOutport_);
 
-    addProperties(simplification_);
+    topKFeatures_.visibilityDependsOn(simplificationCriterion_,
+                                      [](TemplateOptionProperty<SimplificationCriterion>& p) {
+                                          return p.get() == SimplificationCriterion::TopKFeatures;
+                                      });
+
+    threshold_.visibilityDependsOn(simplificationCriterion_,
+                                   [](TemplateOptionProperty<SimplificationCriterion>& p) {
+                                       return p.get() == SimplificationCriterion::Threshold;
+                                   });
+
+    addProperties(treeType_, featureType_, simplificationCriterion_, topKFeatures_, threshold_);
+
+    treeType_.onChange([this]() { computeTree(); });
+    volumeInport_.onChange([this]() { computeTree(); });
 }
 
-void ContourTree::process() {
-    auto inputVolume = volumeInport_.getData();
-
-    if (inputVolume->getDataFormat()->getComponents() != 1) {
-        LogWarn("Volume has more than once channel. Aborting.");
+void ContourTree::computeTree() {
+    if (!volumeInport_.hasData() || !volumeInport_.getData()) {
         return;
     }
 
-    auto seg =
+    auto inputVolume = volumeInport_.getData();
+
+    if (inputVolume->getDataFormat()->getComponents() != 1) {
+        LogWarn("Volume has more than one channel. Aborting.");
+        return;
+    }
+
+    auto [contourTreeData, simplifyCt, arcMap] =
         inputVolume->getRepresentation<VolumeRAM>()
-            ->dispatch<std::shared_ptr<Volume>, dispatching::filter::Scalars>(
-                [&](auto vrprecision) {
-                    using ValueType = util::PrecisionValueType<decltype(vrprecision)>;
+            ->dispatch<std::tuple<contourtree::ContourTreeData, contourtree::SimplifyCT,
+                                  std::vector<uint32_t>>,
+                       dispatching::filter::Scalars>([&](auto vrprecision) {
+                using ValueType = util::PrecisionValueType<decltype(vrprecision)>;
 
-                    const auto dimensions = inputVolume->getDimensions();
+                const auto dimensions = inputVolume->getDimensions();
 
-                    contourtree::Grid3D<ValueType> grid(static_cast<int>(dimensions.x),
-                                                        static_cast<int>(dimensions.y),
-                                                        static_cast<int>(dimensions.z));
+                contourtree::Grid3D<ValueType> grid(static_cast<int>(dimensions.x),
+                                                    static_cast<int>(dimensions.y),
+                                                    static_cast<int>(dimensions.z));
 
-                    grid.fnVals.resize(glm::compMul(dimensions));
-                    auto gridData = grid.fnVals.data();
+                grid.fnVals.resize(glm::compMul(dimensions));
+                auto gridData = grid.fnVals.data();
 
-                    auto volumeData = vrprecision->getDataTyped();
+                auto volumeData = vrprecision->getDataTyped();
 
-                    std::memcpy(gridData, volumeData, glm::compMul(dimensions) * sizeof(ValueType));
+                std::memcpy(gridData, volumeData, glm::compMul(dimensions) * sizeof(ValueType));
 
-                    contourtree::MergeTree contourTree;
+                contourtree::MergeTree contourTree;
 
-                    const auto treeType = contourtree::TreeType::ContourTree;
+                const auto treeType = treeType_.get();
 
-                    contourTree.computeTree(&grid, treeType);
+                contourTree.computeTree(&grid, treeType);
 
-                    contourtree::ContourTreeData ctdata(contourTree);
+                contourTree.generateArrays(treeType);
 
-                    contourtree::SimplifyCT sim;
-                    sim.setInput(&ctdata);
+                contourtree::ContourTreeData contourTreeData(contourTree);
 
-                    auto simFn = new contourtree::Persistence(ctdata);
+                contourtree::SimplifyCT simplifyCt;
 
-                    sim.simplify(simFn);
+                simplifyCt.setInput(&contourTreeData);
 
-                    return std::make_shared<Volume>();
-                });
+                const auto simFn = new contourtree::Persistence(contourTreeData);
 
-    segmentationOutport_.setData(seg);
+                simplifyCt.simplify(simFn);
+                simplifyCt.computeWeights();
+
+                return std::tuple(contourTreeData, simplifyCt, contourTree.arcMap);
+            });
+
+    contourTreeData_ = contourTreeData;
+    simplifyCt_ = simplifyCt;
+    arcMap_ = arcMap;
+
+    hasData_ = true;
+}
+
+void ContourTree::process() {
+    if (!hasData_) return;
+
+    const bool partition = featureType_.get() == FeatureType::Arc ? false : true;
+
+    contourtree::TopologicalFeatures topologicalFeatures;
+    topologicalFeatures.loadDataFromArrays(contourTreeData_, simplifyCt_.order, simplifyCt_.weights,
+                                           partition);
+
+    std::vector<contourtree::Feature> features;
+
+    const int topKFeatures = simplificationCriterion_.get() == SimplificationCriterion::Threshold
+                                 ? -1
+                                 : topKFeatures_.get();
+
+    if (featureType_.get() == FeatureType::Arc) {
+        features = topologicalFeatures.getArcFeatures(topKFeatures, threshold_.get());
+    }
+    if (featureType_.get() == FeatureType::PartitionedExtrema) {
+        features =
+            topologicalFeatures.getPartitionedExtremaFeatures(topKFeatures, threshold_.get());
+    }
+
+    LogInfo(fmt::format("{} features selected.", features.size()));
+
+    auto inputVolume = volumeInport_.getData();
+
+    auto segmentationVolume =
+        std::make_shared<Volume>(inputVolume->getDimensions(), DataUInt16::get());
+
+    auto rawData = dynamic_cast<const VolumeRAMPrecision<glm::u16>*>(
+                       segmentationVolume->getRepresentation<VolumeRAM>())
+                       ->getDataTyped();
+
+    /*
+     * Look up which feature the arcId in arcMap belongs to and assign value. That should be it.
+     */
+    for (auto feature : features) {
+    }
 }
 
 }  // namespace inviwo
