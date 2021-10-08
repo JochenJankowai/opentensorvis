@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2017-2018 Inviwo Foundation
+ * Copyright (c) 2021 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,20 +27,50 @@
  *
  *********************************************************************************/
 
-#ifndef IVW_TENSORVISBASEMODULE_H
-#define IVW_TENSORVISBASEMODULE_H
+#pragma once
 
-#include <inviwo/tensorvisbase/tensorvisbasemoduledefine.h>
-#include <inviwo/core/common/inviwomodule.h>
-
+#include <inviwo/contourtree/contourtreemoduledefine.h>
+#include <inviwo/core/processors/processor.h>
+#include <inviwo/core/ports/volumeport.h>
+#include <modules/brushingandlinking/ports/brushingandlinkingports.h>
+#include <inviwo/core/properties/compositeproperty.h>
+#include <inviwo/opentensorviscompute/algorithm/volumereductiongl.h>
 namespace inviwo {
 
-class IVW_MODULE_TENSORVISBASE_API TensorVisBaseModule : public InviwoModule {
+/** \docpage{org.inviwo.VolumeLabelSelectionProcessor, Volume Label Selection Processor}
+ * ![](org.inviwo.VolumeLabelSelectionProcessor.png?classIdentifier=org.inviwo.VolumeLabelSelectionProcessor)
+ * Explanation of how to use the processor.
+ *
+ * ### Inports
+ *   * __<Inport1>__ <description>.
+ *
+ * ### Outports
+ *   * __<Outport1>__ <description>.
+ *
+ * ### Properties
+ *   * __<Prop1>__ <description>.
+ *   * __<Prop2>__ <description>
+ */
+class IVW_MODULE_CONTOURTREE_API VolumeLabelSelectionProcessor : public Processor {
 public:
-    TensorVisBaseModule(InviwoApplication* app);
-    virtual ~TensorVisBaseModule() = default;
+    VolumeLabelSelectionProcessor();
+    virtual ~VolumeLabelSelectionProcessor() = default;
+
+    virtual void initializeResources() override;
+    virtual void process() override;
+
+    virtual const ProcessorInfo getProcessorInfo() const override;
+    static const ProcessorInfo processorInfo_;
+
+private:
+    VolumeInport volumeInport_;
+    BrushingAndLinkingInport linkingInport_;
+
+    CompositeProperty labels_;
+
+    VolumeReductionGL volumeReductionGl_;
+
+    void updateSelection();
 };
 
-} // namespace
-
-#endif // IVW_TENSORVISBASEMODULE_H
+}  // namespace inviwo

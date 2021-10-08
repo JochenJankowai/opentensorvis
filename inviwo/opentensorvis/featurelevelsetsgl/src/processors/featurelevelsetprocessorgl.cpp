@@ -199,7 +199,7 @@ FeatureLevelSetProcessorGL::FeatureLevelSetProcessorGL()
          */
         const auto pair =
             std::find_if(std::begin(sourceVectorData), std::end(sourceVectorData),
-                         [&name = namesToAdd.front()](auto pair) {
+                         [&name = namesToAdd.front()](const auto& pair) {
                              return pair.first->getProcessor()->getDisplayName() == name;
                          });
 
@@ -285,6 +285,13 @@ FeatureLevelSetProcessorGL::FeatureLevelSetProcessorGL()
                     dynamic_cast<ImplicitFunctionTraitProperty*>(property)) {
                 implicitFunctionTraitProperty->inject(shader_);
             }
+        }
+    });
+
+    capMaxDistance_.onChange([this]() {
+        if (capMaxDistance_.get()) {
+            LogInfoCustom("Feature Level Sets",
+                          fmt::format("Capping max distance at {}.", maxDist_));
         }
     });
 }
@@ -433,9 +440,28 @@ void FeatureLevelSetProcessorGL::setUniforms() {
 }
 
 std::shared_ptr<Volume> FeatureLevelSetProcessorGL::bindOutputTexture() {
-    const size3_t dims = volumes_.getData()->getDimensions();
+    auto inputVolumes = volumes_.getVectorData();
+    const size3_t dims = inputVolumes.front()->getDimensions();
+    auto referenceBasis = inputVolumes.front()->getBasis();
+    auto referenceOffset = inputVolumes.front()->getOffset();
+
+    for (auto volume : inputVolumes) {
+        if (glm::any(glm::notEqual(referenceBasis, volume->getBasis()))) {
+            LogWarn(
+                "Input volumes do not have the same bases. Setting basis of input volume 1 for the "
+                "output volume.");
+        }
+        if (glm::any(glm::notEqual(referenceOffset, volume->getOffset()))) {
+            LogWarn(
+                "Input volumes do not have the same offset. Setting offset of input volume 1 for "
+                "the "
+                "output volume.");
+        }
+    }
 
     auto distanceVolume = std::make_shared<Volume>(dims, DataFloat32::get());
+    distanceVolume->setBasis(inputVolumes.front()->getBasis());
+    distanceVolume->setOffset(inputVolumes.front()->getOffset());
     auto distanceVolumeGL = distanceVolume->getEditableRepresentation<VolumeGL>();
 
     glActiveTexture(GL_TEXTURE0);

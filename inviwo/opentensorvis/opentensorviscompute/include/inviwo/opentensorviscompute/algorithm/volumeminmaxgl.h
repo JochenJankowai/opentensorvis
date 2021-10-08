@@ -51,10 +51,15 @@ public:
      * channel you should look at VolumeReductionGL.
      *
      * @param volume Input volume.
+     * @param clampingStatus Indicating whether or not the calculation of the min/max value
+     * should be clamped to a certain range. This is for example handy for volumes where special
+     * regions are marked with voxel values of INT_MAX or the like.
+     * @param range The range the calculation should be clamped to.
      *
      * @returns Aggregated min/max values.
      */
-    dvec2 minmax(std::shared_ptr<const Volume> volume);
+    dvec2 minmax(std::shared_ptr<const Volume> volume,
+                 ClampingStatus clampingStatus = ClampingStatus::Off, const vec2& range = vec2{0});
 
 protected:
     VolumeReductionGL volumeReductionGL_;

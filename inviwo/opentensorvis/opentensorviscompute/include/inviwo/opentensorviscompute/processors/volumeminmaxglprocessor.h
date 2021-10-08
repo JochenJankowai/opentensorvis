@@ -33,6 +33,8 @@
 #include <inviwo/core/processors/processor.h>
 #include <inviwo/core/ports/volumeport.h>
 #include <inviwo/opentensorviscompute/algorithm/volumeminmaxgl.h>
+#include <inviwo/core/properties/ordinalproperty.h>
+#include <inviwo/core/properties/optionproperty.h>
 
 namespace inviwo {
 
@@ -65,6 +67,9 @@ private:
     VolumeOutport volumeOutport_;
 
     VolumeMinMaxGL volumeMinMaxGl_;
+
+    TemplateOptionProperty<ClampingStatus> clampingStatus_;
+    FloatMinMaxProperty clampingRange_;
 };
 
 }  // namespace inviwo

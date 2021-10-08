@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2017-2018 Inviwo Foundation
+ * Copyright (c) 2021 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,25 +24,24 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  *********************************************************************************/
 
-#ifndef IVW_TENSORFIELDTOVOLUME_H
-#define IVW_TENSORFIELDTOVOLUME_H
+#pragma once
 
-#include <inviwo/tensorvisbase/tensorvisbasemoduledefine.h>
-#include <inviwo/core/common/inviwo.h>
+#include <inviwo/contourtree/contourtreemoduledefine.h>
 #include <inviwo/core/processors/processor.h>
+#include <inviwo/core/properties/ordinalproperty.h>
 #include <inviwo/core/ports/volumeport.h>
-#include <inviwo/tensorvisbase/ports/tensorfieldport.h>
-#include <inviwo/core/properties/boolproperty.h>
-#include <inviwo/core/properties/optionproperty.h>
-#include <inviwo/tensorvisbase/datastructures/tensorfieldmetadata.h>
+#include <inviwo/core/properties/templateproperty.h>
+#include <ContourTreeData.h>
+#include <SimplifyCT.h>
+#include <constants.h>
 
 namespace inviwo {
 
-/** \docpage{org.inviwo.TensorFieldSubset, Tensor Field Subset}
- * ![](org.inviwo.TensorFieldSubset.png?classIdentifier=org.inviwo.TensorFieldSubset)
+/** \docpage{org.inviwo.ContourTreeProcessor, Contour Tree}
+ * ![](org.inviwo.ContourTreeProcessor.png?classIdentifier=org.inviwo.ContourTreeProcessor)
  * Explanation of how to use the processor.
  *
  * ### Inports
@@ -50,37 +49,49 @@ namespace inviwo {
  *
  * ### Outports
  *   * __<Outport1>__ <description>.
- * 
+ *   * __<Outport2>__ <description>.
+ *
  * ### Properties
  *   * __<Prop1>__ <description>.
  *   * __<Prop2>__ <description>
  */
 
-
 /**
- * \class TensorFieldSubset
  * \brief VERY_BRIEFLY_DESCRIBE_THE_PROCESSOR
  * DESCRIBE_THE_PROCESSOR_FROM_A_DEVELOPER_PERSPECTIVE
  */
-class IVW_MODULE_TENSORVISBASE_API TensorFieldToVolume : public Processor {
+class IVW_MODULE_CONTOURTREE_API ContourTreeProcessor : public Processor {
 public:
-    TensorFieldToVolume();
-    virtual ~TensorFieldToVolume() = default;
-     
+    ContourTreeProcessor();
+    virtual ~ContourTreeProcessor() = default;
+
     virtual void process() override;
 
     virtual const ProcessorInfo getProcessorInfo() const override;
     static const ProcessorInfo processorInfo_;
+
 private:
-    TensorField3DInport inport_;
-    VolumeOutport outport_;
+    enum class FeatureType { Arc, PartitionedExtrema };
 
-    TemplateOptionProperty<TensorFeature> feature_;
+    enum class SimplificationCriterion { TopKFeatures, Threshold };
 
-    BoolProperty normalizeVectors_;
+    VolumeInport volumeInport_;
+    
+    VolumeOutport segmentationOutport_;
+
+    TemplateOptionProperty<contourtree::TreeType> treeType_;
+    TemplateOptionProperty<FeatureType> featureType_;
+    TemplateOptionProperty<SimplificationCriterion> simplificationCriterion_;
+
+    IntProperty topKFeatures_;
+    FloatProperty threshold_;
+
+    bool hasData_;
+    contourtree::ContourTreeData contourTreeData_;
+    contourtree::SimplifyCT simplifyCt_;
+    std::vector<uint32_t> arcMap_;
+    
+    void computeTree();
 };
 
-} // namespace
-
-#endif // IVW_TENSORFIELDTOVOLUME_H
-
+}  // namespace inviwo

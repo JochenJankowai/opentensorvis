@@ -28,19 +28,21 @@
  *********************************************************************************/
 
 #include <inviwo/contourtree/contourtreemodule.h>
-#include <inviwo/contourtree/processors/contourtree.h>
+#include <inviwo/contourtree/processors/contourtreeprocessor.h>
+#include <inviwo/contourtree/processors/volumelabelselectionprocessor.h>
 
 namespace inviwo {
 
-ContourTreeModule::ContourTreeModule(InviwoApplication* app) : InviwoModule(app, "ContourTree") {
+ContourTreeModule::ContourTreeModule(InviwoApplication* app) : InviwoModule(app, "ContourTreeProcessor") {
     // Add a directory to the search path of the Shadermanager
     // ShaderManager::getPtr()->addShaderSearchPath(getPath(ModulePath::GLSL));
 
     // Register objects that can be shared with the rest of inviwo here:
 
     // Processors
-    registerProcessor<ContourTree>();
+    registerProcessor<ContourTreeProcessor>();
     // registerProcessor<ContourTreeProcessor>();
+    registerProcessor<VolumeLabelSelectionProcessor>();
 
     // Properties
     // registerProperty<ContourTreeProperty>();

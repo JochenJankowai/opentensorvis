@@ -27,7 +27,7 @@
  *
  *********************************************************************************/
 
-#include <inviwo/contourtree/processors/contourtree.h>
+#include <inviwo/contourtree/processors/ContourTreeProcessor.h>
 #include <inviwo/core/datastructures/volume/volumeram.h>
 #include <inviwo/core/datastructures/volume/volumeramprecision.h>
 #include <Grid3D.h>
@@ -40,16 +40,16 @@
 namespace inviwo {
 
 // The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
-const ProcessorInfo ContourTree::processorInfo_{
-    "org.inviwo.ContourTree",  // Class identifier
+const ProcessorInfo ContourTreeProcessor::processorInfo_{
+    "org.inviwo.ContourTreeProcessor",  // Class identifier
     "Contour Tree",            // Display name
     "OpenTensorVis",           // Category
     CodeState::Experimental,   // Code state
     Tags::CPU,                 // Tags
 };
-const ProcessorInfo ContourTree::getProcessorInfo() const { return processorInfo_; }
+const ProcessorInfo ContourTreeProcessor::getProcessorInfo() const { return processorInfo_; }
 
-ContourTree::ContourTree()
+ContourTreeProcessor::ContourTreeProcessor()
     : Processor()
     , volumeInport_("volumeInport")
     , segmentationOutport_("segmentation")
@@ -85,10 +85,12 @@ ContourTree::ContourTree()
     addProperties(treeType_, featureType_, simplificationCriterion_, topKFeatures_, threshold_);
 
     treeType_.onChange([this]() { computeTree(); });
-    volumeInport_.onChange([this]() { computeTree(); });
+    volumeInport_.onChange([this]() {
+        computeTree();
+    });
 }
 
-void ContourTree::computeTree() {
+void ContourTreeProcessor::computeTree() {
     if (!volumeInport_.hasData() || !volumeInport_.getData()) {
         return;
     }
@@ -149,7 +151,7 @@ void ContourTree::computeTree() {
     hasData_ = true;
 }
 
-void ContourTree::process() {
+void ContourTreeProcessor::process() {
     if (!hasData_) return;
 
     const bool partition = featureType_.get() == FeatureType::Arc ? false : true;
@@ -179,15 +181,45 @@ void ContourTree::process() {
     auto segmentationVolume =
         std::make_shared<Volume>(inputVolume->getDimensions(), DataUInt16::get());
 
-    auto rawData = dynamic_cast<const VolumeRAMPrecision<glm::u16>*>(
-                       segmentationVolume->getRepresentation<VolumeRAM>())
+    auto rawData = dynamic_cast<VolumeRAMPrecision<glm::u16>*>(
+                       segmentationVolume->getEditableRepresentation<VolumeRAM>())
                        ->getDataTyped();
 
     /*
      * Look up which feature the arcId in arcMap belongs to and assign value. That should be it.
      */
-    for (auto feature : features) {
+    glm::u16 n{static_cast<glm::u16>(topKFeatures-1)};
+    std::fill_n(rawData, glm::compMul(inputVolume->getDimensions()), topKFeatures);
+
+    for (const auto& feature : features) {
+
+        for (size_t i{0}; i < arcMap_.size(); ++i) {
+            const auto arcID = arcMap_[i];
+            auto& currentValue = rawData[i];
+
+            for (const auto featureArcID : feature.arcs) {
+                if (arcID == featureArcID) {
+                    currentValue = std::min(currentValue, n);
+                }
+            }
+        }
+
+        n--;
     }
+
+    LogInfo("Assigned ids:") std::unordered_set<glm::u16> s;
+    for (int i{0}; i < glm::compMul(inputVolume->getDimensions()); ++i) {
+        s.insert(rawData[i]);
+    }
+    for (auto val : s) {
+        LogInfo(fmt::format("{}", val));
+    }
+
+    segmentationVolume->dataMap_.dataRange = segmentationVolume->dataMap_.valueRange = dvec2{0, topKFeatures};
+    segmentationVolume->setBasis(inputVolume->getBasis());
+    segmentationVolume->setOffset(inputVolume->getOffset());
+
+    segmentationOutport_.setData(segmentationVolume);
 }
 
 }  // namespace inviwo

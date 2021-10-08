@@ -1,7 +1,8 @@
 # Inviwo module dependencies for current module
 # List modules on the format "Inviwo<ModuleName>Module"
 set(dependencies
-    InviwoOpenTensorVisComputeModule # Example dependency 
+    InviwoBrushingAndLinkingModule
+    InviwoOpenTensorVisComputeModule
 )
 
 # Add an alias for this module. Several modules can share an alias. 

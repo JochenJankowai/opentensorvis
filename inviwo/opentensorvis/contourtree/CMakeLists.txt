@@ -11,7 +11,8 @@ add_subdirectory(ext/contour-tree)
 set(HEADER_FILES
     include/inviwo/contourtree/contourtreemodule.h
     include/inviwo/contourtree/contourtreemoduledefine.h
-    include/inviwo/contourtree/processors/contourtree.h
+    include/inviwo/contourtree/processors/contourtreeprocessor.h
+    include/inviwo/contourtree/processors/volumelabelselectionprocessor.h
 )
 ivw_group("Header Files" ${HEADER_FILES})
 
@@ -19,7 +20,8 @@ ivw_group("Header Files" ${HEADER_FILES})
 # Add source files
 set(SOURCE_FILES
     src/contourtreemodule.cpp
-    src/processors/contourtree.cpp
+    src/processors/contourtreeprocessor.cpp
+    src/processors/volumelabelselectionprocessor.cpp
 )
 ivw_group("Source Files" ${SOURCE_FILES})
 

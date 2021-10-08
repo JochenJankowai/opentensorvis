@@ -28,13 +28,14 @@
  *********************************************************************************/
 
 #include <inviwo/opentensorviscompute/processors/volumeminmaxglprocessor.h>
+#include <inviwo/core/network/networklock.h>
 
 namespace inviwo {
 
 // The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
 const ProcessorInfo VolumeMinMaxGLProcessor::processorInfo_{
     "org.inviwo.VolumeMinMaxGLProcessor",  // Class identifier
-    "Volume Min Max GLProcessor",          // Display name
+    "Volume Min Max GL Processor",         // Display name
     "OpenTensorVis",                       // Category
     CodeState::Experimental,               // Code state
     Tags::GL,                              // Tags
@@ -42,15 +43,42 @@ const ProcessorInfo VolumeMinMaxGLProcessor::processorInfo_{
 const ProcessorInfo VolumeMinMaxGLProcessor::getProcessorInfo() const { return processorInfo_; }
 
 VolumeMinMaxGLProcessor::VolumeMinMaxGLProcessor()
-    : Processor(), volumeInport_("volumeInport"), volumeOutport_("volumeOutport") {
+    : Processor()
+    , volumeInport_("volumeInport")
+    , volumeOutport_("volumeOutport")
+    , clampingStatus_("clampingStatus", "Clamping status",
+                      {{"off", "Off", ClampingStatus::Off}, {"on", "On", ClampingStatus::On}})
+    , clampingRange_("clampingRange", "Clamping range") {
 
     addPorts(volumeInport_, volumeOutport_);
+
+    clampingRange_.visibilityDependsOn(clampingStatus_, [](Property& prop) {
+        const auto status = dynamic_cast<TemplateOptionProperty<ClampingStatus>&>(prop).get();
+
+        return status == ClampingStatus::On;
+    });
+
+    addProperties(clampingStatus_, clampingRange_);
+
+    volumeInport_.onChange([this]() {
+        /*
+         * Here we call the volume reduction without any clamping so we get the real min and max
+         * values which we then can clamp in the process method.
+         */
+        const auto range = vec2{volumeMinMaxGl_.minmax(volumeInport_.getData())};
+
+        NetworkLock l;
+
+        clampingRange_.setRangeMin(range.x);
+        clampingRange_.setRangeMax(range.y);
+        clampingRange_.set(range);
+    });
 }
 
 void VolumeMinMaxGLProcessor::process() {
     auto outVolume = std::shared_ptr<Volume>(volumeInport_.getData()->clone());
-    outVolume->dataMap_.dataRange = outVolume->dataMap_.valueRange =
-        volumeMinMaxGl_.minmax(volumeInport_.getData());
+    outVolume->dataMap_.dataRange = outVolume->dataMap_.valueRange = volumeMinMaxGl_.minmax(
+        volumeInport_.getData(), clampingStatus_.get(), clampingRange_.get());
 
     volumeOutport_.setData(outVolume);
 }

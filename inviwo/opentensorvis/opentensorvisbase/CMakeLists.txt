@@ -35,7 +35,6 @@ set(HEADER_FILES
     include/inviwo/opentensorvisbase/processors/tensorfield2dlic.h
     include/inviwo/opentensorvisbase/processors/tensorfield3dslice.h
     include/inviwo/opentensorvisbase/processors/tensorfield2dasrgba.h
-    include/inviwo/opentensorvisbase/processors/volumeactualdataandvaluerange.h
     include/inviwo/opentensorvisbase/properties/eigenvalueproperty.h
     include/inviwo/opentensorvisbase/opentensorvisbasemodule.h
     include/inviwo/opentensorvisbase/opentensorvisbasemoduledefine.h
@@ -78,7 +77,6 @@ set(SOURCE_FILES
     src/processors/tensorfield2dlic.cpp
     src/processors/tensorfield3dslice.cpp
     src/processors/tensorfield2dasrgba.cpp
-    src/processors/volumeactualdataandvaluerange.cpp
     src/properties/eigenvalueproperty.cpp
     src/opentensorvisbasemodule.cpp
     src/util/tensorfieldutil.cpp

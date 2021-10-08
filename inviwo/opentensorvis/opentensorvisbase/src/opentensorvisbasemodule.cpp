@@ -54,7 +54,6 @@
 #include <inviwo/opentensorvisbase/processors/tensorfield2dasrgba.h>
 #include <inviwo/opentensorvisbase/processors/tensorfield3dtovolume.h>
 #include <inviwo/opentensorvisbase/processors/tensorfield3dinformation.h>
-#include <inviwo/opentensorvisbase/processors/volumeactualdataandvaluerange.h>
 #include <inviwo/opentensorvisbase/properties/eigenvalueproperty.h>
 
 namespace inviwo {
@@ -86,7 +85,6 @@ OpenTensorVisBaseModule::OpenTensorVisBaseModule(InviwoApplication* app)
     registerProcessor<TensorField2DAsRGBA>();
     registerProcessor<TensorField3DToVolume>();
     registerProcessor<TensorField3DInformation>();
-    registerProcessor<VolumeActualDataAndValueRange>();
 
     registerProperty<EigenValueProperty>();
 

@@ -40,11 +40,15 @@ namespace inviwo {
 VolumeReductionGL::VolumeReductionGL()
     : shader_({{ShaderType::Compute, utilgl::findShaderResource("volumereduction.comp")}},
               Shader::Build::Yes)
-    , activeReductionOperator_(ReductionOperator::None) {}
+    , activeReductionOperator_(ReductionOperator::None)
+    , activeClampingStatus_(ClampingStatus::Unset) {}
 
 std::shared_ptr<Volume> VolumeReductionGL::reduce(std::shared_ptr<const Volume> volume,
-                                                  const ReductionOperator op) {
+                                                  const ReductionOperator op,
+                                                  ClampingStatus clampingStatus,
+                                                  const vec2& range) {
     setReductionOperator(op);
+    setClamping(clampingStatus);
 
     shader_.activate();
 
@@ -65,6 +69,11 @@ std::shared_ptr<Volume> VolumeReductionGL::reduce(std::shared_ptr<const Volume> 
         TextureUnitContainer cont;
         utilgl::bindAndSetUniforms(shader_, cont, *input, "inputTexture");
         shader_.setUniform("outputTexture", 0);
+
+        /*
+         * Set value clamping parameters
+         */
+        shader_.setUniform("clampingRange", range);
 
         /*
          * Update output texture.
@@ -112,9 +121,9 @@ std::shared_ptr<Volume> VolumeReductionGL::reduce(std::shared_ptr<const Volume> 
     return output;
 }
 
-double VolumeReductionGL::reduce_v(std::shared_ptr<const Volume> volume,
-                                   const ReductionOperator op) {
-    auto res = reduce(volume, op);
+double VolumeReductionGL::reduce_v(std::shared_ptr<const Volume> volume, const ReductionOperator op,
+                                   ClampingStatus clampingStatus, const vec2& range) {
+    auto res = reduce(volume, op, clampingStatus, range);
 
     return res->getRepresentation<VolumeRAM>()->getAsDouble(size3_t{0, 0, 0});
 }
@@ -122,12 +131,25 @@ double VolumeReductionGL::reduce_v(std::shared_ptr<const Volume> volume,
 void VolumeReductionGL::setReductionOperator(ReductionOperator op) {
     if (op == activeReductionOperator_) return;
 
-    auto computeShader = shader_.getShaderObject(ShaderType::Compute);
+    auto computeShader = shader_.getComputeShaderObject();
     computeShader->removeShaderDefine(StrBuffer{"OPERATOR {}", activeReductionOperator_});
 
     activeReductionOperator_ = op;
 
     computeShader->addShaderDefine(StrBuffer{"OPERATOR {}", activeReductionOperator_});
+
+    shader_.build();
+}
+
+void VolumeReductionGL::setClamping(ClampingStatus clampingStatus) {
+    if (clampingStatus == activeClampingStatus_) return;
+
+    auto computeShader = shader_.getComputeShaderObject();
+    computeShader->removeShaderDefine(StrBuffer{"CLAMP {}", activeClampingStatus_});
+
+    activeClampingStatus_ = clampingStatus;
+
+    computeShader->addShaderDefine(StrBuffer{"CLAMP {}", activeClampingStatus_});
 
     shader_.build();
 }
