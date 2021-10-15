@@ -38,7 +38,7 @@ const ProcessorInfo VolumeMinMaxGLProcessor::processorInfo_{
     "Volume Min Max GL Processor",         // Display name
     "OpenTensorVis",                       // Category
     CodeState::Experimental,               // Code state
-    Tags::GL,                              // Tags
+    "range, minmax",                       // Tags
 };
 const ProcessorInfo VolumeMinMaxGLProcessor::getProcessorInfo() const { return processorInfo_; }
 

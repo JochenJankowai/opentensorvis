@@ -214,6 +214,8 @@ FeatureLevelSetProcessorGL::FeatureLevelSetProcessorGL()
                 traitProperty->setSerializationMode(PropertySerializationMode::All);
             }
         }
+
+        updateNormalizedVolumesCache();
     });
 
     volumes_.onChange([this]() {
@@ -232,6 +234,8 @@ FeatureLevelSetProcessorGL::FeatureLevelSetProcessorGL()
         shader_.build();
 
         updateDataRangesCache();
+
+        updateNormalizedVolumesCache();
 
         updateMaximumDistance();
     });
@@ -277,6 +281,8 @@ FeatureLevelSetProcessorGL::FeatureLevelSetProcessorGL()
          * For now, reset everything, research must go on.
          */
         initializeAllProperties();
+
+        updateNormalizedVolumesCache();
     });
 
     injectButton_.onChange([this]() {
@@ -389,6 +395,23 @@ void FeatureLevelSetProcessorGL::normalizeRangeTraits(std::vector<mat4>& rangeTr
     }
 }
 
+std::vector<vec2> FeatureLevelSetProcessorGL::gatherVolumeRanges() const {
+    std::vector<vec2> ranges{};
+
+    for (const auto volume : volumes_.getVectorData()) {
+        ranges.emplace_back(volume->dataMap_.dataRange);
+    }
+
+    return ranges;
+}
+
+void FeatureLevelSetProcessorGL::normalizeVolumeRanges(std::vector<vec2>& volumeRanges) const {
+    std::transform(std::begin(volumeRanges), std::end(volumeRanges), std::begin(volumeRanges),
+                   [](const auto&) {
+                       return vec2{0.f, 1.f};
+                   });
+}
+
 void FeatureLevelSetProcessorGL::setUniforms() {
     const size3_t dims = volumes_.getData()->getDimensions();
 
@@ -422,18 +445,23 @@ void FeatureLevelSetProcessorGL::setUniforms() {
         }
     }
 
+    LogInfo("--------------------------------------");
+
     shader_.setUniform("dest", 0);
 
     auto pointTraits = gatherPointTraits();
     auto rangeTraits = gatherRangeTraits();
+    auto volumeRanges = gatherVolumeRanges();
 
     if (useNormalizedValues_.get()) {
         normalizePointTraits(pointTraits);
         normalizeRangeTraits(rangeTraits);
+        normalizeVolumeRanges(volumeRanges);
     }
 
     shader_.setUniform("pointTraits", pointTraits);
     shader_.setUniform("rangeTraits", rangeTraits);
+    shader_.setUniform("volumeRanges", volumeRanges);
 
     shader_.setUniform("numPointTraits", static_cast<int>(pointTraits.size()));
     shader_.setUniform("numRangeTraits", static_cast<int>(rangeTraits.size()));
@@ -453,7 +481,7 @@ std::shared_ptr<Volume> FeatureLevelSetProcessorGL::bindOutputTexture() {
         }
         if (glm::any(glm::notEqual(referenceOffset, volume->getOffset()))) {
             LogWarn(
-                "Input volumes do not have the same offset. Setting offset of input volume 1 for "
+                "Input volumes do not have the same offsets. Setting offset of input volume 1 for "
                 "the "
                 "output volume.");
         }

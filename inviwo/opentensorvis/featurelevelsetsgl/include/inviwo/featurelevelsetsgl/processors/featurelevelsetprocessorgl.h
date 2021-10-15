@@ -105,6 +105,9 @@ private:
     std::vector<mat4> gatherRangeTraits() const;
     void normalizeRangeTraits(std::vector<mat4>& rangeTraits) const;
 
+    std::vector<vec2> gatherVolumeRanges() const;
+    void normalizeVolumeRanges(std::vector<vec2>& volumeRanges) const;
+
     // Code fragments
     void checkInput() const;
     void setUniforms();

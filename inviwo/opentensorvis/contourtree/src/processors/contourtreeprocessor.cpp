@@ -41,11 +41,11 @@ namespace inviwo {
 
 // The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
 const ProcessorInfo ContourTreeProcessor::processorInfo_{
-    "org.inviwo.ContourTreeProcessor",  // Class identifier
-    "Contour Tree",            // Display name
-    "OpenTensorVis",           // Category
-    CodeState::Experimental,   // Code state
-    Tags::CPU,                 // Tags
+    "org.inviwo.ContourTreeProcessor",              // Class identifier
+    "Contour Tree",                                 // Display name
+    "OpenTensorVis",                                // Category
+    CodeState::Experimental,                        // Code state
+    "topology, merge tree, join tree, split tree",  // Tags
 };
 const ProcessorInfo ContourTreeProcessor::getProcessorInfo() const { return processorInfo_; }
 
@@ -85,9 +85,7 @@ ContourTreeProcessor::ContourTreeProcessor()
     addProperties(treeType_, featureType_, simplificationCriterion_, topKFeatures_, threshold_);
 
     treeType_.onChange([this]() { computeTree(); });
-    volumeInport_.onChange([this]() {
-        computeTree();
-    });
+    volumeInport_.onChange([this]() { computeTree(); });
 }
 
 void ContourTreeProcessor::computeTree() {
@@ -188,7 +186,7 @@ void ContourTreeProcessor::process() {
     /*
      * Look up which feature the arcId in arcMap belongs to and assign value. That should be it.
      */
-    glm::u16 n{static_cast<glm::u16>(topKFeatures-1)};
+    glm::u16 n{static_cast<glm::u16>(topKFeatures - 1)};
     std::fill_n(rawData, glm::compMul(inputVolume->getDimensions()), topKFeatures);
 
     for (const auto& feature : features) {
@@ -207,15 +205,8 @@ void ContourTreeProcessor::process() {
         n--;
     }
 
-    LogInfo("Assigned ids:") std::unordered_set<glm::u16> s;
-    for (int i{0}; i < glm::compMul(inputVolume->getDimensions()); ++i) {
-        s.insert(rawData[i]);
-    }
-    for (auto val : s) {
-        LogInfo(fmt::format("{}", val));
-    }
-
-    segmentationVolume->dataMap_.dataRange = segmentationVolume->dataMap_.valueRange = dvec2{0, topKFeatures};
+    segmentationVolume->dataMap_.dataRange = segmentationVolume->dataMap_.valueRange =
+        dvec2{0, topKFeatures};
     segmentationVolume->setBasis(inputVolume->getBasis());
     segmentationVolume->setOffset(inputVolume->getOffset());
 
