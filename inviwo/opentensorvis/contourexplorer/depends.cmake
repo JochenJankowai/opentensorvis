@@ -3,6 +3,7 @@
 set(dependencies
     InviwoOpenGLModule
     InviwoBrushingAndLinkingModule
+    InviwoOpenTensorVisComputeModule
 )
 
 # Add an alias for this module. Several modules can share an alias. 

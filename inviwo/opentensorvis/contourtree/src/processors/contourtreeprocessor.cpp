@@ -36,6 +36,8 @@
 #include <TopologicalFeatures.h>
 #include <inviwo/core/network/networklock.h>
 #include <tuple>
+#include <execution>
+#include <inviwo/opentensorviscompute/algorithm/volumereductiongl.h>
 
 namespace inviwo {
 
@@ -63,10 +65,10 @@ ContourTreeProcessor::ContourTreeProcessor()
                     {"partitionedExtrema", "Partitioned extrema", FeatureType::PartitionedExtrema}},
                    1)
     , simplificationCriterion_("simplificationCriterion", "Simplification criterion",
-                               {{"topk", "Top k features", SimplificationCriterion::TopKFeatures},
-                                {"threshold", "Threshold", SimplificationCriterion::Threshold}},
+                               {{"topk", "Top k features", SimplificationCriterion::TopKFeatures}/*,
+                                {"threshold", "Threshold", SimplificationCriterion::Threshold}*/},
                                0)
-    , topKFeatures_("topKFeatures", "Top k features", 1, 0)
+    , topKFeatures_("topKFeatures", "Top k features", 3, 1, 20)
     , threshold_("threshold", "Threshold", 0.0f, 0.0f, 1.0f, 0.0001f)
     , hasData_(false) {
 
@@ -150,7 +152,7 @@ void ContourTreeProcessor::computeTree() {
 }
 
 void ContourTreeProcessor::process() {
-    if (!hasData_) return;
+    if (!hasData_) computeTree();
 
     const bool partition = featureType_.get() == FeatureType::Arc ? false : true;
 
@@ -172,7 +174,7 @@ void ContourTreeProcessor::process() {
             topologicalFeatures.getPartitionedExtremaFeatures(topKFeatures, threshold_.get());
     }
 
-    LogInfo(fmt::format("{} features selected.", features.size()));
+    
 
     auto inputVolume = volumeInport_.getData();
 
@@ -187,28 +189,73 @@ void ContourTreeProcessor::process() {
      * Look up which feature the arcId in arcMap belongs to and assign value. That should be it.
      */
     glm::u16 n{static_cast<glm::u16>(topKFeatures - 1)};
-    std::fill_n(rawData, glm::compMul(inputVolume->getDimensions()), topKFeatures);
+    const auto numberOfElements = glm::compMul(inputVolume->getDimensions());
 
-    for (const auto& feature : features) {
+    std::fill_n(rawData, numberOfElements, 0);
 
-        for (size_t i{0}; i < arcMap_.size(); ++i) {
-            const auto arcID = arcMap_[i];
-            auto& currentValue = rawData[i];
+    std::transform(/*std::execution::par_unseq,*/ std::cbegin(arcMap_), std::cend(arcMap_), rawData,
+                   [features](const auto voxelArcId) {
+                       const auto numberOfFeatures = features.size();
 
-            for (const auto featureArcID : feature.arcs) {
-                if (arcID == featureArcID) {
-                    currentValue = std::min(currentValue, n);
-                }
-            }
+                       for (size_t j{1}; j < numberOfFeatures; ++j) {
+                           if (const auto it = std::find_if(std::cbegin(features[j].arcs),
+                                                            std::cend(features[j].arcs),
+                                                            [voxelArcId](const auto featureArcId) {
+                                                                return voxelArcId == featureArcId;
+                                                            });
+                               it != features[j].arcs.end()) {
+                               return static_cast<glm::u16>(j);
+                           }
+                       }
+
+                       return glm::u16{0};
+                   });
+
+    // std::for_each(std::execution::par_unseq, std::begin(features), std::end(features),
+    //              [&features, rawData, numberOfElements, this](const auto& feature) {
+    //                  //
+    //                  https://stackoverflow.com/questions/3752019/how-to-get-the-index-of-a-value-in-a-vector-using-for-each
+    //                  const auto idx = &feature - &features[0];
+
+    //                  for (size_t i{0}; i < numberOfElements; ++i) {
+    //                      const auto it = std::find(std::cbegin(feature.arcs),
+    //                      std::cend(feature.arcs),
+    //                                          arcMap_[i]);
+
+    //                      if (it != std::cend(feature.arcs)) {
+    //                          rawData[i] = static_cast<glm::u16>(idx);
+    //                      }
+    //                  }
+    //              });
+    
+    auto printHistogram = [rawData,
+                           numberOfElements = glm::compMul(inputVolume->getDimensions())]() {
+        std::map<glm::u16, size_t> histogram;
+        for (size_t i{0}; i < numberOfElements; ++i) {
+            histogram[rawData[i]]++;
         }
 
-        n--;
-    }
+        for (auto pair : histogram) {
+            LogInfoCustom("ContourTreeProcessor", fmt::format("{0}: {1}", pair.first, pair.second));
+        }
+    };
+
+    // printHistogram();
 
     segmentationVolume->dataMap_.dataRange = segmentationVolume->dataMap_.valueRange =
-        dvec2{0, topKFeatures};
+        dvec2{0, features.size() - 1};
+
+
+    LogInfo(fmt::format("# features:      {}", features.size()));
+    LogInfo(fmt::format("Max element CPU: {}", *std::max_element(rawData, rawData + numberOfElements)));
+    LogInfo(fmt::format("Max element GPU: {}",
+                        VolumeReductionGL().reduce_v(segmentationVolume, ReductionOperator::Max)));
+    LogInfo(fmt::format("Data range:      {}", segmentationVolume->dataMap_.dataRange.y));
+
     segmentationVolume->setBasis(inputVolume->getBasis());
     segmentationVolume->setOffset(inputVolume->getOffset());
+
+    segmentationVolume->setInterpolation(InterpolationType::Nearest);
 
     segmentationOutport_.setData(segmentationVolume);
 }

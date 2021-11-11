@@ -68,7 +68,7 @@ void VolumeLabelSelectionProcessor::initializeResources() {
 
     labels_.clear();
 
-    linkingInport_.sendSelectionEvent(std::unordered_set<size_t>{});
+    linkingInport_.select(BitSet{});
 
     const auto min =
         static_cast<int>(volumeReductionGl_.reduce_v(inputVolume, ReductionOperator::Min));
@@ -87,16 +87,18 @@ void VolumeLabelSelectionProcessor::process() {
 }
 
 void VolumeLabelSelectionProcessor::updateSelection() { auto props = labels_.getProperties();
-    std::unordered_set<size_t> selection{};
+    BitSet selection;
+    
+    //std::unordered_set<size_t> selection{};
 
     for (auto prop:props) {
         auto boolProperty = dynamic_cast<BoolProperty*>(prop);
         if (boolProperty->get()) {
-            selection.insert(static_cast<size_t>(std::atoi(prop->getIdentifier().c_str())));
+            selection.add(static_cast<size_t>(std::atoi(prop->getIdentifier().c_str())));
         }
     }
 
-    linkingInport_.sendSelectionEvent(selection);
+    linkingInport_.select(selection);
 }
 
 }  // namespace inviwo

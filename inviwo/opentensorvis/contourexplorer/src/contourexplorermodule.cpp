@@ -30,6 +30,7 @@
 #include <inviwo/contourexplorer/contourexplorermodule.h>
 #include <inviwo/contourexplorer/processors/contourexplorerprocessor.h>
 #include <inviwo/contourexplorer/processors/contourtreetosegmentationvolume.h>
+#include <inviwo/contourexplorer/processors/segmentationvolumetransferfunctionprocessor.h>
 
 namespace inviwo {
 
@@ -42,6 +43,7 @@ ContourExplorerModule::ContourExplorerModule(InviwoApplication* app) : InviwoMod
     // Processors
     registerProcessor<ContourExplorerProcessor>();
     registerProcessor<ContourTreeToSegmentationVolume>();
+    registerProcessor<SegmentationVolumeTransferFunctionProcessor>();
 
     // Properties
     // registerProperty<ContourExplorerProperty>();

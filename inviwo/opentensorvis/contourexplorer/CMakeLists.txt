@@ -3,15 +3,19 @@ ivw_module(ContourExplorer)
 set(HEADER_FILES
     include/inviwo/contourexplorer/contourexplorermodule.h
     include/inviwo/contourexplorer/contourexplorermoduledefine.h
+    include/inviwo/contourexplorer/algorithm/generatesegmentedtf.h
     include/inviwo/contourexplorer/processors/contourexplorerprocessor.h
     include/inviwo/contourexplorer/processors/contourtreetosegmentationvolume.h
+    include/inviwo/contourexplorer/processors/segmentationvolumetransferfunctionprocessor.h
 )
 ivw_group("Header Files" ${HEADER_FILES})
 
 set(SOURCE_FILES
     src/contourexplorermodule.cpp
+    src/algorithm/generatesegmentedtf.cpp
     src/processors/contourexplorerprocessor.cpp
     src/processors/contourtreetosegmentationvolume.cpp
+    src/processors/segmentationvolumetransferfunctionprocessor.cpp
 )
 ivw_group("Source Files" ${SOURCE_FILES})
 

@@ -27,7 +27,6 @@
  *
  *********************************************************************************/
 
-#include <fmt/format.h>
 #include <inviwo/contourexplorer/processors/contourexplorerprocessor.h>
 #include <inviwo/core/algorithm/boundingbox.h>
 #include <inviwo/core/algorithm/cubeplaneintersection.h>
@@ -36,13 +35,14 @@
 #include <inviwo/core/datastructures/geometry/plane.h>
 #include <inviwo/core/datastructures/volume/volumeram.h>
 #include <inviwo/core/interaction/events/pickingevent.h>
-#include <modules/opengl/openglutils.h>
 #include <modules/opengl/rendering/meshdrawergl.h>
 #include <modules/opengl/shader/shaderutils.h>
 #include <modules/opengl/texture/textureunit.h>
 #include <modules/opengl/texture/textureutils.h>
 #include <modules/opengl/volume/volumeutils.h>
-#include <inviwo/core/interaction/events/mouseevent.h>
+#include <inviwo/contourexplorer/algorithm/generatesegmentedtf.h>
+#include <inviwo/opentensorviscompute/algorithm/volumereductiongl.h>
+#include <inviwo/core/network/networklock.h>
 
 namespace inviwo {
 
@@ -75,6 +75,10 @@ ContourExplorerProcessor::ContourExplorerProcessor()
     addPort(backgroundPort_).setOptional(true);
     addPort(brushingAndLinkingInport_);
     addPort(outport_);
+
+    inport_.onChange([this]() { updateTF(); });
+
+    transferFunction_.setReadOnly(true);
 
     addProperties(planeNormal_, planePosition_, transferFunction_, camera_, trackball_);
 
@@ -131,24 +135,53 @@ void ContourExplorerProcessor::handlePicking(PickingEvent* p) {
         const auto worldPos2 = camera_.getWorldPosFromNormalizedDeviceCoords(ndc2);
         const auto dataPos2 = vec3{ct.getWorldToDataMatrix() * vec4{worldPos2, 1.0f}};
 
+        dvec4 value{};
+
         if (const auto dataPoint = plane.getIntersection(dataPos1, dataPos2); dataPoint) {
             const auto index =
                 static_cast<size3_t>(vec3{ct.getDataToIndexMatrix() * vec4{*dataPoint, 1.0f}});
 
             const auto cind = glm::clamp(index, size3_t{0}, data->getDimensions() - size3_t{1});
-            const auto value = data->getRepresentation<VolumeRAM>()->getAsDVec4(cind);
+            value = data->getRepresentation<VolumeRAM>()->getAsDVec4(cind);
 
-            const auto worldPos = vec3{ct.getDataToWorldMatrix() * vec4{*dataPoint, 1.0f}};
+            auto selection = brushingAndLinkingInport_.getSelectedIndices();
+            if (selection.contains(value.x)) {
+                selection.remove(value.x);
+            } else {
+                selection.add(value.x);
+            }
 
-            std::unordered_set<size_t> selection;
-            selection.insert(value.x);
+            brushingAndLinkingInport_.select(selection);
 
-            
-            brushingAndLinkingInport_.sendSelectionEvent(selection);
+            p->markAsUsed();
         }
 
-        p->markAsUsed();
+        LogInfo(fmt::format("Selected feature: {}", value.x));
     }
+}
+
+void ContourExplorerProcessor::updateTF() {
+    if (!inport_.hasData() || !inport_.getData()) return;
+
+    const auto inputVolume = inport_.getData();
+
+    VolumeReductionGL volumeReductionGl;
+
+    const auto max =
+        static_cast<uint32_t>(volumeReductionGl.reduce_v(inputVolume, ReductionOperator::Max));
+
+    BitSet selection;
+
+    selection.addRange(0, max);
+
+    const auto tfPrimitives =
+        SegmentationTransferFunctionGenerator::generateTFPrimitivesForSegments(selection, max + 1);
+
+    NetworkLock l;
+
+    transferFunction_.get().clear();
+
+    transferFunction_.get().set(std::begin(tfPrimitives), std::end(tfPrimitives));
 }
 
 void ContourExplorerProcessor::process() {

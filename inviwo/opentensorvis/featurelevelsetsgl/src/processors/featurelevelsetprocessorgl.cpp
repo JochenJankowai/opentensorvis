@@ -415,8 +415,6 @@ void FeatureLevelSetProcessorGL::normalizeVolumeRanges(std::vector<vec2>& volume
 void FeatureLevelSetProcessorGL::setUniforms() {
     const size3_t dims = volumes_.getData()->getDimensions();
 
-    const size_t numVertices = glm::compMul(dims);
-    shader_.setUniform("numVertices", static_cast<int>(numVertices));
     TextureUnitContainer cont;
 
     if (!useNormalizedValues_.get()) {
@@ -482,8 +480,7 @@ std::shared_ptr<Volume> FeatureLevelSetProcessorGL::bindOutputTexture() {
         if (glm::any(glm::notEqual(referenceOffset, volume->getOffset()))) {
             LogWarn(
                 "Input volumes do not have the same offsets. Setting offset of input volume 1 for "
-                "the "
-                "output volume.");
+                "the output volume.");
         }
     }
 

@@ -30,75 +30,46 @@
 #pragma once
 
 #include <inviwo/contourexplorer/contourexplorermoduledefine.h>
-#include <inviwo/core/datastructures/geometry/typedmesh.h>
-#include <inviwo/core/ports/imageport.h>
-#include <inviwo/core/ports/volumeport.h>
-#include <inviwo/core/interaction/cameratrackball.h>
 #include <inviwo/core/processors/processor.h>
-#include <inviwo/core/properties/ordinalproperty.h>
 #include <inviwo/core/properties/transferfunctionproperty.h>
-#include <inviwo/core/properties/cameraproperty.h>
-#include <modules/opengl/shader/shader.h>
-#include <inviwo/core/interaction/pickingmapper.h>
+#include <inviwo/core/ports/volumeport.h>
 #include <modules/brushingandlinking/ports/brushingandlinkingports.h>
 
 namespace inviwo {
 
-/** \docpage{org.inviwo.ContourExplorerProcessor, Contour Explorer}
- * ![](org.inviwo.ContourExplorerProcessor.png?classIdentifier=org.inviwo.ContourExplorerProcessor)
- * Render an arbitrary slice of a volume in place, i.e. the slice will be
- * oriented as it would have been in the volume.
+/** \docpage{org.inviwo.SegmentationVolumeTransferFunctionProcessor, Segmentation Volume Transfer
+ * Function Processor}
+ * ![](org.inviwo.SegmentationVolumeTransferFunctionProcessor.png?classIdentifier=org.inviwo.SegmentationVolumeTransferFunctionProcessor)
+ * Explanation of how to use the processor.
  *
  * ### Inports
- *   * __volume__ The input volume
- *   * __background__ Optional background image
+ *   * __<Inport1>__ <description>.
+ *
  * ### Outports
- *   * __outport__ Rendered slice
+ *   * __<Outport1>__ <description>.
  *
  * ### Properties
- *   * __Plane Normal__ Defines the normal of the plane in texture/data space
- * [0,1]
- *   * __Plane Position__ Defines a point in the plane in texture/data space
- * [0,1]
- *   * __Transfer Function__ Defines the transfer function for mapping voxel
- * values to color and opacity
- *   * __Camera__ Camera used for rendering
- *   * __Trackball__ Trackball for handling interaction
+ *   * __<Prop1>__ <description>.
+ *   * __<Prop2>__ <description>
  */
-class IVW_MODULE_CONTOUREXPLORER_API ContourExplorerProcessor : public Processor {
+class IVW_MODULE_CONTOUREXPLORER_API SegmentationVolumeTransferFunctionProcessor
+    : public Processor {
 public:
-    ContourExplorerProcessor();
-    virtual ~ContourExplorerProcessor() = default;
+    SegmentationVolumeTransferFunctionProcessor();
+    virtual ~SegmentationVolumeTransferFunctionProcessor() = default;
+
+    virtual void process() override;
 
     virtual const ProcessorInfo getProcessorInfo() const override;
     static const ProcessorInfo processorInfo_;
 
-    virtual void initializeResources() override;
-
-   protected:
-    virtual void process() override;
-    void planeSettingsChanged();
-    void handlePicking(PickingEvent* p);
-    void updateTF();
-
-   private:
-    VolumeInport inport_;
-    ImageInport backgroundPort_;
-    ImageOutport outport_;
+private:
     BrushingAndLinkingInport brushingAndLinkingInport_;
+    VolumeInport volumeInport_;
 
-    Shader shader_;
-
-    FloatVec3Property planeNormal_;
-    FloatVec3Property planePosition_;
-
-    TransferFunctionProperty transferFunction_;
-
-    CameraProperty camera_;
-    CameraTrackball trackball_;
-
-    TypedMesh<buffertraits::PositionsBuffer> embeddedMesh_;
-    PickingMapper picking_;
+    TransferFunctionProperty tfProperty_;
+    DoubleProperty slope_;
+    FloatVec4Property shadeColor_;
 };
 
 }  // namespace inviwo
