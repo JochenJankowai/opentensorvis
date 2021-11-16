@@ -27,13 +27,14 @@
  *
  *********************************************************************************/
 
-#include <inviwo/contourtree/processors/ContourTreeProcessor.h>
+#include <inviwo/contourtree/processors/contourtreeprocessor.h>
 #include <inviwo/core/datastructures/volume/volumeram.h>
 #include <inviwo/core/datastructures/volume/volumeramprecision.h>
 #include <Grid3D.h>
 #include <MergeTree.h>
+#include <SimFunction.h>
 #include <Persistence.h>
-#include <TopologicalFeatures.h>
+#include <HyperVolume.h>
 #include <inviwo/core/network/networklock.h>
 #include <tuple>
 #include <execution>
@@ -64,30 +65,45 @@ ContourTreeProcessor::ContourTreeProcessor()
                    {{"arc", "Arc", FeatureType::Arc},
                     {"partitionedExtrema", "Partitioned extrema", FeatureType::PartitionedExtrema}},
                    1)
-    , simplificationCriterion_("simplificationCriterion", "Simplification criterion",
-                               {{"topk", "Top k features", SimplificationCriterion::TopKFeatures}/*,
-                                {"threshold", "Threshold", SimplificationCriterion::Threshold}*/},
-                               0)
+    , queryCriterion_("simplificationCriterion", "Simplification criterion",
+                      {{"topk", "Top k features", QueryCriterion::TopKFeatures},
+                       {"threshold", "Threshold", QueryCriterion::Threshold}},
+                      0)
+    , simplificationMetod_("simplificationMetod", "Simplification method",
+                           {{"persistence", "Persistence", SimplificationMetod::Persistence},
+                            {"hypervolume", "Hypervolume", SimplificationMetod::Hypervolume}},1)
     , topKFeatures_("topKFeatures", "Top k features", 3, 1, 20)
+    , quasiSimplificationFactor_("quasiSimplificationFactor", "Quasi Simplification Factor", 0.f,
+                                 0.f, 1.f)
     , threshold_("threshold", "Threshold", 0.0f, 0.0f, 1.0f, 0.0001f)
     , hasData_(false) {
 
     addPorts(volumeInport_, segmentationOutport_);
 
-    topKFeatures_.visibilityDependsOn(simplificationCriterion_,
-                                      [](TemplateOptionProperty<SimplificationCriterion>& p) {
-                                          return p.get() == SimplificationCriterion::TopKFeatures;
+    topKFeatures_.visibilityDependsOn(queryCriterion_,
+                                      [](TemplateOptionProperty<QueryCriterion>& p) {
+                                          return p.get() == QueryCriterion::TopKFeatures;
                                       });
 
-    threshold_.visibilityDependsOn(simplificationCriterion_,
-                                   [](TemplateOptionProperty<SimplificationCriterion>& p) {
-                                       return p.get() == SimplificationCriterion::Threshold;
-                                   });
+    quasiSimplificationFactor_.visibilityDependsOn(
+        queryCriterion_, [](TemplateOptionProperty<QueryCriterion>& p) {
+            return p.get() == QueryCriterion::TopKFeatures;
+        });
 
-    addProperties(treeType_, featureType_, simplificationCriterion_, topKFeatures_, threshold_);
+    threshold_.visibilityDependsOn(queryCriterion_, [](TemplateOptionProperty<QueryCriterion>& p) {
+        return p.get() == QueryCriterion::Threshold;
+    });
 
-    treeType_.onChange([this]() { computeTree(); });
-    volumeInport_.onChange([this]() { computeTree(); });
+    featureType_.setReadOnly(true);
+
+    addProperties(treeType_, featureType_, queryCriterion_, topKFeatures_,
+                  quasiSimplificationFactor_, threshold_);
+
+    auto updateTree = [this]() { computeTree(); };
+
+    treeType_.onChange(updateTree);
+    simplificationMetod_.onChange(updateTree);
+    volumeInport_.onChange(updateTree);
 }
 
 void ContourTreeProcessor::computeTree() {
@@ -136,7 +152,13 @@ void ContourTreeProcessor::computeTree() {
 
                 simplifyCt.setInput(&contourTreeData);
 
-                const auto simFn = new contourtree::Persistence(contourTreeData);
+                contourtree::SimFunction* simFn;
+
+                if (simplificationMetod_.get() == SimplificationMetod::Persistence) {
+                    simFn = new contourtree::Persistence(contourTreeData);
+                } else {
+                    simFn = new contourtree::HyperVolume(contourTreeData, contourTree.arcMap);
+                }
 
                 simplifyCt.simplify(simFn);
                 simplifyCt.computeWeights();
@@ -144,117 +166,62 @@ void ContourTreeProcessor::computeTree() {
                 return std::tuple(contourTreeData, simplifyCt, contourTree.arcMap);
             });
 
-    contourTreeData_ = contourTreeData;
-    simplifyCt_ = simplifyCt;
-    arcMap_ = arcMap;
-
+    topologicalFeatures_.loadDataFromArrays(contourTreeData, simplifyCt.order, simplifyCt.weights,
+                                           true);
+    arcMap_ = std::move(arcMap);
     hasData_ = true;
 }
 
 void ContourTreeProcessor::process() {
     if (!hasData_) computeTree();
-
-    const bool partition = featureType_.get() == FeatureType::Arc ? false : true;
-
-    contourtree::TopologicalFeatures topologicalFeatures;
-    topologicalFeatures.loadDataFromArrays(contourTreeData_, simplifyCt_.order, simplifyCt_.weights,
-                                           partition);
-
-    std::vector<contourtree::Feature> features;
-
-    const int topKFeatures = simplificationCriterion_.get() == SimplificationCriterion::Threshold
-                                 ? -1
-                                 : topKFeatures_.get();
-
-    if (featureType_.get() == FeatureType::Arc) {
-        features = topologicalFeatures.getArcFeatures(topKFeatures, threshold_.get());
-    }
-    if (featureType_.get() == FeatureType::PartitionedExtrema) {
-        features =
-            topologicalFeatures.getPartitionedExtremaFeatures(topKFeatures, threshold_.get());
-    }
-
     
+    const auto features =
+        topologicalFeatures_.getPartitionedExtremaFeatures(topKFeatures_.get(), threshold_.get());
 
-    auto inputVolume = volumeInport_.getData();
-
-    auto segmentationVolume =
-        std::make_shared<Volume>(inputVolume->getDimensions(), DataUInt16::get());
-
-    auto rawData = dynamic_cast<VolumeRAMPrecision<glm::u16>*>(
-                       segmentationVolume->getEditableRepresentation<VolumeRAM>())
-                       ->getDataTyped();
+    const auto inputVolume = volumeInport_.getData();
 
     /*
      * Look up which feature the arcId in arcMap belongs to and assign value. That should be it.
      */
-    glm::u16 n{static_cast<glm::u16>(topKFeatures - 1)};
     const auto numberOfElements = glm::compMul(inputVolume->getDimensions());
 
+    auto rawData = new uint16_t[numberOfElements];
     std::fill_n(rawData, numberOfElements, 0);
 
-    std::transform(/*std::execution::par_unseq,*/ std::cbegin(arcMap_), std::cend(arcMap_), rawData,
-                   [features](const auto voxelArcId) {
-                       const auto numberOfFeatures = features.size();
+    for (size_t i{1}; i < features.size(); ++i) {
+        for (const auto arcId : features[i].arcs) {
+            for (size_t j{0}; j < numberOfElements; ++j) {
+                if (arcMap_[j] == arcId) {
+                    rawData[j] = static_cast<uint16_t>(i);
+                }
+            }
+        }
+    }
 
-                       for (size_t j{1}; j < numberOfFeatures; ++j) {
-                           if (const auto it = std::find_if(std::cbegin(features[j].arcs),
-                                                            std::cend(features[j].arcs),
-                                                            [voxelArcId](const auto featureArcId) {
-                                                                return voxelArcId == featureArcId;
-                                                            });
-                               it != features[j].arcs.end()) {
-                               return static_cast<glm::u16>(j);
-                           }
-                       }
-
-                       return glm::u16{0};
-                   });
-
-    // std::for_each(std::execution::par_unseq, std::begin(features), std::end(features),
-    //              [&features, rawData, numberOfElements, this](const auto& feature) {
-    //                  //
-    //                  https://stackoverflow.com/questions/3752019/how-to-get-the-index-of-a-value-in-a-vector-using-for-each
-    //                  const auto idx = &feature - &features[0];
-
-    //                  for (size_t i{0}; i < numberOfElements; ++i) {
-    //                      const auto it = std::find(std::cbegin(feature.arcs),
-    //                      std::cend(feature.arcs),
-    //                                          arcMap_[i]);
-
-    //                      if (it != std::cend(feature.arcs)) {
-    //                          rawData[i] = static_cast<glm::u16>(idx);
-    //                      }
-    //                  }
-    //              });
-    
-    auto printHistogram = [rawData,
-                           numberOfElements = glm::compMul(inputVolume->getDimensions())]() {
-        std::map<glm::u16, size_t> histogram;
+    auto printHistogram = [](uint16_t* data, size_t numberOfElements) {
+        std::map<glm::u16, int> histogram;
         for (size_t i{0}; i < numberOfElements; ++i) {
-            histogram[rawData[i]]++;
+            histogram[data[i]]++;
         }
 
+        LogInfoCustom("ContourTreeProcessor", "Histogram");
         for (auto pair : histogram) {
             LogInfoCustom("ContourTreeProcessor", fmt::format("{0}: {1}", pair.first, pair.second));
         }
     };
 
-    // printHistogram();
+    printHistogram(rawData, numberOfElements);
+
+    const auto segmentationVolumeRamPrecision =
+        std::make_shared<VolumeRAMPrecision<uint16_t>>(rawData, inputVolume->getDimensions());
+
+    auto segmentationVolume = std::make_shared<Volume>(segmentationVolumeRamPrecision);
 
     segmentationVolume->dataMap_.dataRange = segmentationVolume->dataMap_.valueRange =
         dvec2{0, features.size() - 1};
-
-
-    LogInfo(fmt::format("# features:      {}", features.size()));
-    LogInfo(fmt::format("Max element CPU: {}", *std::max_element(rawData, rawData + numberOfElements)));
-    LogInfo(fmt::format("Max element GPU: {}",
-                        VolumeReductionGL().reduce_v(segmentationVolume, ReductionOperator::Max)));
-    LogInfo(fmt::format("Data range:      {}", segmentationVolume->dataMap_.dataRange.y));
-
     segmentationVolume->setBasis(inputVolume->getBasis());
     segmentationVolume->setOffset(inputVolume->getOffset());
-
+    
     segmentationVolume->setInterpolation(InterpolationType::Nearest);
 
     segmentationOutport_.setData(segmentationVolume);

@@ -41,7 +41,6 @@
 #include <modules/opengl/texture/textureutils.h>
 #include <modules/opengl/volume/volumeutils.h>
 #include <inviwo/contourexplorer/algorithm/generatesegmentedtf.h>
-#include <inviwo/opentensorviscompute/algorithm/volumereductiongl.h>
 #include <inviwo/core/network/networklock.h>
 
 namespace inviwo {
@@ -67,6 +66,9 @@ ContourExplorerProcessor::ContourExplorerProcessor()
     , planeNormal_{"planeNormal",          "Plane Normal",      vec3(1.f, 0.f, 0.f),
                    vec3(-1.f, -1.f, -1.f), vec3(1.f, 1.f, 1.f), vec3(0.01f, 0.01f, 0.01f)}
     , planePosition_{"planePosition", "Plane Position", vec3(0.5f), vec3(0.0f), vec3(1.0f)}
+    , family_("family", "TF Preset",
+              {{"set3", "Set3", colorbrewer::Family::Set3},
+               {"paired", "Paired", colorbrewer::Family::Paired}})
     , transferFunction_{"transferFunction", "Transfer Function", &inport_}
     , camera_{"camera", "Camera", util::boundingBox(inport_)}
     , trackball_{&camera_}
@@ -165,17 +167,15 @@ void ContourExplorerProcessor::updateTF() {
 
     const auto inputVolume = inport_.getData();
 
-    VolumeReductionGL volumeReductionGl;
-
-    const auto max =
-        static_cast<uint32_t>(volumeReductionGl.reduce_v(inputVolume, ReductionOperator::Max));
+    const auto max = static_cast<int32_t>(inputVolume->dataMap_.dataRange.y);
 
     BitSet selection;
 
     selection.addRange(0, max);
 
     const auto tfPrimitives =
-        SegmentationTransferFunctionGenerator::generateTFPrimitivesForSegments(selection, max + 1);
+        SegmentationTransferFunctionGenerator::generateTFPrimitivesForSegments(selection, max + 1,
+                                                                               family_.get());
 
     NetworkLock l;
 

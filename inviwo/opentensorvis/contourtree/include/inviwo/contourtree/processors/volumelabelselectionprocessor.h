@@ -34,7 +34,6 @@
 #include <inviwo/core/ports/volumeport.h>
 #include <modules/brushingandlinking/ports/brushingandlinkingports.h>
 #include <inviwo/core/properties/compositeproperty.h>
-#include <inviwo/opentensorviscompute/algorithm/volumereductiongl.h>
 namespace inviwo {
 
 /** \docpage{org.inviwo.VolumeLabelSelectionProcessor, Volume Label Selection Processor}
@@ -56,7 +55,6 @@ public:
     VolumeLabelSelectionProcessor();
     virtual ~VolumeLabelSelectionProcessor() = default;
 
-    virtual void initializeResources() override;
     virtual void process() override;
 
     virtual const ProcessorInfo getProcessorInfo() const override;
@@ -68,8 +66,7 @@ private:
 
     CompositeProperty labels_;
 
-    VolumeReductionGL volumeReductionGl_;
-
+    void updateSelectables();
     void updateSelection();
 };
 

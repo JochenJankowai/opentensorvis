@@ -41,6 +41,8 @@
 #include <modules/opengl/shader/shader.h>
 #include <inviwo/core/interaction/pickingmapper.h>
 #include <modules/brushingandlinking/ports/brushingandlinkingports.h>
+#include <inviwo/core/util/colorbrewer.h>
+#include <inviwo/core/properties/templateproperty.h>
 
 namespace inviwo {
 
@@ -92,6 +94,7 @@ public:
     FloatVec3Property planeNormal_;
     FloatVec3Property planePosition_;
 
+    TemplateOptionProperty<colorbrewer::Family> family_;
     TransferFunctionProperty transferFunction_;
 
     CameraProperty camera_;

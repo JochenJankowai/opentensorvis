@@ -34,6 +34,8 @@
 #include <inviwo/core/properties/transferfunctionproperty.h>
 #include <inviwo/core/ports/volumeport.h>
 #include <modules/brushingandlinking/ports/brushingandlinkingports.h>
+#include <inviwo/core/util/colorbrewer.h>
+#include <inviwo/core/properties/templateproperty.h>
 
 namespace inviwo {
 
@@ -67,6 +69,7 @@ private:
     BrushingAndLinkingInport brushingAndLinkingInport_;
     VolumeInport volumeInport_;
 
+    TemplateOptionProperty<colorbrewer::Family> family_;
     TransferFunctionProperty tfProperty_;
     DoubleProperty slope_;
     FloatVec4Property shadeColor_;

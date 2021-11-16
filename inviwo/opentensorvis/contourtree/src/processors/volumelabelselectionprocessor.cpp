@@ -37,7 +37,7 @@ namespace inviwo {
 const ProcessorInfo VolumeLabelSelectionProcessor::processorInfo_{
     "org.inviwo.VolumeLabelSelectionProcessor",  // Class identifier
     "Volume Label Selection Processor",          // Display name
-    "OpenTensorVis",                                 // Category
+    "OpenTensorVis",                             // Category
     CodeState::Experimental,                     // Code state
     Tags::CPU,                                   // Tags
 };
@@ -54,10 +54,10 @@ VolumeLabelSelectionProcessor::VolumeLabelSelectionProcessor()
     addPorts(volumeInport_, linkingInport_);
     addProperties(labels_);
 
-    volumeInport_.onChange([this]() { invalidate(InvalidationLevel::InvalidResources); });
+    volumeInport_.onChange([this]() { updateSelectables(); });
 }
 
-void VolumeLabelSelectionProcessor::initializeResources() {
+void VolumeLabelSelectionProcessor::updateSelectables() {
     if (!volumeInport_.hasData() || !volumeInport_.getData()) {
         return;
     }
@@ -66,32 +66,44 @@ void VolumeLabelSelectionProcessor::initializeResources() {
 
     auto inputVolume = volumeInport_.getData();
 
+    std::vector<bool> currentSelection;
+    for (const auto prop : labels_.getPropertiesByType<BoolProperty>()) {
+        currentSelection.push_back(prop->get());
+    }
+
     labels_.clear();
 
-    linkingInport_.select(BitSet{});
+    const auto min = static_cast<int32_t>(inputVolume->dataMap_.dataRange.x);
+    const auto max = static_cast<int32_t>(inputVolume->dataMap_.dataRange.y);
 
-    const auto min =
-        static_cast<int>(volumeReductionGl_.reduce_v(inputVolume, ReductionOperator::Min));
-    const auto max =
-        static_cast<int>(volumeReductionGl_.reduce_v(inputVolume, ReductionOperator::Max));
+    currentSelection.resize(max + 1, false);
 
-    for (int i{min}; i <= max; i++) {
-        auto prop = new BoolProperty(std::to_string(i), std::to_string(i), false);
+    BitSet s;
+
+    for (size_t i{0}; i < currentSelection.size(); ++i) {
+        if (currentSelection[i]) {
+            s.add(i);
+        }
+    }
+    
+    for (int32_t i{min}; i <= max; i++) {
+        auto prop = new BoolProperty(std::to_string(i), std::to_string(i), currentSelection[i]);
         prop->onChange([this]() { updateSelection(); });
         labels_.addProperty(prop);
     }
+
+    linkingInport_.select(s);
 }
 
-void VolumeLabelSelectionProcessor::process() {
-    // outport_.setData(myImage);
-}
+void VolumeLabelSelectionProcessor::process() {}
 
-void VolumeLabelSelectionProcessor::updateSelection() { auto props = labels_.getProperties();
+void VolumeLabelSelectionProcessor::updateSelection() {
+    auto props = labels_.getProperties();
     BitSet selection;
-    
-    //std::unordered_set<size_t> selection{};
 
-    for (auto prop:props) {
+    // std::unordered_set<size_t> selection{};
+
+    for (auto prop : props) {
         auto boolProperty = dynamic_cast<BoolProperty*>(prop);
         if (boolProperty->get()) {
             selection.add(static_cast<size_t>(std::atoi(prop->getIdentifier().c_str())));

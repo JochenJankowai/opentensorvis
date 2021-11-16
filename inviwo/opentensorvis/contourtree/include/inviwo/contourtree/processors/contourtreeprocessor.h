@@ -38,6 +38,8 @@
 #include <SimplifyCT.h>
 #include <constants.h>
 
+#include "TopologicalFeatures.h"
+
 namespace inviwo {
 
 /** \docpage{org.inviwo.ContourTreeProcessor, Contour Tree}
@@ -73,24 +75,27 @@ public:
 private:
     enum class FeatureType { Arc, PartitionedExtrema };
 
-    enum class SimplificationCriterion { TopKFeatures, Threshold };
+    enum class QueryCriterion { TopKFeatures, Threshold };
+
+    enum class SimplificationMetod { Persistence, Hypervolume };
 
     VolumeInport volumeInport_;
-    
+
     VolumeOutport segmentationOutport_;
 
     TemplateOptionProperty<contourtree::TreeType> treeType_;
     TemplateOptionProperty<FeatureType> featureType_;
-    TemplateOptionProperty<SimplificationCriterion> simplificationCriterion_;
-
+    TemplateOptionProperty<QueryCriterion> queryCriterion_;
+    TemplateOptionProperty<SimplificationMetod> simplificationMetod_;
+    
     IntProperty topKFeatures_;
+    FloatProperty quasiSimplificationFactor_;
     FloatProperty threshold_;
 
     bool hasData_;
-    contourtree::ContourTreeData contourTreeData_;
-    contourtree::SimplifyCT simplifyCt_;
     std::vector<uint32_t> arcMap_;
-    
+    contourtree::TopologicalFeatures topologicalFeatures_;
+
     void computeTree();
 };
 
