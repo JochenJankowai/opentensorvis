@@ -43,6 +43,8 @@
 #include <modules/brushingandlinking/ports/brushingandlinkingports.h>
 #include <inviwo/core/util/colorbrewer.h>
 #include <inviwo/core/properties/templateproperty.h>
+#include <inviwo/core/properties/buttonproperty.h>
+#include <inviwo/core/properties/boolproperty.h>
 
 namespace inviwo {
 
@@ -82,20 +84,26 @@ public:
     void planeSettingsChanged();
     void handlePicking(PickingEvent* p);
     void updateTF();
+    void generateIsoVolume();
 
    private:
     VolumeInport inport_;
     ImageInport backgroundPort_;
     ImageOutport outport_;
+    VolumeOutport isoVolumeOutport_;
     BrushingAndLinkingInport brushingAndLinkingInport_;
 
     Shader shader_;
+
+    BoolProperty ignoreZeroIndex_;
 
     FloatVec3Property planeNormal_;
     FloatVec3Property planePosition_;
 
     TemplateOptionProperty<colorbrewer::Family> family_;
     TransferFunctionProperty transferFunction_;
+
+    ButtonProperty generateVolumeButton_;
 
     CameraProperty camera_;
     CameraTrackball trackball_;

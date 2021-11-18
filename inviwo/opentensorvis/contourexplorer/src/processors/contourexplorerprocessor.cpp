@@ -61,8 +61,10 @@ ContourExplorerProcessor::ContourExplorerProcessor()
     , inport_{"volume"}
     , backgroundPort_{"background"}
     , outport_{"outport"}
+    , isoVolumeOutport_("isoVolumeOutport")
     , brushingAndLinkingInport_{"brushingAndLinkingInport"}
     , shader_{"embeddedvolumeslice.vert", "embeddedvolumeslice.frag", Shader::Build::No}
+    , ignoreZeroIndex_("ignoreZeroIndex", "Ignore zero index", true)
     , planeNormal_{"planeNormal",          "Plane Normal",      vec3(1.f, 0.f, 0.f),
                    vec3(-1.f, -1.f, -1.f), vec3(1.f, 1.f, 1.f), vec3(0.01f, 0.01f, 0.01f)}
     , planePosition_{"planePosition", "Plane Position", vec3(0.5f), vec3(0.0f), vec3(1.0f)}
@@ -70,19 +72,23 @@ ContourExplorerProcessor::ContourExplorerProcessor()
               {{"set3", "Set3", colorbrewer::Family::Set3},
                {"paired", "Paired", colorbrewer::Family::Paired}})
     , transferFunction_{"transferFunction", "Transfer Function", &inport_}
+    , generateVolumeButton_("generateVolumeButton", "Generate iso volume", InvalidationLevel::Valid)
     , camera_{"camera", "Camera", util::boundingBox(inport_)}
     , trackball_{&camera_}
     , picking_{this, 1, [this](PickingEvent* e) { handlePicking(e); }} {
     addPort(inport_);
     addPort(backgroundPort_).setOptional(true);
     addPort(brushingAndLinkingInport_);
-    addPort(outport_);
+    addPorts(outport_, isoVolumeOutport_);
 
     inport_.onChange([this]() { updateTF(); });
 
     transferFunction_.setReadOnly(true);
 
-    addProperties(planeNormal_, planePosition_, transferFunction_, camera_, trackball_);
+    generateVolumeButton_.onChange([this]() { generateIsoVolume(); });
+
+    addProperties(ignoreZeroIndex_, planeNormal_, planePosition_, transferFunction_,
+                  generateVolumeButton_, camera_, trackball_);
 
     planePosition_.onChange([this]() { planeSettingsChanged(); });
     planeNormal_.onChange([this]() { planeSettingsChanged(); });
@@ -137,28 +143,33 @@ void ContourExplorerProcessor::handlePicking(PickingEvent* p) {
         const auto worldPos2 = camera_.getWorldPosFromNormalizedDeviceCoords(ndc2);
         const auto dataPos2 = vec3{ct.getWorldToDataMatrix() * vec4{worldPos2, 1.0f}};
 
-        dvec4 value{};
+        uint32_t value{};
 
         if (const auto dataPoint = plane.getIntersection(dataPos1, dataPos2); dataPoint) {
             const auto index =
                 static_cast<size3_t>(vec3{ct.getDataToIndexMatrix() * vec4{*dataPoint, 1.0f}});
 
             const auto cind = glm::clamp(index, size3_t{0}, data->getDimensions() - size3_t{1});
-            value = data->getRepresentation<VolumeRAM>()->getAsDVec4(cind);
+            value = static_cast<uint32_t>(data->getRepresentation<VolumeRAM>()->getAsDVec4(cind).x);
 
-            auto selection = brushingAndLinkingInport_.getSelectedIndices();
-            if (selection.contains(value.x)) {
-                selection.remove(value.x);
+            if (ignoreZeroIndex_.get() && value == 0) {
             } else {
-                selection.add(value.x);
-            }
+                auto selection = brushingAndLinkingInport_.getSelectedIndices();
+                if (selection.contains(value)) {
+                    selection.remove(value);
+                } else {
+                    selection.add(value);
+                }
 
-            brushingAndLinkingInport_.select(selection);
+                brushingAndLinkingInport_.select(selection);
+            }
 
             p->markAsUsed();
         }
 
-        LogInfo(fmt::format("Selected feature: {}", value.x));
+        LogInfo(fmt::format("Selected feature: {}", value));
+
+        invalidate(InvalidationLevel::Valid);
     }
 }
 
@@ -171,17 +182,66 @@ void ContourExplorerProcessor::updateTF() {
 
     BitSet selection;
 
-    selection.addRange(0, max);
+    selection.addRange(0, max+1);
 
     const auto tfPrimitives =
         SegmentationTransferFunctionGenerator::generateTFPrimitivesForSegments(selection, max + 1,
                                                                                family_.get());
+
+    LogInfo(fmt::format("Generated {} tf primitives for {} segments.", tfPrimitives.size(), max + 1));
 
     NetworkLock l;
 
     transferFunction_.get().clear();
 
     transferFunction_.get().set(std::begin(tfPrimitives), std::end(tfPrimitives));
+}
+
+void ContourExplorerProcessor::generateIsoVolume() {
+    const auto& selection = brushingAndLinkingInport_.getSelectedIndices();
+
+    std::set s(std::begin(selection), std::end(selection));
+    
+    const auto inputVolume = inport_.getData();
+
+    auto rawData = inputVolume->getRepresentation<VolumeRAM>()
+                       ->dispatch<glm::u8*, dispatching::filter::Scalars>([&](auto vrprecision) {
+                           const auto numberOfElements = glm::compMul(inputVolume->getDimensions());
+
+                           auto rawInput = vrprecision->getDataTyped();
+                           auto rawOutput = new glm::u8[numberOfElements];
+
+                           std::fill_n(rawOutput, glm::compMul(inputVolume->getDimensions()), 0);
+
+                           int i = 0;
+
+                           std::transform(rawInput, rawInput + numberOfElements, rawOutput,
+                                          [selection,&i](const auto val) {
+                                              if (selection.contains(val)) {
+                                                  i++;
+                                                  return 1;
+                                              }
+                                              return 0;
+                                          });
+
+                           LogInfoCustom("wawa", fmt::format("{} number of voxels",i));
+
+                           return rawOutput;
+                       });
+
+    const auto isoVolumeRamPrecision =
+        std::make_shared<VolumeRAMPrecision<glm::u8>>(rawData, inputVolume->getDimensions());
+
+    auto isoVolume = std::make_shared<Volume>(isoVolumeRamPrecision);
+
+    isoVolume->setBasis(inputVolume->getBasis());
+    isoVolume->setOffset(inputVolume->getOffset());
+    isoVolume->setModelMatrix(inputVolume->getModelMatrix());
+    isoVolume->setWorldMatrix(inputVolume->getWorldMatrix());
+
+    isoVolume->dataMap_.dataRange = isoVolume->dataMap_.valueRange = dvec2{0,1};
+
+    isoVolumeOutport_.setData(isoVolume);
 }
 
 void ContourExplorerProcessor::process() {
