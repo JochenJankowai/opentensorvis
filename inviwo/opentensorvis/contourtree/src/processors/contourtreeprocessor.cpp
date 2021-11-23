@@ -73,8 +73,6 @@ ContourTreeProcessor::ContourTreeProcessor()
                            {{"persistence", "Persistence", SimplificationMetod::Persistence},
                             {"hypervolume", "Hypervolume", SimplificationMetod::Hypervolume}},1)
     , topKFeatures_("topKFeatures", "Top k features", 3, 1, 20)
-    , quasiSimplificationFactor_("quasiSimplificationFactor", "Quasi Simplification Factor", 0.f,
-                                 0.f, 1.f)
     , threshold_("threshold", "Threshold", 0.0f, 0.0f, 1.0f, 0.0001f)
     , hasData_(false) {
 
@@ -85,11 +83,6 @@ ContourTreeProcessor::ContourTreeProcessor()
                                           return p.get() == QueryCriterion::TopKFeatures;
                                       });
 
-    quasiSimplificationFactor_.visibilityDependsOn(
-        queryCriterion_, [](TemplateOptionProperty<QueryCriterion>& p) {
-            return p.get() == QueryCriterion::TopKFeatures;
-        });
-
     threshold_.visibilityDependsOn(queryCriterion_, [](TemplateOptionProperty<QueryCriterion>& p) {
         return p.get() == QueryCriterion::Threshold;
     });
@@ -97,7 +90,6 @@ ContourTreeProcessor::ContourTreeProcessor()
     featureType_.setReadOnly(true);
 
     addProperties(treeType_, featureType_, queryCriterion_, topKFeatures_,
-                  quasiSimplificationFactor_, threshold_);
 
     auto updateTree = [this]() { computeTree(); };
 
