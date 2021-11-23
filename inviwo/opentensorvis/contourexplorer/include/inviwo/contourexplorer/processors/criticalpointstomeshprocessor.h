@@ -29,21 +29,17 @@
 
 #pragma once
 
-#include <inviwo/contourtree/contourtreemoduledefine.h>
+#include <inviwo/contourexplorer/contourexplorermoduledefine.h>
 #include <inviwo/core/processors/processor.h>
 #include <inviwo/core/properties/ordinalproperty.h>
-#include <inviwo/core/ports/volumeport.h>
 #include <inviwo/core/properties/templateproperty.h>
-#include <ContourTreeData.h>
-#include <SimplifyCT.h>
-#include <constants.h>
-
-#include "TopologicalFeatures.h"
+#include <inviwo/core/ports/volumeport.h>
+#include <inviwo/core/ports/meshport.h>
 
 namespace inviwo {
 
-/** \docpage{org.inviwo.ContourTreeProcessor, Contour Tree}
- * ![](org.inviwo.ContourTreeProcessor.png?classIdentifier=org.inviwo.ContourTreeProcessor)
+/** \docpage{org.inviwo.CriticalPointsToMeshProcessor, Critical Points To Mesh Processor}
+ * ![](org.inviwo.CriticalPointsToMeshProcessor.png?classIdentifier=org.inviwo.CriticalPointsToMeshProcessor)
  * Explanation of how to use the processor.
  *
  * ### Inports
@@ -51,21 +47,15 @@ namespace inviwo {
  *
  * ### Outports
  *   * __<Outport1>__ <description>.
- *   * __<Outport2>__ <description>.
  *
  * ### Properties
  *   * __<Prop1>__ <description>.
  *   * __<Prop2>__ <description>
  */
-
-/**
- * \brief VERY_BRIEFLY_DESCRIBE_THE_PROCESSOR
- * DESCRIBE_THE_PROCESSOR_FROM_A_DEVELOPER_PERSPECTIVE
- */
-class IVW_MODULE_CONTOURTREE_API ContourTreeProcessor : public Processor {
+class IVW_MODULE_CONTOUREXPLORER_API CriticalPointsToMeshProcessor : public Processor {
 public:
-    ContourTreeProcessor();
-    virtual ~ContourTreeProcessor() = default;
+    CriticalPointsToMeshProcessor();
+    virtual ~CriticalPointsToMeshProcessor() = default;
 
     virtual void process() override;
 
@@ -73,30 +63,15 @@ public:
     static const ProcessorInfo processorInfo_;
 
 private:
-    enum class FeatureType { Arc, PartitionedExtrema };
-
-    enum class QueryCriterion { TopKFeatures, Threshold };
-
-    enum class SimplificationMetod { Persistence, Hypervolume };
+    enum class CriticalPointType {
+        Mimimum,
+        Maximum
+    };
 
     VolumeInport volumeInport_;
-
-    VolumeOutport segmentationOutport_;
-
-    TemplateOptionProperty<contourtree::TreeType> treeType_;
-    TemplateOptionProperty<FeatureType> featureType_;
-    TemplateOptionProperty<QueryCriterion> queryCriterion_;
-    TemplateOptionProperty<SimplificationMetod> simplificationMetod_;
-    
-    IntProperty topKFeatures_;
-    FloatProperty threshold_;
-
-    bool hasData_;
-    std::vector<uint32_t> arcMap_;
-    std::vector<char> criticalPoints_;
-    contourtree::TopologicalFeatures topologicalFeatures_;
-
-    void computeTree();
+    MeshOutport meshOutport_;
+    TemplateOptionProperty<CriticalPointType> criticalPointType_;
+    IntProperty numberOfCriticalPoints_;
 };
 
 }  // namespace inviwo

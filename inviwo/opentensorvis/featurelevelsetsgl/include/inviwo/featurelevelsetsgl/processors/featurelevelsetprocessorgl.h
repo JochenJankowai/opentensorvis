@@ -67,7 +67,6 @@ private:
     VolumeOutport distanceVolumeOutport_;
 
     // Properties
-    TemplateOptionProperty<GLuint> divisor_;
     BoolProperty squaredDistance_;
     BoolProperty useVolumesDataMap_;
     BoolProperty useNormalizedValues_;
@@ -77,7 +76,6 @@ private:
 
     // Caches
     size_t prevNumberOfVolumes_;
-    GLuint prevDivisor_;
     std::array<vec2, 4> dataRangesCache_;
     size_t traitAllocation_{8};
     std::vector<std::string> volumeNameCache_{};

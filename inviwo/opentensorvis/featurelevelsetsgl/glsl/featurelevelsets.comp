@@ -45,7 +45,7 @@ uniform vec2 volumeRanges[NUM_VOLUMES];
 uniform int numPointTraits;
 uniform int numRangeTraits;
 
-layout(local_size_x = DIVISOR, local_size_y = DIVISOR, local_size_z = DIVISOR) in;
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 // #define ENABLE_IMPLICIT_FUNCTION_1
 void implicitFunction1(in float point[NUM_VOLUMES], in vec2[NUM_VOLUMES] ranges, out float result) {

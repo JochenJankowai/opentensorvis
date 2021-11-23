@@ -111,10 +111,10 @@ void ContourTreeProcessor::computeTree() {
         return;
     }
 
-    auto [contourTreeData, simplifyCt, arcMap] =
+    auto [contourTreeData, simplifyCt, arcMap,criticalPts] =
         inputVolume->getRepresentation<VolumeRAM>()
             ->dispatch<std::tuple<contourtree::ContourTreeData, contourtree::SimplifyCT,
-                                  std::vector<uint32_t>>,
+                                  std::vector<uint32_t>,std::vector<char>>,
                        dispatching::filter::Scalars>([&](auto vrprecision) {
                 using ValueType = util::PrecisionValueType<decltype(vrprecision)>;
 
@@ -156,7 +156,7 @@ void ContourTreeProcessor::computeTree() {
                 simplifyCt.simplify(simFn);
                 simplifyCt.computeWeights();
 
-                return std::tuple(contourTreeData, simplifyCt, contourTree.arcMap);
+                return std::tuple(contourTreeData, simplifyCt, contourTree.arcMap,contourTree.criticalPts);
             });
 
     const auto partition = featureType_.get() == FeatureType::PartitionedExtrema;
@@ -164,6 +164,7 @@ void ContourTreeProcessor::computeTree() {
     topologicalFeatures_.loadDataFromArrays(contourTreeData, simplifyCt.order, simplifyCt.weights,
                                             partition);
     arcMap_ = std::move(arcMap);
+    
     hasData_ = true;
 }
 

@@ -1,4 +1,4 @@
-﻿/*********************************************************************************
+/*********************************************************************************
  *
  * Inviwo - Interactive Visualization Workshop
  *
@@ -72,7 +72,7 @@ FeatureLevelSetProcessorGL::FeatureLevelSetProcessorGL()
     , PropertyOwnerObserver()
     , volumes_("volume")
     , distanceVolumeOutport_("distanceVolumeOutport")
-    , divisor_("divisor", "Divisor", {{"1", "1", 1}, {"2", "2", 2}, {"4", "4", 4}, {"8", "8", 8}})
+    , meshOutport_("meshOutport")
     , squaredDistance_("squaredDistance", "Use squared distance", false)
     , useVolumesDataMap_("useVolumesDataMap", "Use volume's data map", true)
     , useNormalizedValues_("useNormalizedValues", "Use normalized values", false)
@@ -80,7 +80,6 @@ FeatureLevelSetProcessorGL::FeatureLevelSetProcessorGL()
     , traitPropertiesContainer_("traitProperties", "Traits")
     , injectButton_("injectButton", "Inject")
     , prevNumberOfVolumes_(1)
-    , prevDivisor_(1)
     , dataRangesCache_(std::array<vec2, 4>{vec2(0), vec2(0), vec2(0), vec2(0)})
     , shader_({{
                   ShaderType::Compute,
@@ -95,7 +94,7 @@ FeatureLevelSetProcessorGL::FeatureLevelSetProcessorGL()
         std::make_unique<ImplicitFunctionTraitProperty>("implicitFunction", "Implicit function"));
 
     addPorts(volumes_, distanceVolumeOutport_);
-    addProperties(divisor_, squaredDistance_, useVolumesDataMap_, useNormalizedValues_,
+    addProperties(squaredDistance_, useVolumesDataMap_, useNormalizedValues_, capMaxDistance_,
                   capMaxDistance_, traitPropertiesContainer_, injectButton_);
 
     traitPropertiesContainer_.PropertyOwnerObservable::addObserver(this);
@@ -105,22 +104,9 @@ FeatureLevelSetProcessorGL::FeatureLevelSetProcessorGL()
         auto computeShader = shader_.getShaderObject(ShaderType::Compute);
 
         computeShader->addShaderDefine("NUM_VOLUMES", StrBuffer{"{}", prevNumberOfVolumes_});
-        computeShader->addShaderDefine("DIVISOR", StrBuffer{"{}", prevDivisor_});
         computeShader->addShaderDefine("TRAIT_ALLOCATION", StrBuffer{"{}", traitAllocation_});
     }
     shader_.build();
-
-    divisor_.onChange([this]() {
-        auto computeShader = shader_.getShaderObject(ShaderType::Compute);
-
-        computeShader->removeShaderDefine(StrBuffer{"DIVISOR {}", prevDivisor_});
-
-        prevDivisor_ = divisor_.getSelectedValue();
-
-        computeShader->addShaderDefine("DIVISOR", StrBuffer{"{}", prevDivisor_});
-
-        shader_.build();
-    });
 
     squaredDistance_.onChange([this]() {
         if (auto computeShader = shader_.getShaderObject(ShaderType::Compute);
@@ -298,6 +284,8 @@ FeatureLevelSetProcessorGL::FeatureLevelSetProcessorGL()
         if (capMaxDistance_.get()) {
             LogInfoCustom("Feature Level Sets",
                           fmt::format("Capping max distance at {}.", maxDist_));
+        } else {
+            LogInfoCustom("Feature Level Sets", "Capping disabled.");
         }
     });
 }
@@ -504,11 +492,9 @@ std::shared_ptr<Volume> FeatureLevelSetProcessorGL::bindOutputTexture() {
 void FeatureLevelSetProcessorGL::gpuDispatch() {
     const size3_t dims = volumes_.getData()->getDimensions();
 
-    const GLuint divisor = divisor_.getSelectedValue();
-
-    const auto x = static_cast<GLuint>(dims.x / divisor);
-    const auto y = static_cast<GLuint>(dims.y / divisor);
-    const auto z = static_cast<GLuint>(dims.z / divisor);
+    const auto x = static_cast<GLuint>(dims.x);
+    const auto y = static_cast<GLuint>(dims.y);
+    const auto z = static_cast<GLuint>(dims.z);
 
     glDispatchCompute(x, y, z);
 
