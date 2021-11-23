@@ -89,7 +89,6 @@ private:
     TemplateOptionProperty<SimplificationMetod> simplificationMetod_;
     
     IntProperty topKFeatures_;
-    FloatProperty quasiSimplificationFactor_;
     FloatProperty threshold_;
 
     bool hasData_;

@@ -65,13 +65,14 @@ ContourTreeProcessor::ContourTreeProcessor()
                    {{"arc", "Arc", FeatureType::Arc},
                     {"partitionedExtrema", "Partitioned extrema", FeatureType::PartitionedExtrema}},
                    1)
-    , queryCriterion_("simplificationCriterion", "Simplification criterion",
+    , queryCriterion_("queryCriterion", "Query criterion",
                       {{"topk", "Top k features", QueryCriterion::TopKFeatures},
                        {"threshold", "Threshold", QueryCriterion::Threshold}},
                       0)
     , simplificationMetod_("simplificationMetod", "Simplification method",
                            {{"persistence", "Persistence", SimplificationMetod::Persistence},
-                            {"hypervolume", "Hypervolume", SimplificationMetod::Hypervolume}},1)
+                            {"hypervolume", "Hypervolume", SimplificationMetod::Hypervolume}},
+                           1)
     , topKFeatures_("topKFeatures", "Top k features", 3, 1, 20)
     , threshold_("threshold", "Threshold", 0.0f, 0.0f, 1.0f, 0.0001f)
     , hasData_(false) {
@@ -87,13 +88,13 @@ ContourTreeProcessor::ContourTreeProcessor()
         return p.get() == QueryCriterion::Threshold;
     });
 
-    featureType_.setReadOnly(true);
-
-    addProperties(treeType_, featureType_, queryCriterion_, topKFeatures_,
+    addProperties(treeType_, featureType_, queryCriterion_, simplificationMetod_, topKFeatures_,
+                  threshold_);
 
     auto updateTree = [this]() { computeTree(); };
 
     treeType_.onChange(updateTree);
+    featureType_.onChange(updateTree);
     simplificationMetod_.onChange(updateTree);
     volumeInport_.onChange(updateTree);
 }
@@ -158,17 +159,28 @@ void ContourTreeProcessor::computeTree() {
                 return std::tuple(contourTreeData, simplifyCt, contourTree.arcMap);
             });
 
+    const auto partition = featureType_.get() == FeatureType::PartitionedExtrema;
+
     topologicalFeatures_.loadDataFromArrays(contourTreeData, simplifyCt.order, simplifyCt.weights,
-                                           true);
+                                            partition);
     arcMap_ = std::move(arcMap);
     hasData_ = true;
 }
 
 void ContourTreeProcessor::process() {
     if (!hasData_) computeTree();
-    
-    const auto features =
-        topologicalFeatures_.getPartitionedExtremaFeatures(topKFeatures_.get(), threshold_.get());
+
+    std::vector<contourtree::Feature> features;
+
+    const int topKFeatures =
+        queryCriterion_.get() == QueryCriterion::TopKFeatures ? topKFeatures_.get() : -1;
+
+    if (featureType_.get() == FeatureType::Arc) {
+        features = topologicalFeatures_.getArcFeatures(topKFeatures, threshold_.get());
+    } else {
+        features =
+            topologicalFeatures_.getPartitionedExtremaFeatures(topKFeatures, threshold_.get());
+    }
 
     const auto inputVolume = volumeInport_.getData();
 
@@ -213,7 +225,7 @@ void ContourTreeProcessor::process() {
         dvec2{0, features.size() - 1};
     segmentationVolume->setBasis(inputVolume->getBasis());
     segmentationVolume->setOffset(inputVolume->getOffset());
-    
+
     segmentationVolume->setInterpolation(InterpolationType::Nearest);
 
     segmentationOutport_.setData(segmentationVolume);
