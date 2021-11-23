@@ -33,6 +33,7 @@
 #include <inviwo/opentensorviscompute/processors/volumereductionglprocessor.h>
 #include <modules/opengl/shader/shadermanager.h>
 #include <inviwo/opentensorviscompute/processors/volumenormalizationglprocessor.h>
+#include <inviwo/opentensorviscompute/processors/volumeshrinktonormalrangeglprocessor.h>
 
 namespace inviwo {
 
@@ -43,6 +44,7 @@ OpenTensorVisComputeModule::OpenTensorVisComputeModule(InviwoApplication* app) :
     registerProcessor<VolumeMinMaxGLProcessor>();
     registerProcessor<VolumeNormalizationGLProcessor>();
     registerProcessor<VolumeReductionGLProcessor>();
+    registerProcessor<VolumeShrinkToNormalRangeGLProcessor>();
 }
 
 }  // namespace inviwo
