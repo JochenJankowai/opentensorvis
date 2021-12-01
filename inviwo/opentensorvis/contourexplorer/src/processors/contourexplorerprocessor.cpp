@@ -166,9 +166,7 @@ void ContourExplorerProcessor::handlePicking(PickingEvent* p) {
 
             p->markAsUsed();
         }
-
-        LogInfo(fmt::format("Selected feature: {}", value));
-
+        
         invalidate(InvalidationLevel::Valid);
     }
 }
@@ -223,8 +221,6 @@ void ContourExplorerProcessor::generateIsoVolume() {
                                               }
                                               return 0;
                                           });
-
-                           LogInfoCustom("wawa", fmt::format("{} number of voxels",i));
 
                            return rawOutput;
                        });

@@ -33,11 +33,11 @@
 #include <inviwo/core/processors/processor.h>
 #include <inviwo/core/properties/ordinalproperty.h>
 #include <inviwo/core/ports/volumeport.h>
-#include <inviwo/core/properties/templateproperty.h>
+#include <inviwo/core/properties/compositeproperty.h>
 #include <ContourTreeData.h>
 #include <SimplifyCT.h>
 #include <constants.h>
-
+#include <inviwo/core/ports/meshport.h>
 #include "TopologicalFeatures.h"
 
 namespace inviwo {
@@ -73,6 +73,8 @@ public:
     static const ProcessorInfo processorInfo_;
 
 private:
+    enum class QueryMethod{TopoAngler, Cutoff, Leaves};
+
     enum class FeatureType { Arc, PartitionedExtrema };
 
     enum class QueryCriterion { TopKFeatures, Threshold };
@@ -82,21 +84,86 @@ private:
     VolumeInport volumeInport_;
 
     VolumeOutport segmentationOutport_;
+    MeshOutport meshOutport_;
 
+    TemplateOptionProperty<QueryMethod> queryMethod_;
+
+    /**
+     * General settings regarding tree computation.
+     */
+    CompositeProperty methodGeneral_;
     TemplateOptionProperty<contourtree::TreeType> treeType_;
+    TemplateOptionProperty<SimplificationMetod> simplificationMetod_;
+
+    /**
+     * Properties for the original implementation by TopoAngler.
+     */
+    CompositeProperty methodTopoAngler_;
     TemplateOptionProperty<FeatureType> featureType_;
     TemplateOptionProperty<QueryCriterion> queryCriterion_;
-    TemplateOptionProperty<SimplificationMetod> simplificationMetod_;
-    
     IntProperty topKFeatures_;
     FloatProperty threshold_;
 
+    /**
+     * Properties to steer method for extracting subtrees below a certain threshold.
+     */
+    CompositeProperty methodCutoff_;
+    FloatProperty cutoff_;
+
+
+    /**
+     * Properties to steed method for extracting N leaves and their corresponding arcs.
+     */
+    CompositeProperty methodNLeaves_;
+    IntProperty nLeaves_;
+    
+    /**
+     * Properties to steer the output for the mesh
+     */
+    CompositeProperty sphereOptions_;
+    FloatProperty radius_;
+    FloatVec4Property color_;
+
     bool hasData_;
+    bool isSimplified_;
     std::vector<uint32_t> arcMap_;
     std::vector<char> criticalPoints_;
+    contourtree::MergeTree mergeTree_;
+    contourtree::ContourTreeData contourTreeData_;
+    contourtree::SimplifyCT simplifyCt_;
     contourtree::TopologicalFeatures topologicalFeatures_;
 
     void computeTree();
+    void simplifyTree();
+    void generateMesh();
+    void query(QueryMethod method);
+
+    void queryTopoAngler();
+    void queryCutoff();
+    void queryNLeaves();
+    /**
+     * @return Index of root node into nodes array.
+     */
+    size_t findRoot();
+
+    /**
+     *
+     */
+
+    /**
+     * @return Set of indices of those arcs that intersect with the threshold
+     */
+    std::vector<std::pair<uint32_t, uint32_t>> getIntersectingArcs();
+
+    /**
+     * Get n lowest/highest leaves and their incident arcs (indices).
+     *
+     * @return Pair of indices. pair.first is node index, pair.second is arc index.
+     */
+    std::vector<std::pair<uint32_t, uint32_t>>getNLeavesAndCorrespondingArcs();
+
+    void generateSegmentationVolume(uint16_t* rawData, glm::u8 n);
+
 };
 
 }  // namespace inviwo

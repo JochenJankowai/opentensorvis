@@ -1,4 +1,4 @@
-/*********************************************************************************
+﻿/*********************************************************************************
  *
  * Inviwo - Interactive Visualization Workshop
  *
@@ -93,9 +93,9 @@ FeatureLevelSetProcessorGL::FeatureLevelSetProcessorGL()
     traitPropertiesContainer_.addPrefab(
         std::make_unique<ImplicitFunctionTraitProperty>("implicitFunction", "Implicit function"));
 
-    addPorts(volumes_, distanceVolumeOutport_);
+    addPorts(volumes_, distanceVolumeOutport_, meshOutport_);
     addProperties(squaredDistance_, useVolumesDataMap_, useNormalizedValues_, capMaxDistance_,
-                  capMaxDistance_, traitPropertiesContainer_, injectButton_);
+                  traitPropertiesContainer_, injectButton_);
 
     traitPropertiesContainer_.PropertyOwnerObservable::addObserver(this);
 
@@ -614,11 +614,26 @@ void FeatureLevelSetProcessorGL::onWillAddProperty(Property* property, size_t) {
         }
 
         traitProperty->setSerializationMode(PropertySerializationMode::All);
-    }
 
-    if (traitPropertiesContainer_.getProperties().size() > traitAllocation_) {
-        resizeTraitAllocation();
+        if (traitPropertiesContainer_.getProperties().size() > traitAllocation_) {
+            resizeTraitAllocation();
+        }
+
+        traitProperty->onChange([&, this]() { generateTraitMesh(traitProperty->getIdentifier()); });
     }
 }
+
+void FeatureLevelSetProcessorGL::generateTraitMesh(const std::string& identifier) {
+    auto prop = traitPropertiesContainer_.getPropertyByIdentifier(identifier);
+
+    if (auto pointTraitProperty = dynamic_cast<PointTraitProperty*>(prop)) {
+        
+    }
+
+    if (auto rangeTraitProperty = dynamic_cast<RangeTraitProperty*>(prop)) {
+        
+    }
+}
+
 
 }  // namespace inviwo

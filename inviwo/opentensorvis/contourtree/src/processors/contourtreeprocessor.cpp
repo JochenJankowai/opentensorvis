@@ -39,6 +39,10 @@
 #include <tuple>
 #include <execution>
 #include <inviwo/opentensorviscompute/algorithm/volumereductiongl.h>
+#include <inviwo/core/util/zip.h>
+#include <inviwo/core/util/indexmapper.h>
+#include <modules/base/algorithm/meshutils.h>
+#include "inviwo/core/datastructures/geometry/typedmesh.h"
 
 namespace inviwo {
 
@@ -56,11 +60,22 @@ ContourTreeProcessor::ContourTreeProcessor()
     : Processor()
     , volumeInport_("volumeInport")
     , segmentationOutport_("segmentation")
+    , meshOutport_("meshOutport")
+    , queryMethod_("queryMethod", "Query method",
+                   {{"methodHarish", "TopoAngler", QueryMethod::TopoAngler},
+                    {"methodCutoff_", "Cutoff", QueryMethod::Cutoff},
+                    {"methodLeaves", "Leaves", QueryMethod::Leaves}},
+                   0)
+    , methodGeneral_("methodGeneral", "General")
     , treeType_("treeType", "Tree type",
                 {{"join", "Join", contourtree::TreeType::JoinTree},
-                 {"split", "Split", contourtree::TreeType::SplitTree},
-                 {"contour", "Contour", contourtree::TreeType::ContourTree}},
+                 {"split", "Split", contourtree::TreeType::SplitTree}},
                 0)
+    , simplificationMetod_("simplificationMetod", "Simplification method",
+                           {{"persistence", "Persistence", SimplificationMetod::Persistence},
+                            {"hypervolume", "Hypervolume", SimplificationMetod::Hypervolume}},
+                           1)
+    , methodTopoAngler_("methodTopoAngler", "TopoAngler")
     , featureType_("featureType", "Feature type",
                    {{"arc", "Arc", FeatureType::Arc},
                     {"partitionedExtrema", "Partitioned extrema", FeatureType::PartitionedExtrema}},
@@ -69,34 +84,86 @@ ContourTreeProcessor::ContourTreeProcessor()
                       {{"topk", "Top k features", QueryCriterion::TopKFeatures},
                        {"threshold", "Threshold", QueryCriterion::Threshold}},
                       0)
-    , simplificationMetod_("simplificationMetod", "Simplification method",
-                           {{"persistence", "Persistence", SimplificationMetod::Persistence},
-                            {"hypervolume", "Hypervolume", SimplificationMetod::Hypervolume}},
-                           1)
-    , topKFeatures_("topKFeatures", "Top k features", 3, 1, 20)
+    , topKFeatures_("topKFeatures", "Top k features", 1, 1, 12, 1)
     , threshold_("threshold", "Threshold", 0.0f, 0.0f, 1.0f, 0.0001f)
+    , methodCutoff_("methodCutoff", "Cutoff")
+    , cutoff_("cutoff", "Function value")
+    , methodNLeaves_("methodNLeaves", "N Leaves")
+    , nLeaves_("nLeaves", "Number of leaves", 1, 1, 12, 1)
+    , sphereOptions_("sphereOptions", "Sphere options")
+    , radius_("radius", "Radius", 0.1f, 0.1f, 10.f, 0.1f)
+    , color_("color", "Color", vec4(1), vec4(0), vec4(1), vec4(0.00001f),
+             InvalidationLevel::InvalidOutput, PropertySemantics::Color)
     , hasData_(false) {
+    auto updateTree = [this]() { computeTree(); };
+    auto updateMesh = [this]() { generateMesh(); };
 
-    addPorts(volumeInport_, segmentationOutport_);
+    volumeInport_.onChange([this]() {
+        computeTree();
 
+        NetworkLock l;
+
+        auto inputVolume = volumeInport_.getData();
+        const auto min = static_cast<float>(inputVolume->dataMap_.dataRange.x);
+        const auto max = static_cast<float>(inputVolume->dataMap_.dataRange.y);
+
+        if (cutoff_.get() < min && cutoff_.get() > max) {
+            cutoff_.set(min);
+        }
+
+        cutoff_.setMinValue(min);
+        cutoff_.setMaxValue(max);
+    });
+    addPorts(volumeInport_, segmentationOutport_, meshOutport_);
+
+    /**
+     * General method setup
+     */
+    treeType_.onChange(updateTree);
+    simplificationMetod_.onChange(updateTree);
+    methodGeneral_.addProperties(treeType_, simplificationMetod_);
+
+    /**
+     * Setup for TopoAngler's method
+     */
+    methodTopoAngler_.visibilityDependsOn(queryMethod_, [](TemplateOptionProperty<QueryMethod>& p) {
+        return p.get() == QueryMethod::TopoAngler;
+    });
     topKFeatures_.visibilityDependsOn(queryCriterion_,
                                       [](TemplateOptionProperty<QueryCriterion>& p) {
                                           return p.get() == QueryCriterion::TopKFeatures;
                                       });
-
     threshold_.visibilityDependsOn(queryCriterion_, [](TemplateOptionProperty<QueryCriterion>& p) {
         return p.get() == QueryCriterion::Threshold;
     });
-
-    addProperties(treeType_, featureType_, queryCriterion_, simplificationMetod_, topKFeatures_,
-                  threshold_);
-
-    auto updateTree = [this]() { computeTree(); };
-
-    treeType_.onChange(updateTree);
     featureType_.onChange(updateTree);
-    simplificationMetod_.onChange(updateTree);
-    volumeInport_.onChange(updateTree);
+    methodTopoAngler_.addProperties(featureType_, queryCriterion_, topKFeatures_, threshold_);
+
+    /**
+     * Setup for Cutoff method
+     */
+    methodCutoff_.visibilityDependsOn(queryMethod_, [](TemplateOptionProperty<QueryMethod>& p) {
+        return p.get() == QueryMethod::Cutoff;
+    });
+    methodCutoff_.addProperties(cutoff_);
+
+    /**
+     * Setup for nLeaves method
+     */
+    methodNLeaves_.visibilityDependsOn(queryMethod_, [](TemplateOptionProperty<QueryMethod>& p) {
+        return p.get() == QueryMethod::Leaves;
+    });
+    methodNLeaves_.addProperties(nLeaves_);
+
+    /**
+     * Mesh options
+     */
+    radius_.onChange(updateMesh);
+    color_.onChange(updateMesh);
+    sphereOptions_.addProperties(radius_, color_);
+
+    addProperties(queryMethod_, methodGeneral_, methodTopoAngler_, methodCutoff_, methodNLeaves_,
+                  sphereOptions_);
 }
 
 void ContourTreeProcessor::computeTree() {
@@ -111,65 +178,196 @@ void ContourTreeProcessor::computeTree() {
         return;
     }
 
-    auto [contourTreeData, simplifyCt, arcMap,criticalPts] =
-        inputVolume->getRepresentation<VolumeRAM>()
-            ->dispatch<std::tuple<contourtree::ContourTreeData, contourtree::SimplifyCT,
-                                  std::vector<uint32_t>,std::vector<char>>,
-                       dispatching::filter::Scalars>([&](auto vrprecision) {
+    inputVolume->getRepresentation<VolumeRAM>()->dispatch<void, dispatching::filter::Scalars>(
+        [&, this](auto vrprecision) {
+            using ValueType = util::PrecisionValueType<decltype(vrprecision)>;
+
+            const auto dimensions = inputVolume->getDimensions();
+
+            contourtree::Grid3D<ValueType> grid(static_cast<int>(dimensions.x),
+                                                static_cast<int>(dimensions.y),
+                                                static_cast<int>(dimensions.z));
+
+            grid.fnVals.resize(glm::compMul(dimensions));
+            auto gridData = grid.fnVals.data();
+
+            auto volumeData = vrprecision->getDataTyped();
+
+            std::memcpy(gridData, volumeData, glm::compMul(dimensions) * sizeof(ValueType));
+
+            const auto treeType = treeType_.get();
+
+            mergeTree_ = contourtree::MergeTree();
+
+            mergeTree_.computeTree(&grid, treeType);
+
+            mergeTree_.generateArrays(treeType);
+
+            contourTreeData_ = contourtree::ContourTreeData(mergeTree_);
+        });
+
+    //generateMesh();
+
+    hasData_ = true;
+    isSimplified_ = false;
+}
+
+void ContourTreeProcessor::simplifyTree() {
+    if (!hasData_) return;
+
+    simplifyCt_ = contourtree::SimplifyCT();
+
+    simplifyCt_.setInput(&contourTreeData_);
+
+    contourtree::SimFunction* simFn;
+
+    if (simplificationMetod_.get() == SimplificationMetod::Persistence) {
+        simFn = new contourtree::Persistence(contourTreeData_);
+    } else {
+        simFn = new contourtree::HyperVolume(contourTreeData_, mergeTree_.arcMap);
+    }
+
+    delete simplifyCt_.simFn;
+
+    simplifyCt_.simplify(simFn);
+    simplifyCt_.computeWeights();
+}
+
+size_t ContourTreeProcessor::findRoot() {
+    if (!hasData_) return 0;
+
+    auto& nodes = contourTreeData_.nodes;
+
+    contourtree::Node root;
+
+    size_t i{0};
+    for (; i < nodes.size(); i++) {
+        if (nodes[i].next.empty()) {
+            break;
+        }
+    }
+
+    return i;
+}
+
+std::vector<std::pair<uint32_t, uint32_t>> ContourTreeProcessor::getIntersectingArcs() {
+    const auto cutoff = cutoff_.get();
+
+    if (!hasData_) return std::vector<std::pair<uint32_t, uint32_t>>{};
+
+    const auto inputVolume = volumeInport_.getData();
+
+    return inputVolume->getRepresentation<VolumeRAM>()
+        ->dispatch<std::vector<std::pair<uint32_t, uint32_t>>, dispatching::filter::Scalars>(
+            [&, this](auto vrprecision) {
                 using ValueType = util::PrecisionValueType<decltype(vrprecision)>;
-
-                const auto dimensions = inputVolume->getDimensions();
-
-                contourtree::Grid3D<ValueType> grid(static_cast<int>(dimensions.x),
-                                                    static_cast<int>(dimensions.y),
-                                                    static_cast<int>(dimensions.z));
-
-                grid.fnVals.resize(glm::compMul(dimensions));
-                auto gridData = grid.fnVals.data();
-
                 auto volumeData = vrprecision->getDataTyped();
 
-                std::memcpy(gridData, volumeData, glm::compMul(dimensions) * sizeof(ValueType));
+                const auto& contourTreeData = topologicalFeatures_.ctdata;
 
-                contourtree::MergeTree contourTree;
+                const auto& arcs = contourTreeData.arcs;
 
-                const auto treeType = treeType_.get();
+                std::vector<std::pair<uint32_t, uint32_t>> intersectingArcs;
 
-                contourTree.computeTree(&grid, treeType);
+                auto inRange = [&](const ValueType a, const ValueType b) {
+                    return cutoff >= static_cast<float>(a) && cutoff <= static_cast<float>(b);
+                };
 
-                contourTree.generateArrays(treeType);
+                size_t numberOfIntersectingArcs = 0;
 
-                contourtree::ContourTreeData contourTreeData(contourTree);
+                for (const auto [from, to, id] : arcs) {
+                    const auto value1 = volumeData[contourTreeData.nodeVerts[from]];
+                    const auto value2 = volumeData[contourTreeData.nodeVerts[to]];
 
-                contourtree::SimplifyCT simplifyCt;
-
-                simplifyCt.setInput(&contourTreeData);
-
-                contourtree::SimFunction* simFn;
-
-                if (simplificationMetod_.get() == SimplificationMetod::Persistence) {
-                    simFn = new contourtree::Persistence(contourTreeData);
-                } else {
-                    simFn = new contourtree::HyperVolume(contourTreeData, contourTree.arcMap);
+                    if (inRange(value1, value2)) {
+                        numberOfIntersectingArcs++;
+                    }
                 }
 
-                simplifyCt.simplify(simFn);
-                simplifyCt.computeWeights();
+                LogInfoCustom("ContourTreeProcessor",
+                              fmt::format("{} intersecting arcs at cutoff {}.",
+                                          numberOfIntersectingArcs, cutoff));
 
-                return std::tuple(contourTreeData, simplifyCt, contourTree.arcMap,contourTree.criticalPts);
+                return intersectingArcs;
             });
+}
+
+std::vector<std::pair<uint32_t, uint32_t>> ContourTreeProcessor::getNLeavesAndCorrespondingArcs() {
+    if (!hasData_) computeTree();
+    if (!isSimplified_) simplifyTree();
+
+    const auto n = nLeaves_.get();
+
+    std::vector<std::pair<uint32_t, uint32_t>> list;
+
+    if (!hasData_) return list;
+
+    for (uint32_t i{0}; i < n; ++i) {
+        for (uint32_t j{0}; j < topologicalFeatures_.ctdata.arcs.size(); ++j) {
+            if (const auto [from, to, id] = topologicalFeatures_.ctdata.arcs[j]; from == i) {
+                list.emplace_back(i, j);
+                break;
+            }
+        }
+    }
+
+    LogInfo(fmt::format("Extracted {} node/arc pairs for {} features.", list.size(), n));
+
+    return list;
+}
+
+void ContourTreeProcessor::generateMesh() {
+    if (!volumeInport_.hasData() || !volumeInport_.getData()) return;
+
+    auto inputVolume = volumeInport_.getData();
+
+    std::vector<vec3> positions;
+
+    util::IndexMapper3D indexMapper(inputVolume->getDimensions());
+
+    const auto& nodeVertices = topologicalFeatures_.ctdata.nodeVerts;
+
+    for (int i{0}; i < topKFeatures_.get(); ++i) {
+        auto index = nodeVertices[i];
+        auto position = vec3(indexMapper(index));
+        positions.push_back(position);
+    }
+
+    auto outputMesh = std::make_shared<BasicMesh>();
+
+    for (auto& position : positions) {
+        position = inputVolume->getBasis() * (vec3(position) / vec3(inputVolume->getDimensions()));
+
+        auto mesh = meshutil::sphere(position, radius_.get(), color_.get());
+        mesh->setModelMatrix(inputVolume->getModelMatrix());
+        mesh->setWorldMatrix(inputVolume->getWorldMatrix());
+        outputMesh->Mesh::append(*mesh);
+    }
+
+    meshOutport_.setData(outputMesh);
+}
+
+void ContourTreeProcessor::query(const QueryMethod method) {
+    switch (method) {
+        case QueryMethod::TopoAngler:
+            queryTopoAngler();
+            break;
+        case QueryMethod::Cutoff:
+            queryCutoff();
+            break;
+        case QueryMethod::Leaves:
+            queryNLeaves();
+            break;
+    }
+}
+
+void ContourTreeProcessor::queryTopoAngler() {
+    if (!isSimplified_) simplifyTree();
 
     const auto partition = featureType_.get() == FeatureType::PartitionedExtrema;
 
-    topologicalFeatures_.loadDataFromArrays(contourTreeData, simplifyCt.order, simplifyCt.weights,
-                                            partition);
-    arcMap_ = std::move(arcMap);
-    
-    hasData_ = true;
-}
-
-void ContourTreeProcessor::process() {
-    if (!hasData_) computeTree();
+    topologicalFeatures_.loadDataFromArrays(contourTreeData_, simplifyCt_.order,
+                                            simplifyCt_.weights, partition);
 
     std::vector<contourtree::Feature> features;
 
@@ -203,27 +401,42 @@ void ContourTreeProcessor::process() {
         }
     }
 
-    auto printHistogram = [](uint16_t* data, size_t numberOfElements) {
-        std::map<glm::u16, int> histogram;
-        for (size_t i{0}; i < numberOfElements; ++i) {
-            histogram[data[i]]++;
-        }
+    generateSegmentationVolume(rawData, features.size() - 1);
+}
 
-        LogInfoCustom("ContourTreeProcessor", "Histogram");
-        for (auto pair : histogram) {
-            LogInfoCustom("ContourTreeProcessor", fmt::format("{0}: {1}", pair.first, pair.second));
-        }
-    };
+void ContourTreeProcessor::queryCutoff() { auto intersectingArcs = getIntersectingArcs(); }
 
-    printHistogram(rawData, numberOfElements);
+void ContourTreeProcessor::queryNLeaves() {
+    auto nLeavesAndCorrespondingArcs = getNLeavesAndCorrespondingArcs();
+
+    auto numberOfElements = glm::compMul(volumeInport_.getData()->getDimensions());
+
+    auto rawData = new uint16_t[numberOfElements];
+    std::fill_n(rawData, numberOfElements, nLeavesAndCorrespondingArcs.size() + 1);
+
+    for (size_t i{}; i < nLeavesAndCorrespondingArcs.size(); ++i) {
+        const auto& arc = contourTreeData_.arcs[nLeavesAndCorrespondingArcs[i].second];
+        const auto arcId = arc.id;
+
+        for (size_t j{0}; j < numberOfElements; ++j) {
+            if (arcMap_[j] == arcId) {
+                rawData[j] = static_cast<uint16_t>(i);
+            }
+        }
+    }
+
+    generateSegmentationVolume(rawData, nLeavesAndCorrespondingArcs.size() - 1);
+}
+
+void ContourTreeProcessor::generateSegmentationVolume(uint16_t* rawData, const glm::u8 n) {
+    const auto inputVolume = volumeInport_.getData();
 
     const auto segmentationVolumeRamPrecision =
         std::make_shared<VolumeRAMPrecision<uint16_t>>(rawData, inputVolume->getDimensions());
 
     auto segmentationVolume = std::make_shared<Volume>(segmentationVolumeRamPrecision);
 
-    segmentationVolume->dataMap_.dataRange = segmentationVolume->dataMap_.valueRange =
-        dvec2{0, features.size() - 1};
+    segmentationVolume->dataMap_.dataRange = segmentationVolume->dataMap_.valueRange = dvec2{0, n};
     segmentationVolume->setBasis(inputVolume->getBasis());
     segmentationVolume->setOffset(inputVolume->getOffset());
 
@@ -232,4 +445,47 @@ void ContourTreeProcessor::process() {
     segmentationOutport_.setData(segmentationVolume);
 }
 
+void ContourTreeProcessor::process() {
+    if (!hasData_) computeTree();
+
+    query(queryMethod_.get());
+}
+
 }  // namespace inviwo
+
+/* auto inRange = [](const float threshold, const ValueType a, const ValueType b) {
+                        return threshold >= static_cast<float>(a) &&
+                               threshold <= static_cast<float>(b);
+                    };
+
+                    auto volumeData = vrprecision->getDataTyped();
+                    const auto& nodeVertices = topologicalFeatures_.ctdata.nodeVerts;
+                    auto nodes = topologicalFeatures_.ctdata.nodes;
+
+                    auto parentIndex = findRoot();
+                    auto& parentNode = nodes[parentIndex];
+
+                    std::vector<std::pair<uint32_t, uint32_t>> intersectingArcs;
+
+                    std::vector<std::pair<uint32_t, uint32_t>> nodesToInvestigate;
+
+                    for (auto id : parentNode.prev) {
+                        nodesToInvestigate.emplace_back(parentIndex, id);
+                    }
+
+                    while (!nodesToInvestigate.empty()) {
+
+                        auto [parent, kid] = nodesToInvestigate.back();
+                        nodesToInvestigate.pop_back();
+
+                        const ValueType nodeValue = volumeData[nodeVertices[kid]];
+                        const ValueType parentValue = volumeData[nodeVertices[parent]];
+
+                        if (inRange(threshold, nodeValue,parentValue)) {
+                            intersectingArcs.emplace_back(parent, kid);
+                        } else {
+                            for (auto id : nodes[kid].prev)
+                                nodesToInvestigate.emplace_back(kid, id);
+                        }
+                    }
+*/

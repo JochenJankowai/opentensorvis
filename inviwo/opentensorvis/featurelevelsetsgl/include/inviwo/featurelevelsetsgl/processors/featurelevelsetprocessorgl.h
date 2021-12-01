@@ -39,6 +39,9 @@
 #include <inviwo/opentensorviscompute/algorithm/volumereductiongl.h>
 #include <inviwo/opentensorviscompute/algorithm/volumenormalizationgl.h>
 #include <inviwo/core/properties/buttonproperty.h>
+#include <inviwo/core/ports/meshport.h>
+
+#include "inviwo/core/datastructures/geometry/typedmesh.h"
 
 namespace inviwo {
 
@@ -65,6 +68,7 @@ private:
     // Ports
     DataInport<Volume, 0, true> volumes_;
     VolumeOutport distanceVolumeOutport_;
+    MeshOutport meshOutport_;
 
     // Properties
     BoolProperty squaredDistance_;
@@ -88,6 +92,7 @@ private:
     const size_t maxVolumes_{4};
     VolumeNormalizationGL normalization_;
     VolumeReductionGL reduction_;
+    std::map<std::string, std::shared_ptr<BasicMesh>> traitMeshes_;
 
     // Helpers
     std::vector<vec4> gatherPointTraits() const;
@@ -127,6 +132,8 @@ private:
     void initializeAllProperties();
 
     virtual void onWillAddProperty(Property* property, size_t index) final;
+
+    void generateTraitMesh(const std::string& identifier);
 };
 
 }  // namespace inviwo

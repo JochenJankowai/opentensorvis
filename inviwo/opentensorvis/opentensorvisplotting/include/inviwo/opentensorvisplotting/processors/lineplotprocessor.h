@@ -48,7 +48,6 @@
 #include <modules/opengl/shader/shader.h>
 
 #include <inviwo/dataframe/datastructures/dataframe.h>
-#include <inviwo/dataframe/properties/dataframeproperty.h>
 #include <modules/brushingandlinking/ports/brushingandlinkingports.h>
 
 #include <modules/plotting/properties/marginproperty.h>

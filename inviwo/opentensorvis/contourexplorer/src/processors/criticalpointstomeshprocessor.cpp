@@ -29,6 +29,7 @@
 
 #include <inviwo/contourexplorer/processors/criticalpointstomeshprocessor.h>
 #include <modules/base/algorithm/meshutils.h>
+#include <inviwo/core/util/indexmapper.h>
 
 namespace inviwo {
 
@@ -64,7 +65,37 @@ void CriticalPointsToMeshProcessor::process() {
             ->dispatch<std::vector<vec3>, dispatching::filter::Scalars>([&](auto vrprecision) {
                 using ValueType = util::PrecisionValueType<decltype(vrprecision)>;
 
+                const auto numberOfElements = glm::compMul(inputVolume->getDimensions());
+                auto volumeData = vrprecision->getDataTyped();
 
+                util::IndexMapper3D indexMapper(inputVolume->getDimensions());
+
+                std::vector<ValueType> sortedRange;
+
+                for (size_t i{0};i< numberOfElements;++i) {
+                    sortedRange.push_back(volumeData[i]);
+                }
+
+                std::sort(std::begin(sortedRange), std::end(sortedRange));
+
+                ValueType currentCriticalValue = sortedRange.front();
+
+                //Locate
+
+                for (int i{1}; i < numberOfCriticalPoints_.get();++i) {
+                    while (sortedRange[i] == currentCriticalValue) i++;
+
+                    currentCriticalValue = sortedRange[i];
+
+                    //Locate
+                }
+
+                const auto [min, max] =
+                    std::minmax_element(volumeData, volumeData + numberOfElements);
+
+                LogInfoCustom("", fmt::format("Volume min max: {} | {}",*min,*max));
+
+                return std::vector<vec3>{};
             });
 
     auto outputMesh = std::shared_ptr<BasicMesh>();
@@ -76,7 +107,7 @@ void CriticalPointsToMeshProcessor::process() {
         outputMesh->Mesh::append(*mesh);
     }
 
-
+    meshOutport_.setData(outputMesh);
     
 }
 
