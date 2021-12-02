@@ -27,34 +27,37 @@
  *
  *********************************************************************************/
 
-#include <inviwo/contourtree/contourtreemodule.h>
-#include <inviwo/contourtree/processors/contourtreecomputationprocessor.h>
-#include <inviwo/contourtree/processors/contourtreedataprocessor.h>
-#include <inviwo/contourtree/processors/contourtreequeryprocessor.h>
-#include <inviwo/contourtree/processors/contourtreesimplificationprocessor.h>
+#pragma once
+
+#include <inviwo/contourtree/contourtreemoduledefine.h>
+#include <inviwo/core/processors/processor.h>
 #include <inviwo/contourtree/ports/contourtreeport.h>
 #include <inviwo/contourtree/ports/contourtreedataport.h>
 #include <inviwo/contourtree/ports/contourtreesimplificationport.h>
-#include <inviwo/contourtree/ports/contourtreetopologicalfeaturesport.h
-#include <inviwo/contourtree/processors/contourtreetopologicalfeaturesprocessor.h>
 
 namespace inviwo {
 
-ContourTreeModule::ContourTreeModule(InviwoApplication* app) : InviwoModule(app, "ContourTree") {
-    registerPort<ContourTreeInport>();
-    registerPort<ContourTreeOutport>();
-    registerPort<ContourTreeDataInport>();
-    registerPort<ContourTreeDataOutport>();
-    registerPort<ContourTreeSimplificationInport>();
-    registerPort<ContourTreeSimplificationOutport>();
-    registerPort<ContourTreeTopologicalFeaturesInport>();
-    registerPort<ContourTreeTopologicalFeaturesOutport>();
+/** \docpage{org.inviwo.ContourTreeSimplificationProcessor, Contour Tree Simplification Processor}
+ * ![](org.inviwo.ContourTreeSimplificationProcessor.png?classIdentifier=org.inviwo.ContourTreeSimplificationProcessor)
+ */
+class IVW_MODULE_CONTOURTREE_API ContourTreeSimplificationProcessor : public Processor {
+public:
+    ContourTreeSimplificationProcessor();
+    virtual ~ContourTreeSimplificationProcessor() = default;
 
-    registerProcessor<ContourTreeComputationProcessor>();
-    registerProcessor<ContourTreeDataProcessor>();
-    registerProcessor<ContourTreeQueryProcessor>();
-    registerProcessor<ContourTreeSimplificationProcessor>();
-    registerProcessor<ContourTreeTopologicalFeaturesProcessor>();
-}
+    virtual void process() override;
+
+    virtual const ProcessorInfo getProcessorInfo() const override;
+    static const ProcessorInfo processorInfo_;
+
+private:
+    enum class SimplificationMetod { Persistence, Hypervolume };
+
+    ContourTreeInport contourTreeInport_;
+    ContourTreeDataInport contourTreeDataInport_;
+    ContourTreeSimplificationOutport contourTreeSimplificationOutport_;
+
+    TemplateOptionProperty<SimplificationMetod> simplificationMetod_;
+};
 
 }  // namespace inviwo

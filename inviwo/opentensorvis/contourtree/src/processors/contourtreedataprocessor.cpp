@@ -27,47 +27,31 @@
  *
  *********************************************************************************/
 
-#pragma once
+#include <inviwo/contourtree/processors/contourtreedataprocessor.h>
 
-#include <inviwo/contourtree/contourtreemoduledefine.h>
-#include <inviwo/core/processors/processor.h>
-#include <inviwo/core/ports/volumeport.h>
-#include <modules/brushingandlinking/ports/brushingandlinkingports.h>
-#include <inviwo/core/properties/compositeproperty.h>
 namespace inviwo {
 
-/** \docpage{org.inviwo.VolumeLabelSelectionProcessor, Volume Label Selection Processor}
- * ![](org.inviwo.VolumeLabelSelectionProcessor.png?classIdentifier=org.inviwo.VolumeLabelSelectionProcessor)
- * Explanation of how to use the processor.
- *
- * ### Inports
- *   * __<Inport1>__ <description>.
- *
- * ### Outports
- *   * __<Outport1>__ <description>.
- *
- * ### Properties
- *   * __<Prop1>__ <description>.
- *   * __<Prop2>__ <description>
- */
-class IVW_MODULE_CONTOURTREE_API VolumeLabelSelectionProcessor : public Processor {
-public:
-    VolumeLabelSelectionProcessor();
-    virtual ~VolumeLabelSelectionProcessor() = default;
-
-    virtual void process() override;
-
-    virtual const ProcessorInfo getProcessorInfo() const override;
-    static const ProcessorInfo processorInfo_;
-
-private:
-    VolumeInport volumeInport_;
-    BrushingAndLinkingInport linkingInport_;
-
-    CompositeProperty labels_;
-
-    void updateSelectables();
-    void updateSelection();
+// The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
+const ProcessorInfo ContourTreeDataProcessor::processorInfo_{
+    "org.inviwo.ContourTreeDataProcessor",          // Class identifier
+    "Contour Tree Data Processor",                  // Display name
+    "OpenTensorVis",                                // Category
+    CodeState::Experimental,                        // Code state
+    "topology, merge tree, split tree, join tree",  // Tags
 };
+const ProcessorInfo ContourTreeDataProcessor::getProcessorInfo() const { return processorInfo_; }
+
+ContourTreeDataProcessor::ContourTreeDataProcessor()
+    : Processor()
+    , contourTreeInport_("contourTreeInport")
+    , contourTreeDataOutport_("contourTreeDataOutport") {
+
+    addPorts(contourTreeInport_, contourTreeDataOutport_);
+}
+
+void ContourTreeDataProcessor::process() {
+    contourTreeDataOutport_.setData(
+        std::make_shared<contourtree::ContourTreeData>(contourTreeInport_.getData()));
+}
 
 }  // namespace inviwo

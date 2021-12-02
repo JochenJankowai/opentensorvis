@@ -32,48 +32,16 @@
 #include <inviwo/contourexplorer/processors/contourtreetosegmentationvolume.h>
 #include <inviwo/contourexplorer/processors/criticalpointstomeshprocessor.h>
 #include <inviwo/contourexplorer/processors/segmentationvolumetransferfunctionprocessor.h>
+#include <inviwo/contourexplorer/processors/volumelabelselectionprocessor.h>
 
 namespace inviwo {
 
 ContourExplorerModule::ContourExplorerModule(InviwoApplication* app) : InviwoModule(app, "ContourExplorer") {
-    // Add a directory to the search path of the Shadermanager
-    // ShaderManager::getPtr()->addShaderSearchPath(getPath(ModulePath::GLSL));
-
-    // Register objects that can be shared with the rest of inviwo here:
-
-    // Processors
     registerProcessor<ContourExplorerProcessor>();
     registerProcessor<ContourTreeToSegmentationVolume>();
     registerProcessor<CriticalPointsToMeshProcessor>();
     registerProcessor<SegmentationVolumeTransferFunctionProcessor>();
-
-    // Properties
-    // registerProperty<ContourExplorerProperty>();
-
-    // Readers and writes
-    // registerDataReader(std::make_unique<ContourExplorerReader>());
-    // registerDataWriter(std::make_unique<ContourExplorerWriter>());
-
-    // Data converters
-    // registerRepresentationConverter(std::make_unique<ContourExplorerDisk2RAMConverter>());
-
-    // Ports
-    // registerPort<ContourExplorerOutport>();
-    // registerPort<ContourExplorerInport>();
-
-    // PropertyWidgets
-    // registerPropertyWidget<ContourExplorerPropertyWidget, ContourExplorerProperty>("Default");
-
-    // Dialogs
-    // registerDialog<ContourExplorerDialog>(ContourExplorerOutport);
-
-    // Other things
-    // registerCapabilities(std::make_unique<ContourExplorerCapabilities>());
-    // registerSettings(std::make_unique<ContourExplorerSettings>());
-    // registerMetaData(std::make_unique<ContourExplorerMetaData>());
-    // registerPortInspector("ContourExplorerOutport", "path/workspace.inv");
-    // registerProcessorWidget(std::string processorClassName, std::unique_ptr<ProcessorWidget> processorWidget); 
-    // registerDrawer(util::make_unique_ptr<ContourExplorerDrawer>());
+    registerProcessor<VolumeLabelSelectionProcessor>();
 }
 
 }  // namespace inviwo

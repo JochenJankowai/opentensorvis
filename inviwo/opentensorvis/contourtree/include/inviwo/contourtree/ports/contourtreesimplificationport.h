@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2021 Inviwo Foundation
+ * Copyright (c) 2012-2020 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,34 +27,35 @@
  *
  *********************************************************************************/
 
-#include <inviwo/contourtree/contourtreemodule.h>
-#include <inviwo/contourtree/processors/contourtreecomputationprocessor.h>
-#include <inviwo/contourtree/processors/contourtreedataprocessor.h>
-#include <inviwo/contourtree/processors/contourtreequeryprocessor.h>
-#include <inviwo/contourtree/processors/contourtreesimplificationprocessor.h>
-#include <inviwo/contourtree/ports/contourtreeport.h>
-#include <inviwo/contourtree/ports/contourtreedataport.h>
-#include <inviwo/contourtree/ports/contourtreesimplificationport.h>
-#include <inviwo/contourtree/ports/contourtreetopologicalfeaturesport.h
-#include <inviwo/contourtree/processors/contourtreetopologicalfeaturesprocessor.h>
+#pragma once
+
+#include <inviwo/core/ports/datainport.h>
+#include <inviwo/core/ports/dataoutport.h>
+#include <inviwo/core/datastructures/datatraits.h>
+#include <SimplifyCT.h>
 
 namespace inviwo {
 
-ContourTreeModule::ContourTreeModule(InviwoApplication* app) : InviwoModule(app, "ContourTree") {
-    registerPort<ContourTreeInport>();
-    registerPort<ContourTreeOutport>();
-    registerPort<ContourTreeDataInport>();
-    registerPort<ContourTreeDataOutport>();
-    registerPort<ContourTreeSimplificationInport>();
-    registerPort<ContourTreeSimplificationOutport>();
-    registerPort<ContourTreeTopologicalFeaturesInport>();
-    registerPort<ContourTreeTopologicalFeaturesOutport>();
+/**
+ * \ingroup ports
+ */
+using ContourTreeSimplificationInport = DataInport<contourtree::SimplifyCT>;
 
-    registerProcessor<ContourTreeComputationProcessor>();
-    registerProcessor<ContourTreeDataProcessor>();
-    registerProcessor<ContourTreeQueryProcessor>();
-    registerProcessor<ContourTreeSimplificationProcessor>();
-    registerProcessor<ContourTreeTopologicalFeaturesProcessor>();
-}
+/**
+ * \ingroup ports
+ */
+using ContourTreeSimplificationOutport = DataOutport<contourtree::SimplifyCT>;
 
+template <>
+struct DataTraits<contourtree::SimplifyCT> {
+    static std::string classIdentifier() { return "org.inviwo.contourtree.SimplifyCT"; }
+    static std::string dataName() { return "SimplifyCT"; }
+    static uvec3 colorCode() { return uvec3(0, 0, 50); }
+    static Document info(const contourtree::SimplifyCT& data) {
+        std::ostringstream oss;
+        Document doc;
+        doc.append("p", oss.str());
+        return doc;
+    }
+};
 }  // namespace inviwo

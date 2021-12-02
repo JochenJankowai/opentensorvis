@@ -8,6 +8,7 @@ set(HEADER_FILES
     include/inviwo/contourexplorer/processors/contourtreetosegmentationvolume.h
     include/inviwo/contourexplorer/processors/criticalpointstomeshprocessor.h
     include/inviwo/contourexplorer/processors/segmentationvolumetransferfunctionprocessor.h
+    include/inviwo/contourexplorer/processors/volumelabelselectionprocessor.h
 )
 ivw_group("Header Files" ${HEADER_FILES})
 
@@ -18,6 +19,7 @@ set(SOURCE_FILES
     src/processors/contourtreetosegmentationvolume.cpp
     src/processors/criticalpointstomeshprocessor.cpp
     src/processors/segmentationvolumetransferfunctionprocessor.cpp
+    src/processors/volumelabelselectionprocessor.cpp
 )
 ivw_group("Source Files" ${SOURCE_FILES})
 

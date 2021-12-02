@@ -27,7 +27,7 @@
  *
  *********************************************************************************/
 
-#include <inviwo/contourtree/processors/volumelabelselectionprocessor.h>
+#include <inviwo/contourexplorer/processors/volumelabelselectionprocessor.h>
 #include <inviwo/core/properties/boolproperty.h>
 #include <inviwo/core/network/networklock.h>
 
@@ -85,7 +85,7 @@ void VolumeLabelSelectionProcessor::updateSelectables() {
             s.add(i);
         }
     }
-    
+
     for (int32_t i{min}; i <= max; i++) {
         auto prop = new BoolProperty(std::to_string(i), std::to_string(i), currentSelection[i]);
         prop->onChange([this]() { updateSelection(); });

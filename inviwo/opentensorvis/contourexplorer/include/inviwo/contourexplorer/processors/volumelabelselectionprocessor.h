@@ -27,34 +27,36 @@
  *
  *********************************************************************************/
 
-#include <inviwo/contourtree/contourtreemodule.h>
-#include <inviwo/contourtree/processors/contourtreecomputationprocessor.h>
-#include <inviwo/contourtree/processors/contourtreedataprocessor.h>
-#include <inviwo/contourtree/processors/contourtreequeryprocessor.h>
-#include <inviwo/contourtree/processors/contourtreesimplificationprocessor.h>
-#include <inviwo/contourtree/ports/contourtreeport.h>
-#include <inviwo/contourtree/ports/contourtreedataport.h>
-#include <inviwo/contourtree/ports/contourtreesimplificationport.h>
-#include <inviwo/contourtree/ports/contourtreetopologicalfeaturesport.h
-#include <inviwo/contourtree/processors/contourtreetopologicalfeaturesprocessor.h>
+#pragma once
 
+#include <inviwo/contourexplorer/contourexplorermoduledefine.h>
+#include <inviwo/core/processors/processor.h>
+#include <inviwo/core/ports/volumeport.h>
+#include <modules/brushingandlinking/ports/brushingandlinkingports.h>
+#include <inviwo/core/properties/compositeproperty.h>
 namespace inviwo {
 
-ContourTreeModule::ContourTreeModule(InviwoApplication* app) : InviwoModule(app, "ContourTree") {
-    registerPort<ContourTreeInport>();
-    registerPort<ContourTreeOutport>();
-    registerPort<ContourTreeDataInport>();
-    registerPort<ContourTreeDataOutport>();
-    registerPort<ContourTreeSimplificationInport>();
-    registerPort<ContourTreeSimplificationOutport>();
-    registerPort<ContourTreeTopologicalFeaturesInport>();
-    registerPort<ContourTreeTopologicalFeaturesOutport>();
+/** \docpage{org.inviwo.VolumeLabelSelectionProcessor, Volume Label Selection Processor}
+ * ![](org.inviwo.VolumeLabelSelectionProcessor.png?classIdentifier=org.inviwo.VolumeLabelSelectionProcessor)
+ */
+class IVW_MODULE_CONTOUREXPLORER_API VolumeLabelSelectionProcessor : public Processor {
+public:
+    VolumeLabelSelectionProcessor();
+    virtual ~VolumeLabelSelectionProcessor() = default;
 
-    registerProcessor<ContourTreeComputationProcessor>();
-    registerProcessor<ContourTreeDataProcessor>();
-    registerProcessor<ContourTreeQueryProcessor>();
-    registerProcessor<ContourTreeSimplificationProcessor>();
-    registerProcessor<ContourTreeTopologicalFeaturesProcessor>();
-}
+    virtual void process() override;
+
+    virtual const ProcessorInfo getProcessorInfo() const override;
+    static const ProcessorInfo processorInfo_;
+
+private:
+    VolumeInport volumeInport_;
+    BrushingAndLinkingInport linkingInport_;
+
+    CompositeProperty labels_;
+
+    void updateSelectables();
+    void updateSelection();
+};
 
 }  // namespace inviwo
