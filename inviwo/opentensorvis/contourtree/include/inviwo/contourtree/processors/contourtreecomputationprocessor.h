@@ -58,25 +58,13 @@ public:
     static const ProcessorInfo processorInfo_;
 
 private:
-
-
-    
-
     VolumeInport volumeInport_;
     ContourTreeOutport contourTreeOutport_;
 
     VolumeOutport segmentationOutport_;
     MeshOutport meshOutport_;
-
-    
-
-    /**
-     * General settings regarding tree computation.
-     */
+  
     TemplateOptionProperty<contourtree::TreeType> treeType_;
-    
-
-    
     
     /**
      * Properties to steer the output for the mesh
@@ -84,28 +72,8 @@ private:
     CompositeProperty sphereOptions_;
     FloatProperty radius_;
     FloatVec4Property color_;
-
-    bool hasData_;
-    bool isSimplified_;
-    std::vector<uint32_t> arcMap_;
-    std::vector<char> criticalPoints_;
     
-
-    void computeTree();
-    void simplifyTree();
     void generateMesh();
-    
-    /**
-     * @return Index of root node into nodes array.
-     */
-    size_t findRoot();
-
-    /**
-     *
-     */
-
-    
-
 };
 
 }  // namespace inviwo

@@ -5,6 +5,7 @@ set(dependencies
     InviwoBrushingAndLinkingModule
     InviwoOpenTensorVisComputeModule
     InviwoBaseModule
+    InviwoContourTreeModule
 )
 
 # Add an alias for this module. Several modules can share an alias. 

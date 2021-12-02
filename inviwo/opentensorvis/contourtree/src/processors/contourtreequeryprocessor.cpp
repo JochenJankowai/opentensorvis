@@ -123,7 +123,19 @@ ContourTreeQueryProcessor::ContourTreeQueryProcessor()
     methodNLeaves_.addProperties(nLeaves_);
 }
 
-void ContourTreeQueryProcessor::process() {}
+void ContourTreeQueryProcessor::process() {
+    switch (queryMethod_.get()) {
+        case QueryMethod::TopoAngler:
+            queryTopoAngler();
+            break;
+        case QueryMethod::Cutoff:
+            queryCutoff();
+            break;
+        case QueryMethod::Leaves:
+            queryNLeaves();
+            break;
+    }
+}
 
 void ContourTreeQueryProcessor::queryTopoAngler() {
     if (!util::checkPorts(contourTreeInport_, contourTreeTopologicalFeatuesInport_)) return;
@@ -174,7 +186,7 @@ void ContourTreeQueryProcessor::queryNLeaves() {
 
     auto nLeavesAndCorrespondingArcs = getNLeavesAndCorrespondingArcs();
 
-    auto numberOfElements = contourTree->noVertices;
+    const auto numberOfElements = contourTree->noVertices;
 
     auto rawData = new uint16_t[numberOfElements];
     std::fill_n(rawData, numberOfElements, nLeavesAndCorrespondingArcs.size() + 1);

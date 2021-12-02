@@ -73,13 +73,8 @@ ContourTreeComputationProcessor::ContourTreeComputationProcessor()
     , sphereOptions_("sphereOptions", "Sphere options")
     , radius_("radius", "Radius", 0.1f, 0.1f, 10.f, 0.1f)
     , color_("color", "Color", vec4(1), vec4(0), vec4(1), vec4(0.00001f),
-             InvalidationLevel::InvalidOutput, PropertySemantics::Color)
-    , hasData_(false) {
-    auto updateTree = [this]() { computeTree(); };
-    auto updateMesh = [this]() { generateMesh(); };
-
+             InvalidationLevel::InvalidOutput, PropertySemantics::Color){
     
-
     /**
      * Mesh options
      */
@@ -90,7 +85,39 @@ ContourTreeComputationProcessor::ContourTreeComputationProcessor()
     addProperties(treeType_,sphereOptions_);
 }
 
-void ContourTreeComputationProcessor::computeTree() {
+void ContourTreeComputationProcessor::generateMesh() {
+    if (!volumeInport_.hasData() || !volumeInport_.getData()) return;
+
+    auto inputVolume = volumeInport_.getData();
+
+    std::vector<vec3> positions;
+
+    util::IndexMapper3D indexMapper(inputVolume->getDimensions());
+
+    const auto& nodeVertices = contourTreeData_->nodeVerts;
+
+    for (int i{0}; i < topKFeatures_.get(); ++i) {
+        auto index = nodeVertices[i];
+        auto position = vec3(indexMapper(index));
+        positions.push_back(position);
+    }
+
+    auto outputMesh = std::make_shared<BasicMesh>();
+
+    for (auto& position : positions) {
+        position = inputVolume->getBasis() * (vec3(position) / vec3(inputVolume->getDimensions()));
+
+        auto mesh = meshutil::sphere(position, radius_.get(), color_.get());
+        mesh->setModelMatrix(inputVolume->getModelMatrix());
+        mesh->setWorldMatrix(inputVolume->getWorldMatrix());
+        outputMesh->Mesh::append(*mesh);
+    }
+
+    meshOutport_.setData(outputMesh);
+}
+
+
+void ContourTreeComputationProcessor::process() {
     if (!volumeInport_.hasData() || !volumeInport_.getData()) {
         return;
     }
@@ -131,113 +158,4 @@ void ContourTreeComputationProcessor::computeTree() {
         });
 }
 
-void ContourTreeComputationProcessor::simplifyTree() {
-    if (!hasData_) return;
-}
-
-size_t ContourTreeComputationProcessor::findRoot() {
-    if (!hasData_) return 0;
-
-    auto& nodes = contourTreeData_->nodes;
-
-    contourtree::Node root;
-
-    size_t i{0};
-    for (; i < nodes.size(); i++) {
-        if (nodes[i].next.empty()) {
-            break;
-        }
-    }
-
-    return i;
-}
-
-void ContourTreeComputationProcessor::generateMesh() {
-    if (!volumeInport_.hasData() || !volumeInport_.getData()) return;
-
-    auto inputVolume = volumeInport_.getData();
-
-    std::vector<vec3> positions;
-
-    util::IndexMapper3D indexMapper(inputVolume->getDimensions());
-
-    const auto& nodeVertices = contourTreeData_->nodeVerts;
-
-    for (int i{0}; i < topKFeatures_.get(); ++i) {
-        auto index = nodeVertices[i];
-        auto position = vec3(indexMapper(index));
-        positions.push_back(position);
-    }
-
-    auto outputMesh = std::make_shared<BasicMesh>();
-
-    for (auto& position : positions) {
-        position = inputVolume->getBasis() * (vec3(position) / vec3(inputVolume->getDimensions()));
-
-        auto mesh = meshutil::sphere(position, radius_.get(), color_.get());
-        mesh->setModelMatrix(inputVolume->getModelMatrix());
-        mesh->setWorldMatrix(inputVolume->getWorldMatrix());
-        outputMesh->Mesh::append(*mesh);
-    }
-
-    meshOutport_.setData(outputMesh);
-}
-
-void ContourTreeComputationProcessor::query(const QueryMethod method) {
-    switch (method) {
-        case QueryMethod::TopoAngler:
-            queryTopoAngler();
-            break;
-        case QueryMethod::Cutoff:
-            queryCutoff();
-            break;
-        case QueryMethod::Leaves:
-            queryNLeaves();
-            break;
-    }
-}
-
-void ContourTreeComputationProcessor::process() {
-    if (!hasData_) computeTree();
-
-    query(queryMethod_.get());
-}
-
 }  // namespace inviwo
-
-/* auto inRange = [](const float threshold, const ValueType a, const ValueType b) {
-                        return threshold >= static_cast<float>(a) &&
-                               threshold <= static_cast<float>(b);
-                    };
-
-                    auto volumeData = vrprecision->getDataTyped();
-                    const auto& nodeVertices = topologicalFeatures_.ctdata.nodeVerts;
-                    auto nodes = topologicalFeatures_.ctdata.nodes;
-
-                    auto parentIndex = findRoot();
-                    auto& parentNode = nodes[parentIndex];
-
-                    std::vector<std::pair<uint32_t, uint32_t>> intersectingArcs;
-
-                    std::vector<std::pair<uint32_t, uint32_t>> nodesToInvestigate;
-
-                    for (auto id : parentNode.prev) {
-                        nodesToInvestigate.emplace_back(parentIndex, id);
-                    }
-
-                    while (!nodesToInvestigate.empty()) {
-
-                        auto [parent, kid] = nodesToInvestigate.back();
-                        nodesToInvestigate.pop_back();
-
-                        const ValueType nodeValue = volumeData[nodeVertices[kid]];
-                        const ValueType parentValue = volumeData[nodeVertices[parent]];
-
-                        if (inRange(threshold, nodeValue,parentValue)) {
-                            intersectingArcs.emplace_back(parent, kid);
-                        } else {
-                            for (auto id : nodes[kid].prev)
-                                nodesToInvestigate.emplace_back(kid, id);
-                        }
-                    }
-*/
