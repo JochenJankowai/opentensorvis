@@ -31,6 +31,7 @@
 #include <inviwo/contourexplorer/processors/contourexplorerprocessor.h>
 #include <inviwo/contourexplorer/processors/contourtreetosegmentationvolume.h>
 #include <inviwo/contourexplorer/processors/criticalpointstomeshprocessor.h>
+#include <inviwo/contourexplorer/processors/segmentationlegendprocessor.h>
 #include <inviwo/contourexplorer/processors/segmentationvolumetransferfunctionprocessor.h>
 #include <inviwo/contourexplorer/processors/volumelabelselectionprocessor.h>
 
@@ -40,6 +41,7 @@ ContourExplorerModule::ContourExplorerModule(InviwoApplication* app) : InviwoMod
     registerProcessor<ContourExplorerProcessor>();
     registerProcessor<ContourTreeToSegmentationVolume>();
     registerProcessor<CriticalPointsToMeshProcessor>();
+    registerProcessor<SegmentationLegendProcessor>();
     registerProcessor<SegmentationVolumeTransferFunctionProcessor>();
     registerProcessor<VolumeLabelSelectionProcessor>();
 }

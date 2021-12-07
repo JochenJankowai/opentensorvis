@@ -34,7 +34,7 @@ namespace inviwo {
 // The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
 const ProcessorInfo ContourTreeDataProcessor::processorInfo_{
     "org.inviwo.ContourTreeDataProcessor",          // Class identifier
-    "Contour Tree Data Processor",                  // Display name
+    "Contour Tree Data",                  // Display name
     "OpenTensorVis",                                // Category
     CodeState::Experimental,                        // Code state
     "topology, merge tree, split tree, join tree",  // Tags

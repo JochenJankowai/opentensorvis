@@ -50,7 +50,7 @@ template <>
 struct DataTraits<contourtree::ContourTreeData> {
     static std::string classIdentifier() { return "org.inviwo.contourtree.ContourTreeData"; }
     static std::string dataName() { return "ContourTreeData"; }
-    static uvec3 colorCode() { return uvec3(0, 50, 0); }
+    static uvec3 colorCode() { return uvec3(255, 205, 255); }
     static Document info(const contourtree::ContourTreeData& data) {
         std::ostringstream oss;
         Document doc;

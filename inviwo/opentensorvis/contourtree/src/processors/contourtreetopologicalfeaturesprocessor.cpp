@@ -34,7 +34,7 @@ namespace inviwo {
 // The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
 const ProcessorInfo ContourTreeTopologicalFeaturesProcessor::processorInfo_{
     "org.inviwo.ContourTreeTopologicalFeaturesProcessor",  // Class identifier
-    "Contour Tree Topological Features Processor",         // Display name
+    "Contour Tree Topological Features",         // Display name
     "OpenTensorVis",                                       // Category
     CodeState::Experimental,                               // Code state
     "topology, merge tree, join tree, split tree",         // Tags
@@ -71,8 +71,8 @@ void ContourTreeTopologicalFeaturesProcessor::process() {
 
     auto topologicalFeatures = std::make_shared<contourtree::TopologicalFeatures>();
 
-    topologicalFeatures->loadDataFromArrays(contourTreeData, contourTreeSimplification->order,
-                                            contourTreeSimplification->weights, partition);
+    topologicalFeatures->loadDataFromArrays(contourTreeData, contourTreeSimplification->order_,
+                                            contourTreeSimplification->weights_, partition);
 
     contourTreeTopologicalFeatuesOutport_.setData(topologicalFeatures);
 }

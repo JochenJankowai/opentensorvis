@@ -50,7 +50,7 @@ template <>
 struct DataTraits<contourtree::MergeTree> {
     static std::string classIdentifier() { return "org.inviwo.contourtree.MergeTree"; }
     static std::string dataName() { return "MergeTree"; }
-    static uvec3 colorCode() { return uvec3(0, 0, 0); }
+    static uvec3 colorCode() { return uvec3(255, 255, 255); }
     static Document info(const contourtree::MergeTree& data) {
         std::ostringstream oss;
         Document doc;

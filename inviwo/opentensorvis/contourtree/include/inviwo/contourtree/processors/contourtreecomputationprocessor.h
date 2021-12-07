@@ -31,15 +31,11 @@
 
 #include <inviwo/contourtree/contourtreemoduledefine.h>
 #include <inviwo/core/processors/processor.h>
-#include <inviwo/core/properties/ordinalproperty.h>
 #include <inviwo/core/ports/volumeport.h>
 #include <inviwo/contourtree/ports/contourtreeport.h>
 #include <inviwo/core/properties/compositeproperty.h>
-#include <ContourTreeData.h>
-#include <SimplifyCT.h>
 #include <constants.h>
 #include <inviwo/core/ports/meshport.h>
-#include "TopologicalFeatures.h"
 
 namespace inviwo {
 
@@ -60,20 +56,8 @@ public:
 private:
     VolumeInport volumeInport_;
     ContourTreeOutport contourTreeOutport_;
-
-    VolumeOutport segmentationOutport_;
-    MeshOutport meshOutport_;
   
     TemplateOptionProperty<contourtree::TreeType> treeType_;
-    
-    /**
-     * Properties to steer the output for the mesh
-     */
-    CompositeProperty sphereOptions_;
-    FloatProperty radius_;
-    FloatVec4Property color_;
-    
-    void generateMesh();
 };
 
 }  // namespace inviwo

@@ -36,7 +36,7 @@ namespace inviwo {
 // The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
 const ProcessorInfo VolumeLabelSelectionProcessor::processorInfo_{
     "org.inviwo.VolumeLabelSelectionProcessor",  // Class identifier
-    "Volume Label Selection Processor",          // Display name
+    "Volume Label Selection",          // Display name
     "OpenTensorVis",                             // Category
     CodeState::Experimental,                     // Code state
     Tags::CPU,                                   // Tags

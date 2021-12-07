@@ -7,6 +7,7 @@ set(HEADER_FILES
     include/inviwo/contourexplorer/processors/contourexplorerprocessor.h
     include/inviwo/contourexplorer/processors/contourtreetosegmentationvolume.h
     include/inviwo/contourexplorer/processors/criticalpointstomeshprocessor.h
+    include/inviwo/contourexplorer/processors/segmentationlegendprocessor.h
     include/inviwo/contourexplorer/processors/segmentationvolumetransferfunctionprocessor.h
     include/inviwo/contourexplorer/processors/volumelabelselectionprocessor.h
 )
@@ -18,6 +19,7 @@ set(SOURCE_FILES
     src/processors/contourexplorerprocessor.cpp
     src/processors/contourtreetosegmentationvolume.cpp
     src/processors/criticalpointstomeshprocessor.cpp
+    src/processors/segmentationlegendprocessor.cpp
     src/processors/segmentationvolumetransferfunctionprocessor.cpp
     src/processors/volumelabelselectionprocessor.cpp
 )

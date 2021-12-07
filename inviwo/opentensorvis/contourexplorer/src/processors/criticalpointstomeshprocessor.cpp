@@ -30,13 +30,15 @@
 #include <inviwo/contourexplorer/processors/criticalpointstomeshprocessor.h>
 #include <modules/base/algorithm/meshutils.h>
 #include <inviwo/core/util/indexmapper.h>
+#include <inviwo/contourtree/util/util.h>
+#include <modules/base/algorithm/meshutils.h>
 
 namespace inviwo {
 
 // The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
 const ProcessorInfo CriticalPointsToMeshProcessor::processorInfo_{
     "org.inviwo.CriticalPointsToMeshProcessor",  // Class identifier
-    "Critical Points To Mesh Processor",         // Display name
+    "Critical Points To Mesh",         // Display name
     "OpenTensorVis",                             // Category
     CodeState::Experimental,                     // Code state
     "mimima, maxima, critical, topology",        // Tags
@@ -48,67 +50,52 @@ const ProcessorInfo CriticalPointsToMeshProcessor::getProcessorInfo() const {
 CriticalPointsToMeshProcessor::CriticalPointsToMeshProcessor()
     : Processor()
     , volumeInport_("volumeInport")
+    , contourTreeDataInport_("contourTreeDataInport")
     , meshOutport_("meshOutport")
-    , criticalPointType_(
-          "criticalPointType", "Type", {{"minima", "Minima", CriticalPointType::Mimimum}, {"maxima", "Maxima", CriticalPointType::Maximum}})
-    , numberOfCriticalPoints_("numberOfCriticalPoints","Number of critical points", 1,1,20,1) {
+    , criticalPointType_("criticalPointType", "Type",
+                         {{"minima", "Minima", CriticalPointType::Mimimum},
+                          {"maxima", "Maxima", CriticalPointType::Maximum}})
+    , numberOfCriticalPoints_("numberOfCriticalPoints", "Number of critical points", 1, 1, 20, 1)
+    , sphereOptions_("sphereOptions", "Sphere options")
+    , radius_("radius", "Radius", 0.1f, 0.01f, 3.f, 0.01f)
+    , color_("color", "Color", vec4(1), vec4(0), vec4(1), vec4(0.00001f),
+             InvalidationLevel::InvalidOutput, PropertySemantics::Color) {
 
-    addPorts(volumeInport_, meshOutport_);
-    addProperties(criticalPointType_, numberOfCriticalPoints_);
+    addPorts(volumeInport_, contourTreeDataInport_, meshOutport_);
+    sphereOptions_.addProperties(radius_, color_);
+    addProperties(criticalPointType_, numberOfCriticalPoints_, sphereOptions_);
 }
 
 void CriticalPointsToMeshProcessor::process() {
-    auto inputVolume = volumeInport_.getData();
+    if (!util::checkPorts(volumeInport_, contourTreeDataInport_)) return;
 
-    auto positions =
-        inputVolume->getRepresentation<VolumeRAM>()
-            ->dispatch<std::vector<vec3>, dispatching::filter::Scalars>([&](auto vrprecision) {
-                using ValueType = util::PrecisionValueType<decltype(vrprecision)>;
+    const auto inputVolume = volumeInport_.getData();
+    const auto contourTreeData = contourTreeDataInport_.getData();
 
-                const auto numberOfElements = glm::compMul(inputVolume->getDimensions());
-                auto volumeData = vrprecision->getDataTyped();
+    std::vector<vec3> positions;
 
-                util::IndexMapper3D indexMapper(inputVolume->getDimensions());
+    util::IndexMapper3D indexMapper(inputVolume->getDimensions());
 
-                std::vector<ValueType> sortedRange;
+    const auto& nodeVertices = contourTreeData->nodeVerts;
 
-                for (size_t i{0};i< numberOfElements;++i) {
-                    sortedRange.push_back(volumeData[i]);
-                }
+    for (int i{0}; i < numberOfCriticalPoints_.get(); ++i) {
+        auto index = nodeVertices[i];
+        auto position = vec3(indexMapper(index));
+        positions.push_back(position);
+    }
 
-                std::sort(std::begin(sortedRange), std::end(sortedRange));
+    auto outputMesh = std::make_shared<BasicMesh>();
 
-                ValueType currentCriticalValue = sortedRange.front();
+    for (auto& position : positions) {
+        position = inputVolume->getBasis() * (vec3(position) / vec3(inputVolume->getDimensions()));
 
-                //Locate
-
-                for (int i{1}; i < numberOfCriticalPoints_.get();++i) {
-                    while (sortedRange[i] == currentCriticalValue) i++;
-
-                    currentCriticalValue = sortedRange[i];
-
-                    //Locate
-                }
-
-                const auto [min, max] =
-                    std::minmax_element(volumeData, volumeData + numberOfElements);
-
-                LogInfoCustom("", fmt::format("Volume min max: {} | {}",*min,*max));
-
-                return std::vector<vec3>{};
-            });
-
-    auto outputMesh = std::shared_ptr<BasicMesh>();
-
-    
-
-    for (const auto& position:positions) {
-        auto mesh = meshutil::sphere(position, 0.2f, vec4(1));
+        auto mesh = meshutil::sphere(position, radius_.get(), color_.get());
+        mesh->setModelMatrix(inputVolume->getModelMatrix());
+        mesh->setWorldMatrix(inputVolume->getWorldMatrix());
         outputMesh->Mesh::append(*mesh);
     }
 
     meshOutport_.setData(outputMesh);
-    
 }
 
 }  // namespace inviwo

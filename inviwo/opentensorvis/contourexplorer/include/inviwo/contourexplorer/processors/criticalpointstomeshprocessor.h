@@ -32,25 +32,14 @@
 #include <inviwo/contourexplorer/contourexplorermoduledefine.h>
 #include <inviwo/core/processors/processor.h>
 #include <inviwo/core/properties/ordinalproperty.h>
-#include <inviwo/core/properties/templateproperty.h>
 #include <inviwo/core/ports/volumeport.h>
 #include <inviwo/core/ports/meshport.h>
+#include <inviwo/contourtree/ports/contourtreedataport.h>
 
 namespace inviwo {
 
 /** \docpage{org.inviwo.CriticalPointsToMeshProcessor, Critical Points To Mesh Processor}
  * ![](org.inviwo.CriticalPointsToMeshProcessor.png?classIdentifier=org.inviwo.CriticalPointsToMeshProcessor)
- * Explanation of how to use the processor.
- *
- * ### Inports
- *   * __<Inport1>__ <description>.
- *
- * ### Outports
- *   * __<Outport1>__ <description>.
- *
- * ### Properties
- *   * __<Prop1>__ <description>.
- *   * __<Prop2>__ <description>
  */
 class IVW_MODULE_CONTOUREXPLORER_API CriticalPointsToMeshProcessor : public Processor {
 public:
@@ -69,9 +58,19 @@ private:
     };
 
     VolumeInport volumeInport_;
+    ContourTreeDataInport contourTreeDataInport_;
     MeshOutport meshOutport_;
     TemplateOptionProperty<CriticalPointType> criticalPointType_;
     IntProperty numberOfCriticalPoints_;
+
+    /**
+     * Properties to steer the output for the mesh
+     */
+    CompositeProperty sphereOptions_;
+    FloatProperty radius_;
+    FloatVec4Property color_;
+
+    void generateMesh();
 };
 
 }  // namespace inviwo

@@ -35,7 +35,7 @@
 #include <inviwo/contourtree/ports/contourtreeport.h>
 #include <inviwo/contourtree/ports/contourtreedataport.h>
 #include <inviwo/contourtree/ports/contourtreesimplificationport.h>
-#include <inviwo/contourtree/ports/contourtreetopologicalfeaturesport.h
+#include <inviwo/contourtree/ports/contourtreetopologicalfeaturesport.h>
 #include <inviwo/contourtree/processors/contourtreetopologicalfeaturesprocessor.h>
 
 namespace inviwo {

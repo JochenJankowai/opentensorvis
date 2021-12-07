@@ -44,13 +44,13 @@ using ContourTreeTopologicalFeaturesInport = DataInport<contourtree::Topological
 /**
  * \ingroup ports
  */
-using ContourTreeTopologicalFeatuesOutport = DataOutport<contourtree::TopologicalFeatures>;
+using ContourTreeTopologicalFeaturesOutport = DataOutport<contourtree::TopologicalFeatures>;
 
 template <>
 struct DataTraits<contourtree::TopologicalFeatures> {
     static std::string classIdentifier() { return "org.inviwo.contourtree.TopologicalFeatures"; }
     static std::string dataName() { return "TopologicalFeatures"; }
-    static uvec3 colorCode() { return uvec3(50, 0, 0); }
+    static uvec3 colorCode() { return uvec3(205, 255, 255); }
     static Document info(const contourtree::TopologicalFeatures& data) {
         std::ostringstream oss;
         Document doc;

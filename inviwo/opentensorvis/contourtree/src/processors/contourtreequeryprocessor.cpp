@@ -32,13 +32,14 @@
 #include <inviwo/core/datastructures/volume/volumeramprecision.h>
 #include <inviwo/core/network/networklock.h>
 #include <inviwo/contourtree/util/util.h>
+#include <Persistence.h>
 
 namespace inviwo {
 
 // The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
 const ProcessorInfo ContourTreeQueryProcessor::processorInfo_{
     "org.inviwo.ContourTreeQueryProcessor",         // Class identifier
-    "Contour Tree Query Processor",                 // Display name
+    "Contour Tree Query",                           // Display name
     "OpenTensorVis",                                // Category
     CodeState::Experimental,                        // Code state
     "topology, merge tree, join tree, split tree",  // Tags
@@ -50,12 +51,13 @@ ContourTreeQueryProcessor::ContourTreeQueryProcessor()
     , volumeInport_("volumeInport")
     , contourTreeInport_("contourTreeInport")
     , contourTreeDataInport_("contourTreeDataInport")
+    , contourTreeSimplificationInport_("contourTreeSimplificationInport")
     , contourTreeTopologicalFeatuesInport_("contourTreeTopologicalFeatuesInport")
     , volumeOutport_("volumeOutport")
     , queryMethod_("queryMethod", "Query method",
-                   {{"methodHarish", "TopoAngler", QueryMethod::TopoAngler},
-                    {"methodCutoff_", "Cutoff", QueryMethod::Cutoff},
-                    {"methodLeaves", "Leaves", QueryMethod::Leaves}},
+                   {{"option_methodTopoAngler", "TopoAngler", QueryMethod::TopoAngler},
+                    {"option_methodCutoff", "Cutoff", QueryMethod::Cutoff},
+                    {"option_methodLeaves", "Leaves", QueryMethod::Leaves}},
                    0)
     , methodTopoAngler_("methodTopoAngler", "TopoAngler")
 
@@ -68,12 +70,43 @@ ContourTreeQueryProcessor::ContourTreeQueryProcessor()
     , methodCutoff_("methodCutoff", "Cutoff")
     , cutoff_("cutoff", "Function value")
     , methodNLeaves_("methodNLeaves", "N Leaves")
-    , nLeaves_("nLeaves", "Number of leaves", 1, 1, 12, 1) {
+    , nLeaves_("nLeaves", "Number of leaves", 1, 1, 12, 1)
+    , persistence_("persistence", "Persistence") {
     addPorts(volumeInport_, contourTreeInport_, contourTreeDataInport_,
-             contourTreeTopologicalFeatuesInport_, volumeOutport_);
+             contourTreeSimplificationInport_, contourTreeTopologicalFeatuesInport_,
+             volumeOutport_);
 
-    addProperties(queryMethod_, methodTopoAngler_, queryCriterion_, topKFeatures_, threshold_,
-                  methodCutoff_, cutoff_, methodNLeaves_, nLeaves_);
+    addProperties(queryMethod_, methodTopoAngler_, methodCutoff_, methodNLeaves_);
+
+    contourTreeSimplificationInport_.onChange([this]() {
+        const auto contourTreeSimplification = contourTreeSimplificationInport_.getData();
+
+        const auto simplificationType = contourTreeSimplification->simFn->simType_;
+
+        switch (simplificationType) {
+            case contourtree::SimFunction::SimType::Persistence: {
+                NetworkLock l;
+
+                const auto persistenceSimplification =
+                    std::dynamic_pointer_cast<contourtree::Persistence>(
+                        contourTreeSimplification->simFn);
+
+                const auto min = persistenceSimplification->getMinPersistence();
+                const auto max = persistenceSimplification->getMaxPersistence();
+
+                if (persistence_.get() < min && persistence_.get() > max) {
+                    persistence_.set(min);
+                }
+
+                persistence_.setMinValue(min);
+                persistence_.setMaxValue(max);
+            }
+
+            break;
+            case contourtree::SimFunction::SimType::HyperVolume:
+                break;
+        }
+    });
 
     volumeInport_.onChange([this]() {
         NetworkLock l;
@@ -120,7 +153,7 @@ ContourTreeQueryProcessor::ContourTreeQueryProcessor()
     methodNLeaves_.visibilityDependsOn(queryMethod_, [](TemplateOptionProperty<QueryMethod>& p) {
         return p.get() == QueryMethod::Leaves;
     });
-    methodNLeaves_.addProperties(nLeaves_);
+    methodNLeaves_.addProperties(nLeaves_, persistence_);
 }
 
 void ContourTreeQueryProcessor::process() {
@@ -179,12 +212,29 @@ void ContourTreeQueryProcessor::queryTopoAngler() {
 void ContourTreeQueryProcessor::queryCutoff() { auto intersectingArcs = getIntersectingArcs(); }
 
 void ContourTreeQueryProcessor::queryNLeaves() {
-    if (!util::checkPorts(contourTreeInport_, contourTreeDataInport_)) return;
+    if (!util::checkPorts(contourTreeInport_, contourTreeDataInport_,
+                          contourTreeSimplificationInport_))
+        return;
 
     const auto contourTree = contourTreeInport_.getData();
     const auto contourTreeData = contourTreeDataInport_.getData();
+    const auto contourTreeSimplification = contourTreeSimplificationInport_.getData();
 
-    auto nLeavesAndCorrespondingArcs = getNLeavesAndCorrespondingArcs();
+    contourtree::SimplifyCT simplifyCt(contourTreeSimplification);
+    simplifyCt.simplify(contourTreeSimplification->order_, persistence_.get(),
+                        contourTreeSimplification->weights_);
+
+    const auto& branches = simplifyCt.branches;
+    const auto& nodes = simplifyCt.nodes;
+    const auto& nodeVertices = simplifyCt.data->nodeVerts;
+    
+    for(size_t i{0};i<nLeaves_.get();++i) {
+        const auto& branch = branches[i];
+        
+    }
+
+
+    /*auto nLeavesAndCorrespondingArcs = getNLeavesAndCorrespondingArcs();
 
     const auto numberOfElements = contourTree->noVertices;
 
@@ -202,7 +252,7 @@ void ContourTreeQueryProcessor::queryNLeaves() {
         }
     }
 
-    generateSegmentationVolume(rawData, nLeavesAndCorrespondingArcs.size() - 1);
+    generateSegmentationVolume(rawData, nLeavesAndCorrespondingArcs.size() - 1);*/
 }
 
 std::vector<std::pair<uint32_t, uint32_t>> ContourTreeQueryProcessor::getIntersectingArcs() {

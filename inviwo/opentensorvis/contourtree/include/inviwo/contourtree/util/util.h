@@ -7,7 +7,7 @@ namespace inviwo {
 namespace util {
 template <typename T>
 bool checkPort(T& port) {
-    return t.hasData() && t.getData();
+    return port.hasData() && port.getData();
 }
 
 template <typename... Ts>

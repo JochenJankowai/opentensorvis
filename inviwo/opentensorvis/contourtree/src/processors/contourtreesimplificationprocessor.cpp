@@ -37,7 +37,7 @@ namespace inviwo {
 // The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
 const ProcessorInfo ContourTreeSimplificationProcessor::processorInfo_{
     "org.inviwo.ContourTreeSimplificationProcessor",  // Class identifier
-    "Contour Tree Simplification Processor",          // Display name
+    "Contour Tree Simplification",                    // Display name
     "OpenTensorVis",                                  // Category
     CodeState::Experimental,                          // Code state
     "topology, merge tree, join tree, split tree",    // Tags
@@ -54,8 +54,9 @@ ContourTreeSimplificationProcessor::ContourTreeSimplificationProcessor()
     , simplificationMetod_("simplificationMetod", "Simplification method",
                            {{"persistence", "Persistence", SimplificationMetod::Persistence},
                             {"hypervolume", "Hypervolume", SimplificationMetod::Hypervolume}},
-                           1) {
-    addPorts(contourTreeInport_,contourTreeDataInport_, contourTreeSimplificationOutport_);
+                           1)
+    , normalizeWeights_("normalizeWeights", "Normalize weights", false) {
+    addPorts(contourTreeInport_, contourTreeDataInport_, contourTreeSimplificationOutport_);
 
     addProperties(simplificationMetod_);
 }
@@ -74,11 +75,12 @@ void ContourTreeSimplificationProcessor::process() {
     if (simplificationMetod_.get() == SimplificationMetod::Persistence) {
         simFn = std::make_shared<contourtree::Persistence>(contourTreeData);
     } else {
-        simFn = std::make_shared<contourtree::HyperVolume>(contourTreeData, contourTreeInport_.getData()->arcMap);
+        simFn = std::make_shared<contourtree::HyperVolume>(contourTreeData,
+                                                           contourTreeInport_.getData()->arcMap);
     }
 
     simplifyCt->simplify(simFn);
-    simplifyCt->computeWeights();
+    simplifyCt->computeWeights(normalizeWeights_.get());
 
     contourTreeSimplificationOutport_.setData(simplifyCt);
 }

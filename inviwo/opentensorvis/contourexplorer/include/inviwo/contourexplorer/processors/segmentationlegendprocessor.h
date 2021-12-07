@@ -29,22 +29,23 @@
 
 #pragma once
 
-#include <inviwo/contourtree/contourtreemoduledefine.h>
+#include <inviwo/contourexplorer/contourexplorermoduledefine.h>
 #include <inviwo/core/processors/processor.h>
-#include <inviwo/contourtree/ports/contourtreeport.h>
-#include <inviwo/contourtree/ports/contourtreedataport.h>
-#include <inviwo/contourtree/ports/contourtreesimplificationport.h>
-#include <inviwo/core/properties/boolproperty.h>
+#include <inviwo/core/ports/volumeport.h>
+#include <modules/brushingandlinking/ports/brushingandlinkingports.h>
+#include <inviwo/core/ports/imageport.h>
+#include <inviwo/nanovgutils/nanovgcontext.h>
+#include <modules/fontrendering/properties/fontproperty.h>
 
 namespace inviwo {
 
-/** \docpage{org.inviwo.ContourTreeSimplificationProcessor, Contour Tree Simplification Processor}
- * ![](org.inviwo.ContourTreeSimplificationProcessor.png?classIdentifier=org.inviwo.ContourTreeSimplificationProcessor)
+/** \docpage{org.inviwo.SegmentationLegendProcessor, Segmentation Legend Processor}
+ * ![](org.inviwo.SegmentationLegendProcessor.png?classIdentifier=org.inviwo.SegmentationLegendProcessor)
  */
-class IVW_MODULE_CONTOURTREE_API ContourTreeSimplificationProcessor : public Processor {
+class IVW_MODULE_CONTOUREXPLORER_API SegmentationLegendProcessor : public Processor {
 public:
-    ContourTreeSimplificationProcessor();
-    virtual ~ContourTreeSimplificationProcessor() = default;
+    SegmentationLegendProcessor();
+    virtual ~SegmentationLegendProcessor() = default;
 
     virtual void process() override;
 
@@ -52,14 +53,17 @@ public:
     static const ProcessorInfo processorInfo_;
 
 private:
-    enum class SimplificationMetod { Persistence, Hypervolume };
+    VolumeInport volumeInport_;
+    BrushingAndLinkingInport brushingAndLinkingInport_;
+    ImageOutport imageOutport_;
 
-    ContourTreeInport contourTreeInport_;
-    ContourTreeDataInport contourTreeDataInport_;
-    ContourTreeSimplificationOutport contourTreeSimplificationOutport_;
+    FloatProperty height_;
+    FloatProperty marginBottom_;
+    FloatProperty marginLeft_;
+    FontProperty fontProperties_;
+    FloatVec4Property fontColor_;
 
-    TemplateOptionProperty<SimplificationMetod> simplificationMetod_;
-    BoolProperty normalizeWeights_;
+    NanoVGContext& nvgContext_;
 };
 
 }  // namespace inviwo

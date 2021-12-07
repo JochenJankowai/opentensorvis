@@ -32,17 +32,12 @@
 #include <inviwo/core/datastructures/volume/volumeramprecision.h>
 #include <Grid3D.h>
 #include <MergeTree.h>
-#include <SimFunction.h>
-#include <Persistence.h>
-#include <HyperVolume.h>
 #include <inviwo/core/network/networklock.h>
 #include <tuple>
 #include <execution>
 #include <inviwo/opentensorviscompute/algorithm/volumereductiongl.h>
-#include <inviwo/core/util/zip.h>
-#include <inviwo/core/util/indexmapper.h>
-#include <modules/base/algorithm/meshutils.h>
-#include "inviwo/core/datastructures/geometry/typedmesh.h"
+#include <inviwo/core/datastructures/geometry/typedmesh.h>
+#include <inviwo/contourtree/util/util.h>
 
 namespace inviwo {
 
@@ -62,65 +57,16 @@ ContourTreeComputationProcessor::ContourTreeComputationProcessor()
     : Processor()
     , volumeInport_("volumeInport")
     , contourTreeOutport_("contourTreeOutport")
-    , segmentationOutport_("segmentation")
-    , meshOutport_("meshOutport")
-
     , treeType_("treeType", "Tree type",
                 {{"join", "Join", contourtree::TreeType::JoinTree},
                  {"split", "Split", contourtree::TreeType::SplitTree}},
-                0)
-
-    , sphereOptions_("sphereOptions", "Sphere options")
-    , radius_("radius", "Radius", 0.1f, 0.1f, 10.f, 0.1f)
-    , color_("color", "Color", vec4(1), vec4(0), vec4(1), vec4(0.00001f),
-             InvalidationLevel::InvalidOutput, PropertySemantics::Color){
-    
-    /**
-     * Mesh options
-     */
-    radius_.onChange(updateMesh);
-    color_.onChange(updateMesh);
-    sphereOptions_.addProperties(radius_, color_);
-
-    addProperties(treeType_,sphereOptions_);
+                0) {
+    addPorts(volumeInport_, contourTreeOutport_);
+    addProperties(treeType_);
 }
-
-void ContourTreeComputationProcessor::generateMesh() {
-    if (!volumeInport_.hasData() || !volumeInport_.getData()) return;
-
-    auto inputVolume = volumeInport_.getData();
-
-    std::vector<vec3> positions;
-
-    util::IndexMapper3D indexMapper(inputVolume->getDimensions());
-
-    const auto& nodeVertices = contourTreeData_->nodeVerts;
-
-    for (int i{0}; i < topKFeatures_.get(); ++i) {
-        auto index = nodeVertices[i];
-        auto position = vec3(indexMapper(index));
-        positions.push_back(position);
-    }
-
-    auto outputMesh = std::make_shared<BasicMesh>();
-
-    for (auto& position : positions) {
-        position = inputVolume->getBasis() * (vec3(position) / vec3(inputVolume->getDimensions()));
-
-        auto mesh = meshutil::sphere(position, radius_.get(), color_.get());
-        mesh->setModelMatrix(inputVolume->getModelMatrix());
-        mesh->setWorldMatrix(inputVolume->getWorldMatrix());
-        outputMesh->Mesh::append(*mesh);
-    }
-
-    meshOutport_.setData(outputMesh);
-}
-
 
 void ContourTreeComputationProcessor::process() {
-    if (!volumeInport_.hasData() || !volumeInport_.getData()) {
-        return;
-    }
+    if (!util::checkPorts(volumeInport_)) return;
 
     auto inputVolume = volumeInport_.getData();
 

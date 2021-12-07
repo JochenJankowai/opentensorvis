@@ -35,6 +35,7 @@
 #include <inviwo/core/ports/volumeport.h>
 #include <inviwo/contourtree/ports/contourtreeport.h>
 #include <inviwo/contourtree/ports/contourtreedataport.h>
+#include <inviwo/contourtree/ports/contourtreesimplificationport.h>
 #include <inviwo/contourtree/ports/contourtreetopologicalfeaturesport.h>
 
 namespace inviwo {
@@ -59,6 +60,7 @@ private:
     VolumeInport volumeInport_;
     ContourTreeInport contourTreeInport_;
     ContourTreeDataInport contourTreeDataInport_;
+    ContourTreeSimplificationInport contourTreeSimplificationInport_;
     ContourTreeTopologicalFeaturesInport contourTreeTopologicalFeatuesInport_;
 
     VolumeOutport volumeOutport_;
@@ -85,6 +87,7 @@ private:
      */
     CompositeProperty methodNLeaves_;
     IntProperty nLeaves_;
+    FloatProperty persistence_;
 
 
 

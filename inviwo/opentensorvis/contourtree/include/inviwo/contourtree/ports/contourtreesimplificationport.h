@@ -50,7 +50,7 @@ template <>
 struct DataTraits<contourtree::SimplifyCT> {
     static std::string classIdentifier() { return "org.inviwo.contourtree.SimplifyCT"; }
     static std::string dataName() { return "SimplifyCT"; }
-    static uvec3 colorCode() { return uvec3(0, 0, 50); }
+    static uvec3 colorCode() { return uvec3(255, 255, 205); }
     static Document info(const contourtree::SimplifyCT& data) {
         std::ostringstream oss;
         Document doc;
