@@ -31,21 +31,29 @@
 
 #include <inviwo/contourtree/contourtreemoduledefine.h>
 #include <inviwo/core/processors/processor.h>
-#include <inviwo/contourtree/ports/contourtreedataport.h>
-#include <inviwo/contourtree/ports/contourtreesimplificationport.h>
-#include <inviwo/contourtree/ports/contourtreetopologicalfeaturesport.h>
-
-#include <inviwo/core/properties/optionproperty.h>
+#include <inviwo/core/properties/ordinalproperty.h>
+#include <inviwo/core/ports/imageport.h>
 
 namespace inviwo {
 
-/** \docpage{org.inviwo.ContourTreeTopologicalFeaturesProcessor, Contour Tree Topological Features Processor}
- * ![](org.inviwo.ContourTreeTopologicalFeaturesProcessor.png?classIdentifier=org.inviwo.ContourTreeTopologicalFeaturesProcessor)
+/** \docpage{org.inviwo.PersistenceSimplificationProcessor, Persistence Simplification Processor}
+ * ![](org.inviwo.PersistenceSimplificationProcessor.png?classIdentifier=org.inviwo.PersistenceSimplificationProcessor)
+ * Explanation of how to use the processor.
+ *
+ * ### Inports
+ *   * __<Inport1>__ <description>.
+ *
+ * ### Outports
+ *   * __<Outport1>__ <description>.
+ *
+ * ### Properties
+ *   * __<Prop1>__ <description>.
+ *   * __<Prop2>__ <description>
  */
-class IVW_MODULE_CONTOURTREE_API ContourTreeTopologicalFeaturesProcessor : public Processor {
+class IVW_MODULE_CONTOURTREE_API PersistenceSimplificationProcessor : public Processor {
 public:
-    ContourTreeTopologicalFeaturesProcessor();
-    virtual ~ContourTreeTopologicalFeaturesProcessor() = default;
+    PersistenceSimplificationProcessor();
+    virtual ~PersistenceSimplificationProcessor() = default;
 
     virtual void process() override;
 
@@ -53,13 +61,8 @@ public:
     static const ProcessorInfo processorInfo_;
 
 private:
-    enum class FeatureType { Arc, PartitionedExtrema };
-    
-    ContourTreeDataInport contourTreeDataInport_;
-    ContourTreeSimplificationInport contourTreeSimplificationInport_;
-    ContourTreeTopologicalFeaturesOutport contourTreeTopologicalFeatuesOutport_;
-
-    TemplateOptionProperty<FeatureType> featureType_;
+    ImageOutport outport_;
+    FloatVec3Property position_;
 };
 
 }  // namespace inviwo

@@ -29,11 +29,13 @@
 
 #include <inviwo/contourexplorer/processors/contourexplorerprocessor.h>
 #include <inviwo/core/algorithm/boundingbox.h>
+#include <inviwo/core/datastructures/volume/volume.h>
+#include <inviwo/core/datastructures/volume/volumeram.h>
+#include <inviwo/core/datastructures/volume/volumeramprecision.h>
 #include <inviwo/core/algorithm/cubeplaneintersection.h>
 #include <inviwo/core/datastructures/buffer/bufferramprecision.h>
 #include <inviwo/core/datastructures/geometry/mesh.h>
 #include <inviwo/core/datastructures/geometry/plane.h>
-#include <inviwo/core/datastructures/volume/volumeram.h>
 #include <inviwo/core/interaction/events/pickingevent.h>
 #include <modules/opengl/rendering/meshdrawergl.h>
 #include <modules/opengl/shader/shaderutils.h>
@@ -42,6 +44,7 @@
 #include <modules/opengl/volume/volumeutils.h>
 #include <inviwo/contourexplorer/algorithm/generatesegmentedtf.h>
 #include <inviwo/core/network/networklock.h>
+#include <set>
 
 namespace inviwo {
 

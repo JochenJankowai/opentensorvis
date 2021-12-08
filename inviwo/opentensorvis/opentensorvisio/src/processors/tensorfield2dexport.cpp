@@ -30,6 +30,7 @@
 #include <inviwo/opentensorvisio/processors/tensorfield2dexport.h>
 #include <inviwo/opentensorvisio/util/util.h>
 #include <inviwo/opentensorvisbase/opentensorvisbasemodule.h>
+#include <fstream>
 
 namespace inviwo {
 

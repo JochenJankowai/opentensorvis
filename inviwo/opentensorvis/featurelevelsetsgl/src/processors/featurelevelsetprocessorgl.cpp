@@ -627,13 +627,10 @@ void FeatureLevelSetProcessorGL::generateTraitMesh(const std::string& identifier
     auto prop = traitPropertiesContainer_.getPropertyByIdentifier(identifier);
 
     if (auto pointTraitProperty = dynamic_cast<PointTraitProperty*>(prop)) {
-        
     }
 
     if (auto rangeTraitProperty = dynamic_cast<RangeTraitProperty*>(prop)) {
-        
     }
 }
-
 
 }  // namespace inviwo

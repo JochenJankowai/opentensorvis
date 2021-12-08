@@ -20,6 +20,8 @@ set(HEADER_FILES
     include/inviwo/contourtree/processors/contourtreequeryprocessor.h
     include/inviwo/contourtree/processors/contourtreesimplificationprocessor.h
     include/inviwo/contourtree/processors/contourtreetopologicalfeaturesprocessor.h
+    include/inviwo/contourtree/processors/persistenceprocessor.h
+    include/inviwo/contourtree/processors/persistencesimplificationprocessor.h
     include/inviwo/contourtree/util/util.h
 )
 ivw_group("Header Files" ${HEADER_FILES})
@@ -33,6 +35,8 @@ set(SOURCE_FILES
     src/processors/contourtreequeryprocessor.cpp
     src/processors/contourtreesimplificationprocessor.cpp
     src/processors/contourtreetopologicalfeaturesprocessor.cpp
+    src/processors/persistenceprocessor.cpp
+    src/processors/persistencesimplificationprocessor.cpp
 )
 ivw_group("Source Files" ${SOURCE_FILES})
 

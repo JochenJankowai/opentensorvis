@@ -27,39 +27,31 @@
  *
  *********************************************************************************/
 
-#pragma once
-
-#include <inviwo/contourtree/contourtreemoduledefine.h>
-#include <inviwo/core/processors/processor.h>
-#include <inviwo/contourtree/ports/contourtreedataport.h>
-#include <inviwo/contourtree/ports/contourtreesimplificationport.h>
-#include <inviwo/contourtree/ports/contourtreetopologicalfeaturesport.h>
-
-#include <inviwo/core/properties/optionproperty.h>
+#include <inviwo/contourtree/processors/persistenceprocessor.h>
 
 namespace inviwo {
 
-/** \docpage{org.inviwo.ContourTreeTopologicalFeaturesProcessor, Contour Tree Topological Features Processor}
- * ![](org.inviwo.ContourTreeTopologicalFeaturesProcessor.png?classIdentifier=org.inviwo.ContourTreeTopologicalFeaturesProcessor)
- */
-class IVW_MODULE_CONTOURTREE_API ContourTreeTopologicalFeaturesProcessor : public Processor {
-public:
-    ContourTreeTopologicalFeaturesProcessor();
-    virtual ~ContourTreeTopologicalFeaturesProcessor() = default;
-
-    virtual void process() override;
-
-    virtual const ProcessorInfo getProcessorInfo() const override;
-    static const ProcessorInfo processorInfo_;
-
-private:
-    enum class FeatureType { Arc, PartitionedExtrema };
-    
-    ContourTreeDataInport contourTreeDataInport_;
-    ContourTreeSimplificationInport contourTreeSimplificationInport_;
-    ContourTreeTopologicalFeaturesOutport contourTreeTopologicalFeatuesOutport_;
-
-    TemplateOptionProperty<FeatureType> featureType_;
+// The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
+const ProcessorInfo PersistenceProcessor::processorInfo_{
+    "org.inviwo.PersistenceProcessor",      // Class identifier
+    "Persistence Processor",                // Display name
+    "Undefined",              // Category
+    CodeState::Experimental,  // Code state
+    Tags::None,               // Tags
 };
+const ProcessorInfo PersistenceProcessor::getProcessorInfo() const { return processorInfo_; }
+
+PersistenceProcessor::PersistenceProcessor()
+    : Processor()
+    , outport_("outport")
+    , position_("position", "Position", vec3(0.0f), vec3(-100.0f), vec3(100.0f)) {
+
+    addPort(outport_);
+    addProperty(position_);
+}
+
+void PersistenceProcessor::process() {
+    // outport_.setData(myImage);
+}
 
 }  // namespace inviwo

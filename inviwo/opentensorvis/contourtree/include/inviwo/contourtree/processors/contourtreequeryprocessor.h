@@ -32,6 +32,7 @@
 #include <inviwo/contourtree/contourtreemoduledefine.h>
 #include <inviwo/core/processors/processor.h>
 #include <inviwo/core/properties/compositeproperty.h>
+#include <inviwo/core/properties/ordinalproperty.h>
 #include <inviwo/core/ports/volumeport.h>
 #include <inviwo/contourtree/ports/contourtreeport.h>
 #include <inviwo/contourtree/ports/contourtreedataport.h>

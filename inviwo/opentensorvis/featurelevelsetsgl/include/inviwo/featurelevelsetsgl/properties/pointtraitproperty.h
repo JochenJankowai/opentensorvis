@@ -44,7 +44,7 @@ public:
     virtual std::string getClassIdentifier() const override;
     static const std::string classIdentifier;
 
-    virtual ~PointTraitProperty() = default;
+    virtual ~PointTraitProperty() final = default;
 
     vec4 getAsVec4() const;
 

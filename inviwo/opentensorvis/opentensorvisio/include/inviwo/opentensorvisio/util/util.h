@@ -4,7 +4,7 @@
 #include <string>
 #include <filesystem>
 #include <sstream>
-#include <ostream>
+#include <fstream>
 #include <iomanip>
 #include <inviwo/opentensorvisio/opentensorvisiomoduledefine.h>
 

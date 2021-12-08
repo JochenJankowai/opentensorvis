@@ -2,6 +2,7 @@
 
 #include <inviwo/featurelevelsetsgl/featurelevelsetsglmoduledefine.h>
 #include <inviwo/core/properties/compositeproperty.h>
+#include <inviwo/core/datastructures/volume/volume.h>
 
 namespace inviwo {
 class IVW_MODULE_FEATURELEVELSETSGL_API TraitProperty : public CompositeProperty {

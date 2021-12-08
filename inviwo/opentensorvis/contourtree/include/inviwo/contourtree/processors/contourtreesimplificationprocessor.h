@@ -35,6 +35,7 @@
 #include <inviwo/contourtree/ports/contourtreedataport.h>
 #include <inviwo/contourtree/ports/contourtreesimplificationport.h>
 #include <inviwo/core/properties/boolproperty.h>
+#include <inviwo/core/properties/optionproperty.h>
 
 namespace inviwo {
 

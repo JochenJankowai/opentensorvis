@@ -32,6 +32,7 @@
 #include <inviwo/contourexplorer/contourexplorermoduledefine.h>
 #include <inviwo/core/datastructures/bitset.h>
 #include <inviwo/core/datastructures/tfprimitiveset.h>
+#include <inviwo/core/util/colorbrewer.h>
 
 namespace inviwo {
 class IVW_MODULE_CONTOUREXPLORER_API SegmentationTransferFunctionGenerator {

@@ -28,7 +28,6 @@
  *********************************************************************************/
 
 #include <inviwo/contourexplorer/algorithm/generatesegmentedtf.h>
-#include <inviwo/core/util/colorbrewer.h>
 
 namespace inviwo {
 TFPrimitiveSet SegmentationTransferFunctionGenerator::generateTFPrimitivesForSegments(

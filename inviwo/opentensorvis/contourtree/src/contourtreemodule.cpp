@@ -37,6 +37,8 @@
 #include <inviwo/contourtree/ports/contourtreesimplificationport.h>
 #include <inviwo/contourtree/ports/contourtreetopologicalfeaturesport.h>
 #include <inviwo/contourtree/processors/contourtreetopologicalfeaturesprocessor.h>
+#include <inviwo/contourtree/processors/persistenceprocessor.h>
+#include <inviwo/contourtree/processors/persistencesimplificationprocessor.h>
 
 namespace inviwo {
 
@@ -55,6 +57,8 @@ ContourTreeModule::ContourTreeModule(InviwoApplication* app) : InviwoModule(app,
     registerProcessor<ContourTreeQueryProcessor>();
     registerProcessor<ContourTreeSimplificationProcessor>();
     registerProcessor<ContourTreeTopologicalFeaturesProcessor>();
+    registerProcessor<PersistenceProcessor>();
+    registerProcessor<PersistenceSimplificationProcessor>();
 }
 
 }  // namespace inviwo

@@ -33,6 +33,7 @@
 #include <inviwo/nanovgutils/nanovgutilsmodule.h>
 #include <inviwo/core/common/inviwoapplication.h>
 #include <modules/opengl/openglutils.h>
+#include <modules/opengl/texture/textureutils.h>
 
 namespace inviwo {
 

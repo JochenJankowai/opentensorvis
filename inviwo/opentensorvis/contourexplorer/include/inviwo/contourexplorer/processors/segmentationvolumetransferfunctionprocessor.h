@@ -35,7 +35,7 @@
 #include <inviwo/core/ports/volumeport.h>
 #include <modules/brushingandlinking/ports/brushingandlinkingports.h>
 #include <inviwo/core/util/colorbrewer.h>
-#include <inviwo/core/properties/templateproperty.h>
+#include <inviwo/core/properties/ordinalproperty.h>
 
 namespace inviwo {
 
