@@ -27,9 +27,19 @@
  *
  *********************************************************************************/
 
-uniform sampler3D inputTexture;
+#ifdef REDUCTION_SAMPLER_TYPE_FLOAT
+    uniform sampler3D inputTexture;
+#endif
 
-uniform vec2 clampingRange;
+#ifdef REDUCTION_SAMPLER_TYPE_INTEGER
+    uniform isampler3D inputTexture;
+#endif
+
+#ifdef REDUCTION_SAMPLER_TYPE_UNSIGNED
+    uniform usampler3D inputTexture;
+#endif
+
+uniform vec2 disregardingRange;
 
 writeonly uniform image3D outputTexture;
 
@@ -50,8 +60,8 @@ void main() {
     vec4 sampledVal = vec4(0);
     bool less = false;
     bool greater = false;
-    vec4 clampingRangeMin = vec4(clampingRange.x);
-    vec4 clampingRangeMax = vec4(clampingRange.y);
+    vec4 disregardingRangeMin = vec4(disregardingRange.x);
+    vec4 disregardingRangeMax = vec4(disregardingRange.y);
 
 // Min operator
 #if OPERATOR == 0
@@ -60,64 +70,64 @@ void main() {
     
 
     sampledVal = texelFetch(inputTexture, samplePosition000, 0);
-#if CLAMP == 1
-    less = any(lessThan(sampledVal, clampingRangeMin));
+#if DISREGARD == 1
+    less = any(lessThan(sampledVal, disregardingRangeMin));
     val = less ? val : min(val, sampledVal);
 #else
     val = min(val, sampledVal);
 #endif
 
     sampledVal = texelFetch(inputTexture, samplePosition001, 0);
-#if CLAMP == 1
-    less = any(lessThan(sampledVal, clampingRangeMin));
+#if DISREGARD == 1
+    less = any(lessThan(sampledVal, disregardingRangeMin));
     val = less ? val : min(val, sampledVal);
 #else
     val = min(val, sampledVal);
 #endif
 
     sampledVal = texelFetch(inputTexture, samplePosition010, 0);
-#if CLAMP == 1
-    less = any(lessThan(sampledVal, clampingRangeMin));
+#if DISREGARD == 1
+    less = any(lessThan(sampledVal, disregardingRangeMin));
     val = less ? val : min(val, sampledVal);
 #else
     val = min(val, sampledVal);
 #endif
 
     sampledVal = texelFetch(inputTexture, samplePosition011, 0);
-#if CLAMP == 1
-    less = any(lessThan(sampledVal, clampingRangeMin));
+#if DISREGARD == 1
+    less = any(lessThan(sampledVal, disregardingRangeMin));
     val = less ? val : min(val, sampledVal);
 #else
     val = min(val, sampledVal);
 #endif
 
     sampledVal = texelFetch(inputTexture, samplePosition100, 0);
-#if CLAMP == 1
-    less = any(lessThan(sampledVal, clampingRangeMin));
+#if DISREGARD == 1
+    less = any(lessThan(sampledVal, disregardingRangeMin));
     val = less ? val : min(val, sampledVal);
 #else
     val = min(val, sampledVal);
 #endif
 
     sampledVal = texelFetch(inputTexture, samplePosition101, 0);
-#if CLAMP == 1
-    less = any(lessThan(sampledVal, clampingRangeMin));
+#if DISREGARD == 1
+    less = any(lessThan(sampledVal, disregardingRangeMin));
     val = less ? val : min(val, sampledVal);
 #else
     val = min(val, sampledVal);
 #endif
 
     sampledVal = texelFetch(inputTexture, samplePosition110, 0);
-#if CLAMP == 1
-    less = any(lessThan(sampledVal, clampingRangeMin));
+#if DISREGARD == 1
+    less = any(lessThan(sampledVal, disregardingRangeMin));
     val = less ? val : min(val, sampledVal);
 #else
     val = min(val, sampledVal);
 #endif
 
     sampledVal = texelFetch(inputTexture, samplePosition111, 0);
-#if CLAMP == 1
-    less = any(lessThan(sampledVal, clampingRangeMin));
+#if DISREGARD == 1
+    less = any(lessThan(sampledVal, disregardingRangeMin));
     val = less ? val : min(val, sampledVal);
 #else
     val = min(val, sampledVal);
@@ -130,64 +140,64 @@ void main() {
     val = vec4(-1.0 / 0.0);
     
     sampledVal = texelFetch(inputTexture, samplePosition000, 0);
-#if CLAMP == 1
-    greater = any(greaterThan(sampledVal, clampingRangeMax));
+#if DISREGARD == 1
+    greater = any(greaterThan(sampledVal, disregardingRangeMax));
     val = greater ? val : max(val, sampledVal);
 #else
     val = max(val, sampledVal);
 #endif
 
     sampledVal = texelFetch(inputTexture, samplePosition001, 0);
-#if CLAMP == 1
-    greater = any(greaterThan(sampledVal, clampingRangeMax));
+#if DISREGARD == 1
+    greater = any(greaterThan(sampledVal, disregardingRangeMax));
     val = greater ? val : max(val, sampledVal);
 #else
     val = max(val, sampledVal);
 #endif
 
     sampledVal = texelFetch(inputTexture, samplePosition010, 0);
-#if CLAMP == 1
-    greater = any(greaterThan(sampledVal, clampingRangeMax));
+#if DISREGARD == 1
+    greater = any(greaterThan(sampledVal, disregardingRangeMax));
     val = greater ? val : max(val, sampledVal);
 #else
     val = max(val, sampledVal);
 #endif
 
     sampledVal = texelFetch(inputTexture, samplePosition011, 0);
-#if CLAMP == 1
-    greater = any(greaterThan(sampledVal, clampingRangeMax));
+#if DISREGARD == 1
+    greater = any(greaterThan(sampledVal, disregardingRangeMax));
     val = greater ? val : max(val, sampledVal);
 #else
     val = max(val, sampledVal);
 #endif
 
     sampledVal = texelFetch(inputTexture, samplePosition100, 0);
-#if CLAMP == 1
-    greater = any(greaterThan(sampledVal, clampingRangeMax));
+#if DISREGARD == 1
+    greater = any(greaterThan(sampledVal, disregardingRangeMax));
     val = greater ? val : max(val, sampledVal);
 #else
     val = max(val, sampledVal);
 #endif
 
     sampledVal = texelFetch(inputTexture, samplePosition101, 0);
-#if CLAMP == 1
-    greater = any(greaterThan(sampledVal, clampingRangeMax));
+#if DISREGARD == 1
+    greater = any(greaterThan(sampledVal, disregardingRangeMax));
     val = greater ? val : max(val, sampledVal);
 #else
     val = max(val, sampledVal);
 #endif
 
     sampledVal = texelFetch(inputTexture, samplePosition110, 0);
-#if CLAMP == 1
-    greater = any(greaterThan(sampledVal, clampingRangeMax));
+#if DISREGARD == 1
+    greater = any(greaterThan(sampledVal, disregardingRangeMax));
     val = greater ? val : max(val, sampledVal);
 #else
     val = max(val, sampledVal);
 #endif
 
     sampledVal = texelFetch(inputTexture, samplePosition111, 0);
-#if CLAMP == 1
-    greater = any(greaterThan(sampledVal, clampingRangeMax));
+#if DISREGARD == 1
+    greater = any(greaterThan(sampledVal, disregardingRangeMax));
     val = greater ? val : max(val, sampledVal);
 #else
     val = max(val, sampledVal);

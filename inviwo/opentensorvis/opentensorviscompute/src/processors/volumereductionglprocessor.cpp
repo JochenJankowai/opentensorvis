@@ -34,7 +34,7 @@ namespace inviwo {
 // The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
 const ProcessorInfo VolumeReductionGLProcessor::processorInfo_{
     "org.inviwo.VolumeReductionGLProcessor",  // Class identifier
-    "Volume Reduction Processor",             // Display name
+    "Volume Reduction",                       // Display name
     "OpenTensorVis",                          // Category
     CodeState::Experimental,                  // Code state
     Tags::GL,                                 // Tags
@@ -45,7 +45,7 @@ VolumeReductionGLProcessor::VolumeReductionGLProcessor()
     : Processor()
     , volumeInport_("volumeInport")
     , volumeOutport_("volumeOutport")
-    , reductionOperator_("", "",
+    , reductionOperator_("reductionOperator", "Reduction operator",
                          {{"min", "Min", ReductionOperator::Min},
                           {"max", "Max", ReductionOperator::Max},
                           {"sum", "Sum", ReductionOperator::Sum}}) {
@@ -59,8 +59,6 @@ void VolumeReductionGLProcessor::process() {
     const auto reduced = gpuReduction_.reduce(volumeInport_.getData(), reductionOperator_.get());
 
     const auto val = reduced->getRepresentation<VolumeRAM>()->getAsDouble(size3_t{0});
-
-    LogInfo(fmt::format("Reduced value: {}", val));
 
     volumeOutport_.setData(reduced);
 }

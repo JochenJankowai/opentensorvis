@@ -35,11 +35,11 @@
 
 namespace inviwo {
 enum class ReductionOperator { Min = 0, Max = 1, Sum = 2, None = 3 };
-enum class ClampingStatus { Off = 0, On = 1, Unset = 2 };
+enum class DisregardingStatus { Off = 0, On = 1, Unset = 2 };
 
 /** \class VolumeReductionGL
  *
- * GL implementation of add, min, and max reductions for 1, 2, and 3D textures.
+ * GL implementation of add, min, and max reductions for 3D textures (volumes).
  */
 class IVW_MODULE_OPENTENSORVISCOMPUTE_API VolumeReductionGL {
 public:
@@ -59,15 +59,20 @@ public:
      * @param volume Input volume.
      * @param op Reduction operator that is applied to calculate the reduced value, i.e.
      * min/max/sum.
-     * @param clampingStatus Indicating whether or not the calculation of the min/max/sum value
-     * should be clamped to a certain range. This is for example handy for volumes where special
+     * @param disregardingStatus Indicating whether or not the calculation of the min/max/sum value
+     * should disregard a certain value range. This is for example handy for volumes where special
      * regions are marked with voxel values of INT_MAX or the like.
-     * @param range The range the calculation should be clamped to.
+     * Example: Your data array consists of {0, 1, 2, 3, INT_MAX} and you would like to compute the
+     * max value. In addition, you know that outliers are marked with a value of INT_MAX so you
+     * would like those values to not be considered. In that case, you call
+     * reduce(myVolume, ReductionOperator::Max, DisregardingStatus::On,
+     *        vec2{myVolume->dataMap_.dataRange.x, std::numeric_limits<int>::max() - 1});
+     * @param range The range that should be disregarded.
      *
      * @returns Reduced volume (dimensions 1x1x1) according to selected operator.
      */
     std::shared_ptr<Volume> reduce(std::shared_ptr<const Volume> volume, ReductionOperator op,
-                                   ClampingStatus clampingStatus = ClampingStatus::Off,
+                                   DisregardingStatus disregardingStatus = DisregardingStatus::Off,
                                    const vec2& range = vec2{0});
 
     /**
@@ -77,25 +82,31 @@ public:
      * @param volume Input volume.
      * @param op Reduction operator that is applied to calculate the reduced value, i.e.
      * min/max/sum.
-     * @param clampingStatus Indicating whether or not the calculation of the min/max/sum value
+     * @param disregardingStatus Indicating whether or not the calculation of the min/max/sum value
      * should be clamped to a certain range. This is for example handy for volumes where special
      * regions are marked with voxel values of INT_MAX or the like.
-     * @param range The range the calculation should be clamped to.
+     * Example: Your data array consists of {0, 1, 2, 3, INT_MAX} and you would like to compute the
+     * max value. In addition, you know that outliers are marked with a value of INT_MAX so you
+     * would like those values to not be considered. In that case, you call
+     * reduce(myVolume, ReductionOperator::Max, DisregardingStatus::On,
+     *        vec2{myVolume->dataMap_.dataRange.x, std::numeric_limits<int>::max() - 1});
+     * @param range The range that should be disregarded.
      *
      * @returns Reduced value according to selected operator.
      */
     double reduce_v(std::shared_ptr<const Volume> volume, ReductionOperator op,
-                    ClampingStatus clampingStatus = ClampingStatus::Off,
+                    DisregardingStatus disregardingStatus = DisregardingStatus::Off,
                     const vec2& range = vec2{0});
 
 protected:
     Shader shader_;
     ReductionOperator activeReductionOperator_;
-    ClampingStatus activeClampingStatus_;
+    DisregardingStatus activeDisregardingStatus_;
 
 private:
     void setReductionOperator(ReductionOperator op);
-    void setClamping(ClampingStatus clampingStatus);
+    void setDisregarding(DisregardingStatus disregardingStatus);
+    void setSamplerType(std::shared_ptr<const Volume> volume);
     static void gpuDispatch(GLuint x, GLuint y, GLuint z);
 };
 

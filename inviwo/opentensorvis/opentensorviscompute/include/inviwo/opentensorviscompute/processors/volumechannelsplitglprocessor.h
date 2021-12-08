@@ -39,17 +39,14 @@ namespace inviwo {
 
 /** \docpage{org.inviwo.VolumeChannelSplitGLProcessor, Volume Channel Split Processor}
  * ![](org.inviwo.VolumeChannelSplitGLProcessor.png?classIdentifier=org.inviwo.VolumeChannelSplitGLProcessor)
- * Explanation of how to use the processor.
+ *
+ * Splits a multi-channel volume into a set of single-channel volumes.
  *
  * ### Inports
- *   * __<Inport1>__ <description>.
+ *   * __Volume inport__ Input volume.
  *
  * ### Outports
- *   * __<Outport1>__ <description>.
- *
- * ### Properties
- *   * __<Prop1>__ <description>.
- *   * __<Prop2>__ <description>
+ *   * __Volume outport__ Set of single-channel volumes.
  */
 class IVW_MODULE_OPENTENSORVISCOMPUTE_API VolumeChannelSplitGLProcessor : public Processor {
 public:

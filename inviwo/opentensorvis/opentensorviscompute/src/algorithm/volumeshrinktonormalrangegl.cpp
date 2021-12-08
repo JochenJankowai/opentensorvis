@@ -71,10 +71,10 @@ void VolumeShrinkToNormalRangeGL::reset() { setShrinkChannels({true, false, fals
 std::shared_ptr<Volume> VolumeShrinkToNormalRangeGL::shrink(const Volume& volume) {
     std::shared_ptr<Volume> outVolume;
 
-    const float offset = (volume.dataMap_.dataRange.x < 0 && volume.dataMap_.dataRange.y > 0)
+    const auto offset = (volume.dataMap_.dataRange.x < 0.0 && volume.dataMap_.dataRange.y > 0.0)
                             ? volume.dataMap_.dataRange.x /
                                   (volume.dataMap_.dataRange.y - volume.dataMap_.dataRange.x)
-                            : 0.0f;
+                            : 0.0;
 
     // Don't dispatch if we don't have to
     if (volume.getDataFormat()->getNumericType() == NumericType::Float) {
@@ -112,7 +112,7 @@ std::shared_ptr<Volume> VolumeShrinkToNormalRangeGL::shrink(const Volume& volume
     TextureUnitContainer cont;
     utilgl::bindAndSetUniforms(shader_, cont, volume, "inputTexture");
     shader_.setUniform("outputTexture", 0);
-    shader_.setUniform("offset", offset);
+    shader_.setUniform("offset", static_cast<float>(offset));
 
     auto outVolumeGL = outVolume->getEditableRepresentation<VolumeGL>();
     outVolumeGL->setWrapping({Wrapping::Clamp, Wrapping::Clamp, Wrapping::Clamp});

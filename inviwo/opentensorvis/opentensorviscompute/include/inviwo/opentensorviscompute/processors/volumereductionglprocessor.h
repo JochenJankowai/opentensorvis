@@ -39,17 +39,18 @@ namespace inviwo {
 
 /** \docpage{org.inviwo.VolumeReductionGLProcessor, Volume Reduction Processor}
  * ![](org.inviwo.VolumeReductionGLProcessor.png?classIdentifier=org.inviwo.VolumeReductionGLProcessor)
- * Explanation of how to use the processor.
  *
- * ### Inports
- *   * __<Inport1>__ <description>.
+ * GL implementation of add, min, and max reductions for 3D textures (volumes).
+ *
+ * ### Inputs
+ *   * __Volume inport__ Input volume.
  *
  * ### Outports
- *   * __<Outport1>__ <description>.
+ *   * __Volume outport__ Reduced volume.
  *
  * ### Properties
- *   * __<Prop1>__ <description>.
- *   * __<Prop2>__ <description>
+ *   * __Reduction operator__ Operator for reduction.
+ *
  */
 class IVW_MODULE_OPENTENSORVISCOMPUTE_API VolumeReductionGLProcessor : public Processor {
 public:

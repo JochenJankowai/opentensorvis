@@ -37,7 +37,7 @@
 namespace inviwo {
 /** \class VolumeChannelSplitGL
  *
- * Splits multi-channel volumes into several single-channel volumes
+ * Splits multi-channel volumes into several single-channel volumes.
  */
 class IVW_MODULE_OPENTENSORVISCOMPUTE_API VolumeChannelSplitGL {
 public:
@@ -50,6 +50,12 @@ public:
 
     virtual ~VolumeChannelSplitGL() = default;
 
+    /**
+     * Splits multi-channel volumes into several single-channel volumes
+     *
+     * @param volume Volume to be split.
+     * @return Set of single-channel volumes
+     */
     std::vector<std::shared_ptr<Volume>> split(std::shared_ptr<const Volume> volume);
 
 protected:

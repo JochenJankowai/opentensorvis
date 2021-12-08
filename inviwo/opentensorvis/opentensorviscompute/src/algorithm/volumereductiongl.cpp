@@ -34,6 +34,8 @@
 #include <modules/opengl/volume/volumeutils.h>
 
 #include <inviwo/core/datastructures/volume/volume.h>
+#include <inviwo/core/datastructures/volume/volumeram.h>
+#include <inviwo/core/datastructures/volume/volumeramprecision.h>
 
 namespace inviwo {
 
@@ -41,14 +43,17 @@ VolumeReductionGL::VolumeReductionGL()
     : shader_({{ShaderType::Compute, utilgl::findShaderResource("volumereduction.comp")}},
               Shader::Build::Yes)
     , activeReductionOperator_(ReductionOperator::None)
-    , activeClampingStatus_(ClampingStatus::Unset) {}
+    , activeDisregardingStatus_(DisregardingStatus::Unset) {}
 
 std::shared_ptr<Volume> VolumeReductionGL::reduce(std::shared_ptr<const Volume> volume,
                                                   const ReductionOperator op,
-                                                  ClampingStatus clampingStatus,
+                                                  DisregardingStatus disregardingStatus,
                                                   const vec2& range) {
     setReductionOperator(op);
-    setClamping(clampingStatus);
+    setDisregarding(disregardingStatus);
+    setSamplerType(volume);
+
+    shader_.build();
 
     shader_.activate();
 
@@ -71,9 +76,9 @@ std::shared_ptr<Volume> VolumeReductionGL::reduce(std::shared_ptr<const Volume> 
         shader_.setUniform("outputTexture", 0);
 
         /*
-         * Set value clamping parameters
+         * Set value disregarding parameters
          */
-        shader_.setUniform("clampingRange", range);
+        shader_.setUniform("disregardingRange", range);
 
         /*
          * Update output texture.
@@ -122,8 +127,8 @@ std::shared_ptr<Volume> VolumeReductionGL::reduce(std::shared_ptr<const Volume> 
 }
 
 double VolumeReductionGL::reduce_v(std::shared_ptr<const Volume> volume, const ReductionOperator op,
-                                   ClampingStatus clampingStatus, const vec2& range) {
-    auto res = reduce(volume, op, clampingStatus, range);
+                                   DisregardingStatus disregardingStatus, const vec2& range) {
+    auto res = reduce(volume, op, disregardingStatus, range);
 
     return res->getRepresentation<VolumeRAM>()->getAsDouble(size3_t{0, 0, 0});
 }
@@ -137,21 +142,43 @@ void VolumeReductionGL::setReductionOperator(ReductionOperator op) {
     activeReductionOperator_ = op;
 
     computeShader->addShaderDefine(StrBuffer{"OPERATOR {}", activeReductionOperator_});
-
-    shader_.build();
 }
 
-void VolumeReductionGL::setClamping(ClampingStatus clampingStatus) {
-    if (clampingStatus == activeClampingStatus_) return;
+void VolumeReductionGL::setDisregarding(DisregardingStatus disregardingStatus) {
+    if (disregardingStatus == activeDisregardingStatus_) return;
 
     auto computeShader = shader_.getComputeShaderObject();
-    computeShader->removeShaderDefine(StrBuffer{"CLAMP {}", activeClampingStatus_});
+    computeShader->removeShaderDefine(StrBuffer{"DISREGARD {}", activeDisregardingStatus_});
 
-    activeClampingStatus_ = clampingStatus;
+    activeDisregardingStatus_ = disregardingStatus;
 
-    computeShader->addShaderDefine(StrBuffer{"CLAMP {}", activeClampingStatus_});
+    computeShader->addShaderDefine(StrBuffer{"DISREGARD {}", activeDisregardingStatus_});
+}
 
-    shader_.build();
+void VolumeReductionGL::setSamplerType(std::shared_ptr<const Volume> volume) {
+    auto computeShader = shader_.getComputeShaderObject();
+
+    /*
+     * Reset just to be sure.
+     */
+    computeShader->removeShaderDefine("REDUCTION_SAMPLER_TYPE_FLOAT");
+    computeShader->removeShaderDefine("REDUCTION_SAMPLER_TYPE_INTEGER");
+    computeShader->removeShaderDefine("REDUCTION_SAMPLER_TYPE_UNSIGNED");
+
+    volume->getRepresentation<VolumeRAM>()->dispatch<void, dispatching::filter::All>(
+        [&computeShader](auto vrprecision) {
+            using ValueType = util::PrecisionValueType<decltype(vrprecision)>;
+
+            if constexpr (std::is_floating_point_v<ValueType>) {
+                computeShader->addShaderDefine("REDUCTION_SAMPLER_TYPE_FLOAT");
+            }
+            if constexpr (std::is_integral_v<ValueType>) {
+                computeShader->addShaderDefine("REDUCTION_SAMPLER_TYPE_SIGNED");
+            }
+            if constexpr (std::is_unsigned_v<ValueType>) {
+                computeShader->addShaderDefine("REDUCTION_SAMPLER_TYPE_UNSIGNED");
+            }
+        });
 }
 
 void VolumeReductionGL::gpuDispatch(const GLuint x, const GLuint y, const GLuint z) {

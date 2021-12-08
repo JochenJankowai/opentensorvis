@@ -30,12 +30,12 @@
 #include <inviwo/opentensorviscompute/algorithm/volumeminmaxgl.h>
 
 namespace inviwo {
-dvec2 VolumeMinMaxGL::minmax(std::shared_ptr<const Volume> volume, ClampingStatus clampingStatus,
+dvec2 VolumeMinMaxGL::minmax(std::shared_ptr<const Volume> volume, DisregardingStatus disregardingStatus,
                              const vec2& range) {
     const auto min =
-        volumeReductionGL_.reduce_v(volume, ReductionOperator::Min, clampingStatus, range);
+        volumeReductionGL_.reduce_v(volume, ReductionOperator::Min, disregardingStatus, range);
     const auto max =
-        volumeReductionGL_.reduce_v(volume, ReductionOperator::Max, clampingStatus, range);
+        volumeReductionGL_.reduce_v(volume, ReductionOperator::Max, disregardingStatus, range);
 
     return dvec2{min, max};
 }

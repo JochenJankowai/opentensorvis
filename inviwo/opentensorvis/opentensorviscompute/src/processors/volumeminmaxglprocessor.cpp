@@ -35,7 +35,7 @@ namespace inviwo {
 // The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
 const ProcessorInfo VolumeMinMaxGLProcessor::processorInfo_{
     "org.inviwo.VolumeMinMaxGLProcessor",  // Class identifier
-    "Volume Min Max GL Processor",         // Display name
+    "Volume Min Max",         // Display name
     "OpenTensorVis",                       // Category
     CodeState::Experimental,               // Code state
     "range, minmax",                       // Tags
@@ -46,39 +46,39 @@ VolumeMinMaxGLProcessor::VolumeMinMaxGLProcessor()
     : Processor()
     , volumeInport_("volumeInport")
     , volumeOutport_("volumeOutport")
-    , clampingStatus_("clampingStatus", "Clamping status",
-                      {{"off", "Off", ClampingStatus::Off}, {"on", "On", ClampingStatus::On}})
-    , clampingRange_("clampingRange", "Clamping range") {
+    , disregardingStatus_("disregardingStatus", "Disregarding status",
+                      {{"off", "Off", DisregardingStatus::Off}, {"on", "On", DisregardingStatus::On}})
+    , disregardingRange_("range", "Range") {
 
     addPorts(volumeInport_, volumeOutport_);
 
-    clampingRange_.visibilityDependsOn(clampingStatus_, [](Property& prop) {
-        const auto status = dynamic_cast<TemplateOptionProperty<ClampingStatus>&>(prop).get();
+    disregardingRange_.visibilityDependsOn(disregardingStatus_, [](Property& prop) {
+        const auto status = dynamic_cast<TemplateOptionProperty<DisregardingStatus>&>(prop).get();
 
-        return status == ClampingStatus::On;
+        return status == DisregardingStatus::On;
     });
 
-    addProperties(clampingStatus_, clampingRange_);
+    addProperties(disregardingStatus_, disregardingRange_);
 
     volumeInport_.onChange([this]() {
         /*
-         * Here we call the volume reduction without any clamping so we get the real min and max
-         * values which we then can clamp in the process method.
+         * Here we call the volume reduction without any disregarding so we get the real min and max
+         * values.
          */
         const auto range = vec2{volumeMinMaxGl_.minmax(volumeInport_.getData())};
 
         NetworkLock l;
 
-        clampingRange_.setRangeMin(range.x);
-        clampingRange_.setRangeMax(range.y);
-        clampingRange_.set(range);
+        disregardingRange_.setRangeMin(range.x);
+        disregardingRange_.setRangeMax(range.y);
+        disregardingRange_.set(range);
     });
 }
 
 void VolumeMinMaxGLProcessor::process() {
     auto outVolume = std::shared_ptr<Volume>(volumeInport_.getData()->clone());
     outVolume->dataMap_.dataRange = outVolume->dataMap_.valueRange = volumeMinMaxGl_.minmax(
-        volumeInport_.getData(), clampingStatus_.get(), clampingRange_.get());
+        volumeInport_.getData(), disregardingStatus_.get(), disregardingRange_.get());
 
     volumeOutport_.setData(outVolume);
 }

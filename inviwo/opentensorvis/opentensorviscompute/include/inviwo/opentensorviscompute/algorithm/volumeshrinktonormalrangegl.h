@@ -36,8 +36,8 @@
 namespace inviwo {
 /** \class VolumeShrinkToNormalRangeGL
  *
- * GL implementation of volume shrink operation. The algorithm takes in a volume and normalizes its
- * data in the selected channels to range [0,1] + offset where offset is the percentual deviaton of
+ * GL implementation of volume shrink operation. The algorithm takes in a volume and shrinks its
+ * data in the selected channels to range [0,1] + offset where offset is the percentual deviation of
  * the minimum from 0. For example, range [-0.5, 1.0] will be shrunk to [-0.33, 0.66].
  */
 class IVW_MODULE_OPENTENSORVISCOMPUTE_API VolumeShrinkToNormalRangeGL {

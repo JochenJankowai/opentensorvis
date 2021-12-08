@@ -47,19 +47,24 @@ public:
     virtual ~VolumeMinMaxGL() = default;
 
     /**
-     * This method calculates aggregated min and max values of a volume. If you need min/max per
+     * This method calculates min and max values of a volume. If you need min/max per
      * channel you should look at VolumeReductionGL.
      *
      * @param volume Input volume.
-     * @param clampingStatus Indicating whether or not the calculation of the min/max value
-     * should be clamped to a certain range. This is for example handy for volumes where special
+     * @param disregardingStatus Indicating whether or not the calculation of the min/max value
+     * should disregard a certain value range. This is for example handy for volumes where special
      * regions are marked with voxel values of INT_MAX or the like.
-     * @param range The range the calculation should be clamped to.
+     * * Example: Your data array consists of {0, 1, 2, 3, INT_MAX} and you would like to compute the
+     * max value. In addition, you know that outliers are marked with a value of INT_MAX so you
+     * would like those values to not be considered. In that case, you call
+     * minmax(myVolume, DisregardingStatus::On,
+     *        vec2{myVolume->dataMap_.dataRange.x, std::numeric_limits<int>::max() - 1});
+     * @param range The range that should be disregarded.
      *
      * @returns Aggregated min/max values.
      */
     dvec2 minmax(std::shared_ptr<const Volume> volume,
-                 ClampingStatus clampingStatus = ClampingStatus::Off, const vec2& range = vec2{0});
+                 DisregardingStatus disregardingStatus = DisregardingStatus::Off, const vec2& range = vec2{0});
 
 protected:
     VolumeReductionGL volumeReductionGL_;

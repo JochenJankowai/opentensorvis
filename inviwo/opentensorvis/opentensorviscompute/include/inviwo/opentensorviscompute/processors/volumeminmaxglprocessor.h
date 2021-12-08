@@ -33,24 +33,31 @@
 #include <inviwo/core/processors/processor.h>
 #include <inviwo/core/ports/volumeport.h>
 #include <inviwo/opentensorviscompute/algorithm/volumeminmaxgl.h>
-#include <inviwo/core/properties/ordinalproperty.h>
 #include <inviwo/core/properties/optionproperty.h>
+#include <inviwo/core/properties/minmaxproperty.h>
 
 namespace inviwo {
 
 /** \docpage{org.inviwo.VolumeMinMaxGLProcessor, Volume Min Max GLProcessor}
  * ![](org.inviwo.VolumeMinMaxGLProcessor.png?classIdentifier=org.inviwo.VolumeMinMaxGLProcessor)
- * Explanation of how to use the processor.
  *
- * ### Inports
- *   * __<Inport1>__ <description>.
+ * This method calculates min and max values of a volume. If you need min/max per channel you should
+ * look at VolumeReductionGL. The disregarding status indicates whether or not the calculation of the
+ * min/max values should disregard a certain value range. This is for example handy for volumes where
+ * special regions are marked with voxel values of INT_MAX or the like. Example: Your data array
+ * consists of {0, 1, 2, 3, INT_MAX} and you would like to compute the max value. In addition, you
+ * know that outliers are marked with a value of INT_MAX so you would like those values to not be
+ * considered.
+ *
+ * ### Inputs
+ *   * __Volume inport__ Input volume.
  *
  * ### Outports
- *   * __<Outport1>__ <description>.
+ *   * __Volume outport__ Reduced volume.
  *
  * ### Properties
- *   * __<Prop1>__ <description>.
- *   * __<Prop2>__ <description>
+ *   * __Disregarding status__ Enable/disable value discarding
+ *   * __Disregarding range__ Value range to be discarded when computing minmax values.
  */
 class IVW_MODULE_OPENTENSORVISCOMPUTE_API VolumeMinMaxGLProcessor : public Processor {
 public:
@@ -68,8 +75,8 @@ private:
 
     VolumeMinMaxGL volumeMinMaxGl_;
 
-    TemplateOptionProperty<ClampingStatus> clampingStatus_;
-    FloatMinMaxProperty clampingRange_;
+    TemplateOptionProperty<DisregardingStatus> disregardingStatus_;
+    FloatMinMaxProperty disregardingRange_;
 };
 
 }  // namespace inviwo
