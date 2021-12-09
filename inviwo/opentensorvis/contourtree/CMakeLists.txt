@@ -17,10 +17,12 @@ set(HEADER_FILES
     include/inviwo/contourtree/ports/contourtreetopologicalfeaturesport.h
     include/inviwo/contourtree/processors/contourtreecomputationprocessor.h
     include/inviwo/contourtree/processors/contourtreedataprocessor.h
+    include/inviwo/contourtree/processors/contourtreequerycriticalpointsprocessor.h
     include/inviwo/contourtree/processors/contourtreequeryprocessor.h
+    include/inviwo/contourtree/processors/contourtreequerysubtrees.h
+    include/inviwo/contourtree/processors/contourtreequerytopoangler.h
     include/inviwo/contourtree/processors/contourtreesimplificationprocessor.h
     include/inviwo/contourtree/processors/contourtreetopologicalfeaturesprocessor.h
-    include/inviwo/contourtree/processors/persistenceprocessor.h
     include/inviwo/contourtree/processors/persistencesimplificationprocessor.h
     include/inviwo/contourtree/util/util.h
 )
@@ -32,10 +34,12 @@ set(SOURCE_FILES
     src/contourtreemodule.cpp
     src/processors/contourtreecomputationprocessor.cpp
     src/processors/contourtreedataprocessor.cpp
+    src/processors/contourtreequerycriticalpointsprocessor.cpp
     src/processors/contourtreequeryprocessor.cpp
+    src/processors/contourtreequerysubtrees.cpp
+    src/processors/contourtreequerytopoangler.cpp
     src/processors/contourtreesimplificationprocessor.cpp
     src/processors/contourtreetopologicalfeaturesprocessor.cpp
-    src/processors/persistenceprocessor.cpp
     src/processors/persistencesimplificationprocessor.cpp
 )
 ivw_group("Source Files" ${SOURCE_FILES})

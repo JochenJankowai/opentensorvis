@@ -32,28 +32,30 @@
 #include <inviwo/contourtree/contourtreemoduledefine.h>
 #include <inviwo/core/processors/processor.h>
 #include <inviwo/core/properties/ordinalproperty.h>
-#include <inviwo/core/ports/imageport.h>
 
 namespace inviwo {
 
-/** \docpage{org.inviwo.PersistenceProcessor, Persistence Processor}
- * ![](org.inviwo.PersistenceProcessor.png?classIdentifier=org.inviwo.PersistenceProcessor)
- * Explanation of how to use the processor.
+/** \docpage{org.inviwo.ContourTreeQueryCriticalPointsProcessor, Contour Tree Query Critical Points
+ * Processor}
+ * ![](org.inviwo.ContourTreeQueryCriticalPointsProcessor.png?classIdentifier=org.inviwo.ContourTreeQueryCriticalPointsProcessor)
+ *
+ * Computes segmentation volume based on a simplified contour tree. Depending on the type of tree,
+ * the processor extracts the n lowest minima/highest maxima and segments the input volume according
+ * to the incident branches of these minima/maxima.
  *
  * ### Inports
- *   * __<Inport1>__ <description>.
+ *   * __Contour tree simplification inport__ Contour tree simplification. This should come from a PersistenceSimplificationProcessor.
  *
  * ### Outports
- *   * __<Outport1>__ <description>.
+ *   * __Segmentation volume__ Segmentation volume where each voxel is associated to a branch in the simplified tree.
  *
  * ### Properties
- *   * __<Prop1>__ <description>.
- *   * __<Prop2>__ <description>
+ *   * __N leaves__ Number of leaves (minima/maxima) to extract.
  */
-class IVW_MODULE_CONTOURTREE_API PersistenceProcessor : public Processor {
+class IVW_MODULE_CONTOURTREE_API ContourTreeQueryCriticalPointsProcessor : public Processor {
 public:
-    PersistenceProcessor();
-    virtual ~PersistenceProcessor() = default;
+    ContourTreeQueryCriticalPointsProcessor();
+    virtual ~ContourTreeQueryCriticalPointsProcessor() = default;
 
     virtual void process() override;
 
@@ -61,8 +63,7 @@ public:
     static const ProcessorInfo processorInfo_;
 
 private:
-    ImageOutport outport_;
-    FloatVec3Property position_;
+    Int64Property nLeaves_;
 };
 
 }  // namespace inviwo

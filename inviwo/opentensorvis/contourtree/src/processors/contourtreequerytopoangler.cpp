@@ -27,21 +27,21 @@
  *
  *********************************************************************************/
 
-#include <inviwo/contourtree/processors/persistenceprocessor.h>
+#include <inviwo/contourtree/processors/contourtreequerytopoangler.h>
 
 namespace inviwo {
 
 // The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
-const ProcessorInfo PersistenceProcessor::processorInfo_{
-    "org.inviwo.PersistenceProcessor",      // Class identifier
-    "Persistence Processor",                // Display name
+const ProcessorInfo ContourTreeQueryTopoAngler::processorInfo_{
+    "org.inviwo.ContourTreeQueryTopoAngler",      // Class identifier
+    "Contour Tree Query Topo Angler",                // Display name
     "Undefined",              // Category
     CodeState::Experimental,  // Code state
     Tags::None,               // Tags
 };
-const ProcessorInfo PersistenceProcessor::getProcessorInfo() const { return processorInfo_; }
+const ProcessorInfo ContourTreeQueryTopoAngler::getProcessorInfo() const { return processorInfo_; }
 
-PersistenceProcessor::PersistenceProcessor()
+ContourTreeQueryTopoAngler::ContourTreeQueryTopoAngler()
     : Processor()
     , outport_("outport")
     , position_("position", "Position", vec3(0.0f), vec3(-100.0f), vec3(100.0f)) {
@@ -50,7 +50,7 @@ PersistenceProcessor::PersistenceProcessor()
     addProperty(position_);
 }
 
-void PersistenceProcessor::process() {
+void ContourTreeQueryTopoAngler::process() {
     // outport_.setData(myImage);
 }
 

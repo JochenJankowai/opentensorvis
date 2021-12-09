@@ -51,7 +51,7 @@ struct DataTraits<contourtree::TopologicalFeatures> {
     static std::string classIdentifier() { return "org.inviwo.contourtree.TopologicalFeatures"; }
     static std::string dataName() { return "TopologicalFeatures"; }
     static uvec3 colorCode() { return uvec3(205, 255, 255); }
-    static Document info(const contourtree::TopologicalFeatures& data) {
+    static Document info(const contourtree::TopologicalFeatures&) {
         std::ostringstream oss;
         Document doc;
         doc.append("p", oss.str());

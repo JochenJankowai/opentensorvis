@@ -31,15 +31,13 @@
 
 #include <inviwo/contourtree/contourtreemoduledefine.h>
 #include <inviwo/core/processors/processor.h>
-#include <inviwo/contourtree/ports/contourtreedataport.h>
-#include <inviwo/contourtree/ports/contourtreesimplificationport.h>
 #include <inviwo/core/properties/ordinalproperty.h>
-#include <Persistence.h>
+#include <inviwo/core/ports/imageport.h>
 
 namespace inviwo {
 
-/** \docpage{org.inviwo.PersistenceSimplificationProcessor, Persistence Simplification Processor}
- * ![](org.inviwo.PersistenceSimplificationProcessor.png?classIdentifier=org.inviwo.PersistenceSimplificationProcessor)
+/** \docpage{org.inviwo.ContourTreeQueryTopoAngler, Contour Tree Query Topo Angler}
+ * ![](org.inviwo.ContourTreeQueryTopoAngler.png?classIdentifier=org.inviwo.ContourTreeQueryTopoAngler)
  * Explanation of how to use the processor.
  *
  * ### Inports
@@ -52,10 +50,10 @@ namespace inviwo {
  *   * __<Prop1>__ <description>.
  *   * __<Prop2>__ <description>
  */
-class IVW_MODULE_CONTOURTREE_API PersistenceSimplificationProcessor : public Processor {
+class IVW_MODULE_CONTOURTREE_API ContourTreeQueryTopoAngler : public Processor {
 public:
-    PersistenceSimplificationProcessor();
-    virtual ~PersistenceSimplificationProcessor() = default;
+    ContourTreeQueryTopoAngler();
+    virtual ~ContourTreeQueryTopoAngler() = default;
 
     virtual void process() override;
 
@@ -63,13 +61,8 @@ public:
     static const ProcessorInfo processorInfo_;
 
 private:
-    ContourTreeDataInport contourTreeDataInport_;
-    ContourTreeSimplificationOutport contourTreeSimplificationOutport_;
-
-    FloatProperty persistence_;
-
-    std::shared_ptr<contourtree::Persistence> persistenceObject_;
-    std::shared_ptr<contourtree::SimplifyCT> simplifyCt_;
+    ImageOutport outport_;
+    FloatVec3Property position_;
 };
 
 }  // namespace inviwo

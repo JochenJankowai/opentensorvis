@@ -40,7 +40,7 @@ enum class DistanceMetric { Euclidean, Manhattan, Minkowski, SquaredSum };
 
 /**
  * \brief Calculates Minkowski distance of order n
- *        Input: Two vectors, each of which represent one point in an n-dimensional space
+ *        Input: Two vectors of length n, each of which represent one point in an n-dimensional space
  *        Output: Minkowski distance of order n between the two points
  *
  * \param a Point a
@@ -58,7 +58,7 @@ T minkowskiDistance(const std::vector<T>& a, const std::vector<T>& b, const T or
 
 /**
  * \brief Calculates Manhattan distance
- *        Input: Two vectors, each of which represent one point in an n-dimensional space
+ *        Input: Two vectors of length n, each of which represent one point in an n-dimensional space
  *        Output: Manhattan distance between the two points
  *
  * \param a Point a
@@ -72,7 +72,7 @@ T manhattanDistance(const std::vector<T>& a, const std::vector<T>& b) {
 
 /**
  * \brief Calculates Euclidean distance
- *        Input: Two vectors, each of which represent one point in an n-dimensional space
+ *        Input: Two vectors of length n, each of which represent one point in an n-dimensional space
  *        Output: Euclidean distance between the two points
  *
  * \param a Point a
@@ -86,7 +86,7 @@ T euclideanDistance(const std::vector<T>& a, const std::vector<T>& b) {
 
 /**
  * \brief Calculates squared sum distance
- *        Input: Two vectors, each of which represent one point in an n-dimensional space
+ *        Input: Two vectors of length n, each of which represent one point in an n-dimensional space
  *        Output: Squared sum distance between the two points
  *
  * \param a Point a
@@ -101,7 +101,7 @@ T squaredSumDistance(const std::vector<T>& a, const std::vector<T>& b) {
 }
 
 template <typename T>
-inline std::function<T(const std::vector<T>&, const std::vector<T>&)> getDistanceMetricFunctor(
+std::function<T(const std::vector<T>&, const std::vector<T>&)> getDistanceMetricFunctor(
     DistanceMetric metric) {
 
     switch (metric) {

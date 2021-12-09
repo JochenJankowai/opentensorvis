@@ -27,49 +27,31 @@
  *
  *********************************************************************************/
 
-#pragma once
-
-#include <inviwo/contourtree/contourtreemoduledefine.h>
-#include <inviwo/core/processors/processor.h>
-#include <inviwo/contourtree/ports/contourtreedataport.h>
-#include <inviwo/contourtree/ports/contourtreesimplificationport.h>
-#include <inviwo/core/properties/ordinalproperty.h>
-#include <Persistence.h>
+#include <inviwo/contourtree/processors/contourtreequerycriticalpointsprocessor.h>
 
 namespace inviwo {
 
-/** \docpage{org.inviwo.PersistenceSimplificationProcessor, Persistence Simplification Processor}
- * ![](org.inviwo.PersistenceSimplificationProcessor.png?classIdentifier=org.inviwo.PersistenceSimplificationProcessor)
- * Explanation of how to use the processor.
- *
- * ### Inports
- *   * __<Inport1>__ <description>.
- *
- * ### Outports
- *   * __<Outport1>__ <description>.
- *
- * ### Properties
- *   * __<Prop1>__ <description>.
- *   * __<Prop2>__ <description>
- */
-class IVW_MODULE_CONTOURTREE_API PersistenceSimplificationProcessor : public Processor {
-public:
-    PersistenceSimplificationProcessor();
-    virtual ~PersistenceSimplificationProcessor() = default;
-
-    virtual void process() override;
-
-    virtual const ProcessorInfo getProcessorInfo() const override;
-    static const ProcessorInfo processorInfo_;
-
-private:
-    ContourTreeDataInport contourTreeDataInport_;
-    ContourTreeSimplificationOutport contourTreeSimplificationOutport_;
-
-    FloatProperty persistence_;
-
-    std::shared_ptr<contourtree::Persistence> persistenceObject_;
-    std::shared_ptr<contourtree::SimplifyCT> simplifyCt_;
+// The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
+const ProcessorInfo ContourTreeQueryCriticalPointsProcessor::processorInfo_{
+    "org.inviwo.ContourTreeQueryCriticalPointsProcessor",      // Class identifier
+    "Contour Tree Query Critical Points Processor",                // Display name
+    "Undefined",              // Category
+    CodeState::Experimental,  // Code state
+    Tags::None,               // Tags
 };
+const ProcessorInfo ContourTreeQueryCriticalPointsProcessor::getProcessorInfo() const { return processorInfo_; }
+
+ContourTreeQueryCriticalPointsProcessor::ContourTreeQueryCriticalPointsProcessor()
+    : Processor()
+    , outport_("outport")
+    , position_("position", "Position", vec3(0.0f), vec3(-100.0f), vec3(100.0f)) {
+
+    addPort(outport_);
+    addProperty(position_);
+}
+
+void ContourTreeQueryCriticalPointsProcessor::process() {
+    // outport_.setData(myImage);
+}
 
 }  // namespace inviwo
