@@ -41,7 +41,7 @@ namespace inviwo {
 
 VolumeReductionGL::VolumeReductionGL()
     : shader_({{ShaderType::Compute, utilgl::findShaderResource("volumereduction.comp")}},
-              Shader::Build::Yes)
+              Shader::Build::No)
     , activeReductionOperator_(ReductionOperator::None)
     , activeDisregardingStatus_(DisregardingStatus::Unset) {}
 

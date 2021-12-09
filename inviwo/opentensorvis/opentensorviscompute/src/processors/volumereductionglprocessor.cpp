@@ -57,9 +57,7 @@ VolumeReductionGLProcessor::VolumeReductionGLProcessor()
 
 void VolumeReductionGLProcessor::process() {
     const auto reduced = gpuReduction_.reduce(volumeInport_.getData(), reductionOperator_.get());
-
-    const auto val = reduced->getRepresentation<VolumeRAM>()->getAsDouble(size3_t{0});
-
+    
     volumeOutport_.setData(reduced);
 }
 

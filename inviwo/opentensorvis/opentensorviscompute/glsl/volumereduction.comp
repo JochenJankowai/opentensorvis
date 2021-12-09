@@ -27,17 +27,15 @@
  *
  *********************************************************************************/
 
-#ifdef REDUCTION_SAMPLER_TYPE_FLOAT
-    uniform sampler3D inputTexture;
+uniform
+#if defined REDUCTION_SAMPLER_TYPE_FLOAT
+     sampler3D 
+#elif defined REDUCTION_SAMPLER_TYPE_INTEGER
+    isampler3D
+#elif defined REDUCTION_SAMPLER_TYPE_UNSIGNED
+    usampler3D
 #endif
-
-#ifdef REDUCTION_SAMPLER_TYPE_INTEGER
-    uniform isampler3D inputTexture;
-#endif
-
-#ifdef REDUCTION_SAMPLER_TYPE_UNSIGNED
-    uniform usampler3D inputTexture;
-#endif
+inputTexture;
 
 uniform vec2 disregardingRange;
 
