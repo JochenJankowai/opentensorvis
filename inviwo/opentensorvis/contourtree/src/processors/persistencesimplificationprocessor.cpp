@@ -83,8 +83,7 @@ PersistenceSimplificationProcessor::PersistenceSimplificationProcessor()
 void PersistenceSimplificationProcessor::process() {
     if (!util::checkPorts(contourTreeDataInport_)) return;
 
-    simplifyCt_->queue =
-        std::priority_queue<uint32_t, std::vector<uint32_t>, contourtree::BranchCompare>{};
+    
 
     simplifyCt_->simplify(persistence_.get());
 
