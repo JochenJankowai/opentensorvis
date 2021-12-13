@@ -167,7 +167,8 @@ void VolumeReductionGL::setSamplerType(std::shared_ptr<const Volume> volume) {
 
     volume->getRepresentation<VolumeRAM>()->dispatch<void, dispatching::filter::All>(
         [&computeShader](auto vrprecision) {
-            using ValueType = util::PrecisionValueType<decltype(vrprecision)>;
+            using VectorType = util::PrecisionValueType<decltype(vrprecision)>;
+            using ValueType = util::value_type_t<VectorType>;
 
             if constexpr (std::is_floating_point_v<ValueType>) {
                 computeShader->addShaderDefine("REDUCTION_SAMPLER_TYPE_FLOAT");

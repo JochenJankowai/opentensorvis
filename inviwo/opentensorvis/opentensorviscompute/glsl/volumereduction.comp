@@ -29,11 +29,11 @@
 
 uniform
 #if defined REDUCTION_SAMPLER_TYPE_FLOAT
-     sampler3D 
+ sampler3D 
 #elif defined REDUCTION_SAMPLER_TYPE_INTEGER
-    isampler3D
+ isampler3D 
 #elif defined REDUCTION_SAMPLER_TYPE_UNSIGNED
-    usampler3D
+ usampler3D 
 #endif
 inputTexture;
 

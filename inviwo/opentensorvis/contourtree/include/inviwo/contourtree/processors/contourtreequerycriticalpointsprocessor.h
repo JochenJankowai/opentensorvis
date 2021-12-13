@@ -32,6 +32,8 @@
 #include <inviwo/contourtree/contourtreemoduledefine.h>
 #include <inviwo/core/processors/processor.h>
 #include <inviwo/core/properties/ordinalproperty.h>
+#include <inviwo/contourtree/ports/contourtreesimplificationport.h>
+#include <inviwo/core/ports/volumeport.h>
 
 namespace inviwo {
 
@@ -55,7 +57,7 @@ namespace inviwo {
 class IVW_MODULE_CONTOURTREE_API ContourTreeQueryCriticalPointsProcessor : public Processor {
 public:
     ContourTreeQueryCriticalPointsProcessor();
-    virtual ~ContourTreeQueryCriticalPointsProcessor() = default;
+    virtual ~ContourTreeQueryCriticalPointsProcessor() override = default;
 
     virtual void process() override;
 
@@ -63,6 +65,9 @@ public:
     static const ProcessorInfo processorInfo_;
 
 private:
+    ContourTreeSimplificationInport contourTreeSimplificationInport_;
+    VolumeOutport volumeOutport_;
+
     Int64Property nLeaves_;
 };
 

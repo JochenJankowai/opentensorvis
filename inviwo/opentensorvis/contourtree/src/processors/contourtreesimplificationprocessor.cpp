@@ -54,8 +54,7 @@ ContourTreeSimplificationProcessor::ContourTreeSimplificationProcessor()
     , simplificationMetod_("simplificationMetod", "Simplification method",
                            {{"persistence", "Persistence", SimplificationMetod::Persistence},
                             {"hypervolume", "Hypervolume", SimplificationMetod::Hypervolume}},
-                           1)
-    , normalizeWeights_("normalizeWeights", "Normalize weights", false) {
+                           1) {
     addPorts(contourTreeInport_, contourTreeDataInport_, contourTreeSimplificationOutport_);
 
     addProperties(simplificationMetod_);
@@ -80,7 +79,7 @@ void ContourTreeSimplificationProcessor::process() {
     }
 
     simplifyCt->simplify(simFn);
-    simplifyCt->computeWeights(normalizeWeights_.get());
+    simplifyCt->computeWeights();
 
     contourTreeSimplificationOutport_.setData(simplifyCt);
 }

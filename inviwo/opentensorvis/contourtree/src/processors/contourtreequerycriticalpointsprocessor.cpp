@@ -28,30 +28,47 @@
  *********************************************************************************/
 
 #include <inviwo/contourtree/processors/contourtreequerycriticalpointsprocessor.h>
+#include <inviwo/contourtree/util/util.h>
+#include <inviwo/core/util/zip.h>
 
 namespace inviwo {
 
 // The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
 const ProcessorInfo ContourTreeQueryCriticalPointsProcessor::processorInfo_{
-    "org.inviwo.ContourTreeQueryCriticalPointsProcessor",      // Class identifier
-    "Contour Tree Query Critical Points Processor",                // Display name
-    "Undefined",              // Category
-    CodeState::Experimental,  // Code state
-    Tags::None,               // Tags
+    "org.inviwo.ContourTreeQueryCriticalPointsProcessor",  // Class identifier
+    "Contour Tree Query Critical Points Processor",        // Display name
+    "OpenTensorVis",                                       // Category
+    CodeState::Experimental,                               // Code state
+    Tags::None,                                            // Tags
 };
-const ProcessorInfo ContourTreeQueryCriticalPointsProcessor::getProcessorInfo() const { return processorInfo_; }
+const ProcessorInfo ContourTreeQueryCriticalPointsProcessor::getProcessorInfo() const {
+    return processorInfo_;
+}
 
 ContourTreeQueryCriticalPointsProcessor::ContourTreeQueryCriticalPointsProcessor()
     : Processor()
-    , outport_("outport")
-    , position_("position", "Position", vec3(0.0f), vec3(-100.0f), vec3(100.0f)) {
+    , contourTreeSimplificationInport_("contourTreeSimplificationInport")
+    , volumeOutport_("volumeOutport")
+    , nLeaves_("nLeaves", "Number of leaves", 1, 1, 12, 1) {
 
-    addPort(outport_);
-    addProperty(position_);
+    addPorts(contourTreeSimplificationInport_, volumeOutport_);
+    addProperties(nLeaves_);
 }
 
 void ContourTreeQueryCriticalPointsProcessor::process() {
-    // outport_.setData(myImage);
+    if (!util::checkPorts(contourTreeSimplificationInport_)) return;
+
+    const auto contourTreeSimplification = contourTreeSimplificationInport_.getData();
+
+    size_t i{0};
+
+    for (const auto [a, b, c] :
+         util::zip(contourTreeSimplification->branches, *contourTreeSimplification->fn_,
+                   contourTreeSimplification->fnv)) {
+        if (i > 10) break;
+
+        LogInfo(fmt::format("branch{},{},{}", i++, b, c));
+    }
 }
 
 }  // namespace inviwo

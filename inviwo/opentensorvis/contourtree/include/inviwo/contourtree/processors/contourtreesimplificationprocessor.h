@@ -60,7 +60,6 @@ private:
     ContourTreeSimplificationOutport contourTreeSimplificationOutport_;
 
     TemplateOptionProperty<SimplificationMetod> simplificationMetod_;
-    BoolProperty normalizeWeights_;
 };
 
 }  // namespace inviwo

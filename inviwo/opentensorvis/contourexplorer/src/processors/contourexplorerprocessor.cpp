@@ -155,6 +155,8 @@ void ContourExplorerProcessor::handlePicking(PickingEvent* p) {
             const auto cind = glm::clamp(index, size3_t{0}, data->getDimensions() - size3_t{1});
             value = static_cast<uint32_t>(data->getRepresentation<VolumeRAM>()->getAsDVec4(cind).x);
 
+            LogInfo(fmt::format("Picked id: {}", value));
+
             if (ignoreZeroIndex_.get() && value == 0) {
             } else {
                 auto selection = brushingAndLinkingInport_.getSelectedIndices();

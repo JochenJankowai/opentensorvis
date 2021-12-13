@@ -33,6 +33,7 @@
 #include <inviwo/core/network/networklock.h>
 #include <inviwo/contourtree/util/util.h>
 #include <Persistence.h>
+#include <Grid3D.h>
 
 namespace inviwo {
 
@@ -183,36 +184,57 @@ void ContourTreeQueryProcessor::queryTopoAngler() {
 
     if (!topologicalFeatures->isPartitioned) {
         features = topologicalFeatures->getArcFeatures(topKFeatures, threshold_.get());
-    } else {
-        features =
-            topologicalFeatures->getPartitionedExtremaFeatures(topKFeatures, threshold_.get());
-    }
 
-    /*
-     * Look up which feature the arcId in arcMap belongs to and assign value. That should be it.
-     */
-    const auto numberOfElements = contourTree->noVertices;
+        /*
+         * Look up which feature the arcId in arcMap belongs to and assign value. That should be it.
+         */
+        const auto numberOfElements = contourTree->noVertices;
 
-    auto rawData = new uint16_t[numberOfElements];
-    std::fill_n(rawData, numberOfElements, 0);
+        auto rawData = new uint16_t[numberOfElements];
+        std::fill_n(rawData, numberOfElements, 0);
 
-    for (size_t i{1}; i < features.size(); ++i) {
-        for (const auto arcId : features[i].arcs) {
-            for (size_t j{0}; j < numberOfElements; ++j) {
-                if (contourTree->arcMap[j] == arcId) {
-                    rawData[j] = static_cast<uint16_t>(i);
+        for (size_t i{0}; i < features.size(); ++i) {
+            for (const auto arcId : features[i].arcs) {
+                for (size_t j{0}; j < numberOfElements; ++j) {
+                    if (contourTree->arcMap[j] == arcId) {
+                        rawData[j] = static_cast<uint16_t>(i + 1);
+                    }
                 }
             }
         }
-    }
 
-    generateSegmentationVolume(rawData, features.size() - 1);
+        generateSegmentationVolume(rawData, features.size());
+
+    } else {
+        features =
+            topologicalFeatures->getPartitionedExtremaFeatures(topKFeatures, threshold_.get());
+
+        /*
+         * Look up which feature the arcId in arcMap belongs to and assign value. That should be it.
+         */
+        const auto numberOfElements = contourTree->noVertices;
+
+        auto rawData = new uint16_t[numberOfElements];
+        std::fill_n(rawData, numberOfElements, 0);
+
+        for (size_t i{1}; i < features.size(); ++i) {
+            for (const auto arcId : features[i].arcs) {
+                for (size_t j{0}; j < numberOfElements; ++j) {
+                    if (contourTree->arcMap[j] == arcId) {
+                        rawData[j] = static_cast<uint16_t>(i);
+                    }
+                }
+            }
+        }
+
+        generateSegmentationVolume(rawData, features.size() - 1);
+    }
 }
 
 void ContourTreeQueryProcessor::queryCutoff() { auto intersectingArcs = getIntersectingArcs(); }
 
 void ContourTreeQueryProcessor::queryNLeaves() {
-    if (!util::checkPorts(contourTreeInport_, contourTreeDataInport_,
+    if (!util::checkPorts(volumeInport_,contourTreeInport_, contourTreeDataInport_,
                           contourTreeSimplificationInport_))
         return;
 
@@ -220,39 +242,58 @@ void ContourTreeQueryProcessor::queryNLeaves() {
     const auto contourTreeData = contourTreeDataInport_.getData();
     const auto contourTreeSimplification = contourTreeSimplificationInport_.getData();
 
-    contourtree::SimplifyCT simplifyCt(contourTreeSimplification);
-    simplifyCt.simplify(contourTreeSimplification->order_, persistence_.get(),
-                        contourTreeSimplification->weights_);
+    const auto topologicalFeatures = contourTreeTopologicalFeatuesInport_.getData();
 
-    const auto& branches = simplifyCt.branches;
-    const auto& nodes = simplifyCt.nodes;
-    const auto& nodeVertices = simplifyCt.data->nodeVerts;
-    
-    for(size_t i{0};i<nLeaves_.get();++i) {
-        const auto& branch = branches[i];
-        
-    }
+    const auto features =
+        volumeInport_.getData()
+            ->getRepresentation<VolumeRAM>()
+            ->dispatch<std::vector<contourtree::Feature>,
+                       dispatching::filter::Scalars>([&, this](auto vrprecision) {
+                using ValueType = util::PrecisionValueType<decltype(vrprecision)>;
 
+                const auto grid = std::dynamic_pointer_cast<const contourtree::Grid3D<ValueType>>(
+                    contourTree->data);
 
-    /*auto nLeavesAndCorrespondingArcs = getNLeavesAndCorrespondingArcs();
+                std::vector<contourtree::Feature> f;
+
+                if (contourTree->treeType_ == contourtree::TreeType::JoinTree) {
+                    f = topologicalFeatures
+                                   ->getNExtremalArcFeatures<contourtree::TreeType::JoinTree, ValueType>(
+                                       nLeaves_, persistence_.get(), grid->fnVals);
+                }
+
+                if (contourTree->treeType_ == contourtree::TreeType::SplitTree) {
+                    f = topologicalFeatures
+                            ->getNExtremalArcFeatures<contourtree::TreeType::SplitTree, ValueType>(
+                                       nLeaves_, persistence_.get(), grid->fnVals);
+                }
+
+                if (f.size() < nLeaves_.get()) {
+                    LogWarn(fmt::format(
+                        "With persistence simplification level at {} the tree yielded {} features "
+                        "instead of the requested {}.",
+                        persistence_.get(), f.size(), nLeaves_.get()));
+                }
+
+                return f;
+            });
 
     const auto numberOfElements = contourTree->noVertices;
 
     auto rawData = new uint16_t[numberOfElements];
-    std::fill_n(rawData, numberOfElements, nLeavesAndCorrespondingArcs.size() + 1);
+    std::fill_n(rawData, numberOfElements, 0);
 
-    for (size_t i{}; i < nLeavesAndCorrespondingArcs.size(); ++i) {
-        const auto& arc = contourTreeData->arcs[nLeavesAndCorrespondingArcs[i].second];
-        const auto arcId = arc.id;
-
-        for (size_t j{0}; j < numberOfElements; ++j) {
-            if (contourTree->arcMap[j] == arcId) {
-                rawData[j] = static_cast<uint16_t>(i);
+    for (size_t i{0}; i < features.size(); ++i) {
+        for (const auto arcId : features[i].arcs) {
+            for (size_t j{0}; j < numberOfElements; ++j) {
+                if (contourTree->arcMap[j] == arcId) {
+                    rawData[j] = static_cast<uint16_t>(i + 1);
+                }
             }
         }
     }
 
-    generateSegmentationVolume(rawData, nLeavesAndCorrespondingArcs.size() - 1);*/
+    generateSegmentationVolume(rawData, features.size());
 }
 
 std::vector<std::pair<uint32_t, uint32_t>> ContourTreeQueryProcessor::getIntersectingArcs() {
