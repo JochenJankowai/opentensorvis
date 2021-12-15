@@ -1,4 +1,4 @@
-#include <inviwo/opentensorvisbase/datastructures/hyperstreamlinetracer.h>
+#include <inviwo/opentensorvishyperstreamlines//datastructures/hyperstreamlinetracer.h>
 
 namespace inviwo {
 HyperStreamLineTracer::HyperStreamLineTracer(

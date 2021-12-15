@@ -3,6 +3,5 @@ set(dependencies
     InviwoOpenGLModule
     InviwoBaseGLModule
     InviwoEigenUtilsModule
-    InviwoVectorFieldVisualizationModule
     InviwoDataFrameModule
 )

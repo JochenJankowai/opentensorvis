@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2016-2020 Inviwo Foundation
+ * Copyright (c) 2021 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,36 +27,40 @@
  *
  *********************************************************************************/
 
-#pragma once
+#ifdef _MSC_VER
+#pragma comment(linker, "/SUBSYSTEM:CONSOLE")
+#ifdef IVW_ENABLE_MSVC_MEM_LEAK_TEST
+#include <vld.h>
+#endif
+#endif
 
-#include <inviwo/opentensorvisbase/opentensorvisbasemoduledefine.h>
-#include <inviwo/core/common/inviwo.h>
-#include <inviwo/core/processors/processor.h>
-#include <inviwo/core/ports/datainport.h>
-#include <inviwo/core/util/utilities.h>
-#include <inviwo/core/util/foreach.h>
-#include <modules/vectorfieldvisualization/datastructures/integrallineset.h>
-#include <modules/vectorfieldvisualization/ports/seedpointsport.h>
-#include <inviwo/opentensorvisbase/datastructures/hyperstreamlinetracer.h>
+#include <inviwo/core/util/logcentral.h>
+#include <inviwo/core/util/consolelogger.h>
+#include <inviwo/testutil/configurablegtesteventlistener.h>
 
-namespace inviwo {
+#include <warn/push>
+#include <warn/ignore/all>
+#include <gtest/gtest.h>
+#include <warn/pop>
 
-class IVW_MODULE_OPENTENSORVISBASE_API HyperStreamlines : public Processor {
-public:
-    HyperStreamlines();
-    virtual ~HyperStreamlines();
+int main(int argc, char** argv) {
+    using namespace inviwo;
+    LogCentral::init();
+    auto logger = std::make_shared<ConsoleLogger>();
+    LogCentral::getPtr()->setVerbosity(LogVerbosity::Error);
+    LogCentral::getPtr()->registerLogger(logger);
 
-    virtual void process() override;
-
-    virtual const ProcessorInfo getProcessorInfo() const override;
-    static const ProcessorInfo processorInfo_;
-
-private:
-    DataInport<SpatialSampler<3, 3, double>> sampler_;
-    SeedPointsInport<SpatialSampler<3, 3, double>::SpatialDimensions> seeds_;
-
-    IntegralLineSetOutport lines_;
-
-    IntegralLineProperties properties_;
-};
-}  // namespace inviwo
+    int ret = -1;
+    {
+#ifdef IVW_ENABLE_MSVC_MEM_LEAK_TEST
+        VLDDisable();
+        ::testing::InitGoogleTest(&argc, argv);
+        VLDEnable();
+#else
+        ::testing::InitGoogleTest(&argc, argv);
+#endif
+        inviwo::ConfigurableGTestEventListener::setup();
+        ret = RUN_ALL_TESTS();
+    }
+    return ret;
+}

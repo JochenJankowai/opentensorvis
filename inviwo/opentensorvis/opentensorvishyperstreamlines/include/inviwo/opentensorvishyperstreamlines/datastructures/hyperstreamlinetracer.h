@@ -29,7 +29,7 @@
 
 #pragma once
 
-#include <inviwo/opentensorvisbase/opentensorvisbasemoduledefine.h>
+#include <inviwo/opentensorvishyperstreamlines//opentensorvishyperstreamlinesmoduledefine.h>
 #include <inviwo/core/common/inviwo.h>
 #include <modules/vectorfieldvisualization/datastructures/integralline.h>
 #include <modules/vectorfieldvisualization/properties/integrallineproperties.h>
@@ -101,7 +101,7 @@ std::tuple<SpatialVector, DataVector, bool> hyperstep(const SpatialVector &oldPo
 }
 }  // namespace detail
 
-class IVW_MODULE_OPENTENSORVISBASE_API HyperStreamLineTracer {
+class IVW_MODULE_OPENTENSORVISHYPERSTREAMLINES_API HyperStreamLineTracer {
 public:
     struct Result {
         IntegralLine line;

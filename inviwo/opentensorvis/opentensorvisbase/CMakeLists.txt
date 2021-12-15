@@ -9,7 +9,6 @@ set(HEADER_FILES
     include/inviwo/opentensorvisbase/algorithm/tensorfieldslicing.h
     include/inviwo/opentensorvisbase/datastructures/attributes.h
     include/inviwo/opentensorvisbase/datastructures/attributes.inl
-    include/inviwo/opentensorvisbase/datastructures/hyperstreamlinetracer.h
     include/inviwo/opentensorvisbase/datastructures/tensorfield.h
     include/inviwo/opentensorvisbase/datastructures/tensorfield2d.h
     include/inviwo/opentensorvisbase/datastructures/tensorfield3d.h
@@ -17,7 +16,6 @@ set(HEADER_FILES
     include/inviwo/opentensorvisbase/datavisualizer/hyperlicvisualizer2d.h
     include/inviwo/opentensorvisbase/datavisualizer/hyperlicvisualizer3d.h
     include/inviwo/opentensorvisbase/ports/tensorfieldport.h
-    include/inviwo/opentensorvisbase/processors/hyperstreamlines.h
     include/inviwo/opentensorvisbase/processors/tensorfield2dmetadata.h
     include/inviwo/opentensorvisbase/processors/tensorfield2dsubsample.h
     include/inviwo/opentensorvisbase/processors/tensorfield2dsubset.h
@@ -53,13 +51,11 @@ ivw_group("Header Files" ${HEADER_FILES})
 set(SOURCE_FILES
     src/algorithm/tensorfieldsampling.cpp
     src/algorithm/tensorfieldslicing.cpp
-    src/datastructures/hyperstreamlinetracer.cpp
     src/datastructures/tensorfield2d.cpp
     src/datastructures/tensorfield3d.cpp
     src/datavisualizer/anisotropyraycastingvisualizer.cpp
     src/datavisualizer/hyperlicvisualizer2d.cpp
     src/datavisualizer/hyperlicvisualizer3d.cpp
-    src/processors/hyperstreamlines.cpp
     src/processors/tensorfield2dmetadata.cpp
     src/processors/tensorfield2dsubsample.cpp
     src/processors/tensorfield2dsubset.cpp

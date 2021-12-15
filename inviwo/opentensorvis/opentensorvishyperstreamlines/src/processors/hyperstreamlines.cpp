@@ -1,5 +1,4 @@
-#include <inviwo/opentensorvisbase/processors/hyperstreamlines.h>
-#include <inviwo/opentensorvisbase/opentensorvisbasemodule.h>
+#include <inviwo/opentensorvishyperstreamlines//processors/hyperstreamlines.h>
 
 namespace inviwo {
 
@@ -9,7 +8,7 @@ const ProcessorInfo HyperStreamlines::processorInfo_{
     "HyperStreamlines",             // Display name
     "Tensor Visualization",         // Category
     CodeState::Experimental,        // Code state
-    tag::OpenTensorVis | Tag::CPU,  // Tags
+    Tags::CPU,  // Tags
 };
 const ProcessorInfo HyperStreamlines::getProcessorInfo() const { return processorInfo_; }
 

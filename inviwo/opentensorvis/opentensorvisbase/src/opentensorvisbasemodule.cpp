@@ -36,7 +36,6 @@
 #include <inviwo/opentensorvisbase/datavisualizer/anisotropyraycastingvisualizer.h>
 
 #include <inviwo/opentensorvisbase/ports/tensorfieldport.h>
-#include <inviwo/opentensorvisbase/processors/hyperstreamlines.h>
 #include <inviwo/opentensorvisbase/processors/tensorfield2dmetadata.h>
 #include <inviwo/opentensorvisbase/processors/tensorfield2dsubsample.h>
 #include <inviwo/opentensorvisbase/processors/tensorfield2dsubset.h>
@@ -67,7 +66,6 @@ OpenTensorVisBaseModule::OpenTensorVisBaseModule(InviwoApplication* app)
     registerPort<TensorField3DInport>();
     registerPort<TensorField3DOutport>();
 
-    registerProcessor<HyperStreamlines>();
     registerProcessor<TensorField2DMetaData>();
     registerProcessor<TensorField2DSubsample>();
     registerProcessor<TensorField2DSubset>();
