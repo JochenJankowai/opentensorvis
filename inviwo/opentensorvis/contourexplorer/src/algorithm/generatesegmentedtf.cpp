@@ -31,9 +31,26 @@
 
 namespace inviwo {
 TFPrimitiveSet SegmentationTransferFunctionGenerator::generateTFPrimitivesForSegments(
-    const BitSet& selection, size_t numberOfSegments,colorbrewer::Family colorFamily, double slope, const vec4& shadeColor) {
+    const BitSet& selection, size_t numberOfSegments, double slope, const vec4& shadeColor) {
 
-    const auto& colorMap = colorbrewer::getColormap(colorFamily, numberOfSegments);
+    std::vector<dvec4> colorMap;
+    if (numberOfSegments > 24) {
+        for (size_t i{0}; i < numberOfSegments; ++i) {
+            colorMap.emplace_back(
+                dvec3(static_cast<double>(i + 1) / static_cast<double>(numberOfSegments)), 1.0);
+        }
+    } else if (numberOfSegments > 12) {
+        colorMap = colorbrewer::getColormap(colorbrewer::Family::Set3, 12);
+
+        const auto& rest =
+            colorbrewer::getColormap(colorbrewer::Family::Paired, numberOfSegments - 12);
+
+        colorMap.insert(std::begin(colorMap), std::begin(rest), std::end(rest));
+    } else if (numberOfSegments < 3) {
+        colorMap.emplace_back(1.0);
+    } else {
+        colorMap = colorbrewer::getColormap(colorbrewer::Family::Set3, numberOfSegments);
+    }
 
     TFPrimitiveSet tfPoints;
 

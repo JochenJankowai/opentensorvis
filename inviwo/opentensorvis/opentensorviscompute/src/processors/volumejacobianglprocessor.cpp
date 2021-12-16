@@ -27,51 +27,25 @@
  *
  *********************************************************************************/
 
-#pragma once
+#include <inviwo/opentensorviscompute/processors/volumejacobianglprocessor.h>
 
-#include <inviwo/contourexplorer/contourexplorermoduledefine.h>
-#include <inviwo/core/processors/processor.h>
-#include <inviwo/core/properties/transferfunctionproperty.h>
-#include <inviwo/core/ports/volumeport.h>
-#include <modules/brushingandlinking/ports/brushingandlinkingports.h>
-#include <inviwo/core/util/colorbrewer.h>
-#include <inviwo/core/properties/ordinalproperty.h>
 
 namespace inviwo {
 
-/** \docpage{org.inviwo.SegmentationVolumeTransferFunctionProcessor, Segmentation Volume Transfer
- * Function Processor}
- * ![](org.inviwo.SegmentationVolumeTransferFunctionProcessor.png?classIdentifier=org.inviwo.SegmentationVolumeTransferFunctionProcessor)
- * Explanation of how to use the processor.
- *
- * ### Inports
- *   * __<Inport1>__ <description>.
- *
- * ### Outports
- *   * __<Outport1>__ <description>.
- *
- * ### Properties
- *   * __<Prop1>__ <description>.
- *   * __<Prop2>__ <description>
- */
-class IVW_MODULE_CONTOUREXPLORER_API SegmentationVolumeTransferFunctionProcessor
-    : public Processor {
-public:
-    SegmentationVolumeTransferFunctionProcessor();
-    virtual ~SegmentationVolumeTransferFunctionProcessor() = default;
-
-    virtual void process() override;
-
-    virtual const ProcessorInfo getProcessorInfo() const override;
-    static const ProcessorInfo processorInfo_;
-
-private:
-    BrushingAndLinkingInport brushingAndLinkingInport_;
-    VolumeInport volumeInport_;
-
-    TransferFunctionProperty tfProperty_;
-    DoubleProperty slope_;
-    FloatVec4Property shadeColor_;
+// The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
+const ProcessorInfo VolumeJacobianGLProcessor::processorInfo_{
+    "org.inviwo.VolumeJacobianGLProcessor",      // Class identifier
+    "Volume Jacobian GLProcessor",                // Display name
+    "Undefined",              // Category
+    CodeState::Experimental,  // Code state
+    Tags::None,               // Tags
 };
+const ProcessorInfo VolumeJacobianGLProcessor::getProcessorInfo() const { return processorInfo_; }
+
+VolumeJacobianGLProcessor::VolumeJacobianGLProcessor() : Processor(), volumeInport_("volumeInport"){
+    addPorts(volumeInport_);
+}
+
+void VolumeJacobianGLProcessor::process() { volumeJacobianGl_.compute(volumeInport_.getData()); }
 
 }  // namespace inviwo

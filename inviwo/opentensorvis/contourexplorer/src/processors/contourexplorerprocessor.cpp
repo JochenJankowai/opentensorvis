@@ -71,9 +71,6 @@ ContourExplorerProcessor::ContourExplorerProcessor()
     , planeNormal_{"planeNormal",          "Plane Normal",      vec3(1.f, 0.f, 0.f),
                    vec3(-1.f, -1.f, -1.f), vec3(1.f, 1.f, 1.f), vec3(0.01f, 0.01f, 0.01f)}
     , planePosition_{"planePosition", "Plane Position", vec3(0.5f), vec3(0.0f), vec3(1.0f)}
-    , family_("family", "TF Preset",
-              {{"set3", "Set3", colorbrewer::Family::Set3},
-               {"paired", "Paired", colorbrewer::Family::Paired}})
     , transferFunction_{"transferFunction", "Transfer Function", &inport_}
     , generateVolumeButton_("generateVolumeButton", "Generate iso volume", InvalidationLevel::Valid)
     , camera_{"camera", "Camera", util::boundingBox(inport_)}
@@ -188,8 +185,7 @@ void ContourExplorerProcessor::updateTF() {
     selection.addRange(0, max+1);
 
     const auto tfPrimitives =
-        SegmentationTransferFunctionGenerator::generateTFPrimitivesForSegments(selection, max + 1,
-                                                                               family_.get());
+        SegmentationTransferFunctionGenerator::generateTFPrimitivesForSegments(selection, max + 1);
 
     LogInfo(fmt::format("Generated {} tf primitives for {} segments.", tfPrimitives.size(), max + 1));
 

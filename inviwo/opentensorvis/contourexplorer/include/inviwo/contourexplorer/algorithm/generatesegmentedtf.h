@@ -39,7 +39,6 @@ class IVW_MODULE_CONTOUREXPLORER_API SegmentationTransferFunctionGenerator {
 public:
     static TFPrimitiveSet generateTFPrimitivesForSegments(const BitSet& selection,
                                                           size_t numberOfSegments,
-                                                          colorbrewer::Family colorFamily,
                                                           double slope = 0.1,
                                                           const vec4& shadeColor = vec4(0.0f));
 };

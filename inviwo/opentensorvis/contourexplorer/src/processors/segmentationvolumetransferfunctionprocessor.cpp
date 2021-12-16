@@ -50,9 +50,6 @@ SegmentationVolumeTransferFunctionProcessor::SegmentationVolumeTransferFunctionP
     : Processor()
     , brushingAndLinkingInport_("brushingAndLinkingInport")
     , volumeInport_("volumeInport")
-    , family_("family", "TF Preset",
-              {{"set3", "Set3", colorbrewer::Family::Set3},
-               {"paired", "Paired", colorbrewer::Family::Paired}})
     , tfProperty_("tf", "Transfer function")
     , slope_("slope", "Slope", 0.1, 0.01, 0.5, 0.001)
     , shadeColor_("shadeColor", "Shade color", vec4(0), vec4(0), vec4(1), vec4(0.00001f),
@@ -77,7 +74,7 @@ void SegmentationVolumeTransferFunctionProcessor::process() {
     auto& tf = tfProperty_.get();
 
     const auto tfPoints = SegmentationTransferFunctionGenerator::generateTFPrimitivesForSegments(
-        selection, numberOfFeatures, family_.get(), slope_.get(), shadeColor_.get());
+        selection, numberOfFeatures, slope_.get(), shadeColor_.get());
 
     NetworkLock l;
 

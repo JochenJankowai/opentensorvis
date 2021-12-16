@@ -88,28 +88,15 @@ private:
      */
     CompositeProperty methodNLeaves_;
     IntProperty nLeaves_;
-    FloatProperty persistence_;
-
-
+    FloatProperty simplificationThreshold_;
+    
 
     void query(QueryMethod method);
 
     void queryTopoAngler();
     void queryCutoff();
     void queryNLeaves();
-
-    /**
-     * @return Set of indices of those arcs that intersect with the threshold
-     */
-    std::vector<std::pair<uint32_t, uint32_t>> getIntersectingArcs();
-
-    /**
-     * Get n lowest/highest leaves and their incident arcs (indices).
-     *
-     * @return Pair of indices. pair.first is node index, pair.second is arc index.
-     */
-    std::vector<std::pair<uint32_t, uint32_t>> getNLeavesAndCorrespondingArcs();
-
+    
     void generateSegmentationVolume(uint16_t* rawData, glm::u8 n);
 };
 

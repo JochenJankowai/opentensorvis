@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2021 Inviwo Foundation
+ * Copyright (c) 2016-2021 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,49 +29,38 @@
 
 #pragma once
 
-#include <inviwo/contourexplorer/contourexplorermoduledefine.h>
-#include <inviwo/core/processors/processor.h>
-#include <inviwo/core/properties/transferfunctionproperty.h>
-#include <inviwo/core/ports/volumeport.h>
-#include <modules/brushingandlinking/ports/brushingandlinkingports.h>
-#include <inviwo/core/util/colorbrewer.h>
-#include <inviwo/core/properties/ordinalproperty.h>
+#include <inviwo/opentensorviscompute/opentensorviscomputemoduledefine.h>
+#include <modules/opengl/shader/shader.h>
+#include <inviwo/core/datastructures/volume/volume.h>
+#include <inviwo/core/datastructures/volume/volumeram.h>
+#include <inviwo/core/datastructures/volume/volumeramprecision.h>
 
 namespace inviwo {
-
-/** \docpage{org.inviwo.SegmentationVolumeTransferFunctionProcessor, Segmentation Volume Transfer
- * Function Processor}
- * ![](org.inviwo.SegmentationVolumeTransferFunctionProcessor.png?classIdentifier=org.inviwo.SegmentationVolumeTransferFunctionProcessor)
- * Explanation of how to use the processor.
+/** \class VolumeJacobianGL
  *
- * ### Inports
- *   * __<Inport1>__ <description>.
- *
- * ### Outports
- *   * __<Outport1>__ <description>.
- *
- * ### Properties
- *   * __<Prop1>__ <description>.
- *   * __<Prop2>__ <description>
+ * Computes the Jacobian matrix (partial derivatives) of the input vector volume
  */
-class IVW_MODULE_CONTOUREXPLORER_API SegmentationVolumeTransferFunctionProcessor
-    : public Processor {
+class IVW_MODULE_OPENTENSORVISCOMPUTE_API VolumeJacobianGL {
 public:
-    SegmentationVolumeTransferFunctionProcessor();
-    virtual ~SegmentationVolumeTransferFunctionProcessor() = default;
+    template <typename Callback>
+    VolumeJacobianGL(Callback C) : VolumeJacobianGL() {
+        shader_.onReload(C);
+    }
 
-    virtual void process() override;
+    VolumeJacobianGL();
 
-    virtual const ProcessorInfo getProcessorInfo() const override;
-    static const ProcessorInfo processorInfo_;
+    virtual ~VolumeJacobianGL() = default;
 
-private:
-    BrushingAndLinkingInport brushingAndLinkingInport_;
-    VolumeInport volumeInport_;
+    /**
+     * Computes the Jacobian matrix (partial derivatives) of the input vector volume
+     *
+     * @param volume Vector field.
+     * @return Set of volumes, each containing a column of the Jacobian
+     */
+    std::vector<std::shared_ptr<Volume>> compute(std::shared_ptr<const Volume> volume);
 
-    TransferFunctionProperty tfProperty_;
-    DoubleProperty slope_;
-    FloatVec4Property shadeColor_;
+protected:
+    Shader shader_;
 };
 
 }  // namespace inviwo

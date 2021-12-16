@@ -2,6 +2,7 @@ ivw_module(OpenTensorVisCompute)
 
 set(HEADER_FILES
     include/inviwo/opentensorviscompute/algorithm/volumechannelsplitgl.h
+    include/inviwo/opentensorviscompute/algorithm/volumejacobiangl.h
     include/inviwo/opentensorviscompute/algorithm/volumeminmaxgl.h
     include/inviwo/opentensorviscompute/algorithm/volumenormalizationgl.h
     include/inviwo/opentensorviscompute/algorithm/volumereductiongl.h
@@ -9,6 +10,7 @@ set(HEADER_FILES
     include/inviwo/opentensorviscompute/opentensorviscomputemodule.h
     include/inviwo/opentensorviscompute/opentensorviscomputemoduledefine.h
     include/inviwo/opentensorviscompute/processors/volumechannelsplitglprocessor.h
+    include/inviwo/opentensorviscompute/processors/volumejacobianglprocessor.h
     include/inviwo/opentensorviscompute/processors/volumeminmaxglprocessor.h
     include/inviwo/opentensorviscompute/processors/volumenormalizationglprocessor.h
     include/inviwo/opentensorviscompute/processors/volumereductionglprocessor.h
@@ -18,12 +20,14 @@ ivw_group("Header Files" ${HEADER_FILES})
 
 set(SOURCE_FILES
     src/algorithm/volumechannelsplitgl.cpp
+    src/algorithm/volumejacobiangl.cpp
     src/algorithm/volumeminmaxgl.cpp
     src/algorithm/volumenormalizationgl.cpp
     src/algorithm/volumereductiongl.cpp
     src/algorithm/volumeshrinktonormalrangegl.cpp
     src/opentensorviscomputemodule.cpp
     src/processors/volumechannelsplitglprocessor.cpp
+    src/processors/volumejacobianglprocessor.cpp
     src/processors/volumeminmaxglprocessor.cpp
     src/processors/volumenormalizationglprocessor.cpp
     src/processors/volumereductionglprocessor.cpp
@@ -32,6 +36,7 @@ set(SOURCE_FILES
 ivw_group("Source Files" ${SOURCE_FILES})
 
 set(SHADER_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/glsl/volumejacobian.comp
 	${CMAKE_CURRENT_SOURCE_DIR}/glsl/volumesplit.comp
 	${CMAKE_CURRENT_SOURCE_DIR}/glsl/volumereduction.comp
     ${CMAKE_CURRENT_SOURCE_DIR}/glsl/volumenormalization.comp

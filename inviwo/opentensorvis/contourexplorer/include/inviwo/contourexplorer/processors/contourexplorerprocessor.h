@@ -100,7 +100,6 @@ public:
     FloatVec3Property planeNormal_;
     FloatVec3Property planePosition_;
 
-    TemplateOptionProperty<colorbrewer::Family> family_;
     TransferFunctionProperty transferFunction_;
 
     ButtonProperty generateVolumeButton_;

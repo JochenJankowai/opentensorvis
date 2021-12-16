@@ -72,7 +72,7 @@ ContourTreeQueryProcessor::ContourTreeQueryProcessor()
     , cutoff_("cutoff", "Function value")
     , methodNLeaves_("methodNLeaves", "N Leaves")
     , nLeaves_("nLeaves", "Number of leaves", 1, 1, 12, 1)
-    , persistence_("persistence", "Persistence") {
+    , simplificationThreshold_("simplificationThreshold", "Simplification threshold") {
     addPorts(volumeInport_, contourTreeInport_, contourTreeDataInport_,
              contourTreeSimplificationInport_, contourTreeTopologicalFeatuesInport_,
              volumeOutport_);
@@ -82,31 +82,17 @@ ContourTreeQueryProcessor::ContourTreeQueryProcessor()
     contourTreeSimplificationInport_.onChange([this]() {
         const auto contourTreeSimplification = contourTreeSimplificationInport_.getData();
 
-        const auto simplificationType = contourTreeSimplification->simFn->simType_;
+        NetworkLock l;
 
-        switch (simplificationType) {
-            case contourtree::SimFunction::SimType::Persistence: {
-                NetworkLock l;
+        const auto min = contourTreeSimplification->simFn->getMinValue();
+        const auto max = contourTreeSimplification->simFn->getMaxValue();
 
-                const auto persistenceSimplification =
-                    std::dynamic_pointer_cast<contourtree::Persistence>(
-                        contourTreeSimplification->simFn);
-
-                const auto min = persistenceSimplification->getMinPersistence();
-                const auto max = persistenceSimplification->getMaxPersistence();
-
-                if (persistence_.get() < min && persistence_.get() > max) {
-                    persistence_.set(min);
-                }
-
-                persistence_.setMinValue(min);
-                persistence_.setMaxValue(max);
-            }
-
-            break;
-            case contourtree::SimFunction::SimType::HyperVolume:
-                break;
+        if (simplificationThreshold_.get() < min && simplificationThreshold_.get() > max) {
+            simplificationThreshold_.set(min);
         }
+
+        simplificationThreshold_.setMinValue(min);
+        simplificationThreshold_.setMaxValue(max);
     });
 
     volumeInport_.onChange([this]() {
@@ -146,7 +132,7 @@ ContourTreeQueryProcessor::ContourTreeQueryProcessor()
     methodCutoff_.visibilityDependsOn(queryMethod_, [](TemplateOptionProperty<QueryMethod>& p) {
         return p.get() == QueryMethod::Cutoff;
     });
-    methodCutoff_.addProperties(cutoff_);
+    methodCutoff_.addProperties(cutoff_, simplificationThreshold_);
 
     /**
      * Setup for nLeaves method
@@ -154,7 +140,7 @@ ContourTreeQueryProcessor::ContourTreeQueryProcessor()
     methodNLeaves_.visibilityDependsOn(queryMethod_, [](TemplateOptionProperty<QueryMethod>& p) {
         return p.get() == QueryMethod::Leaves;
     });
-    methodNLeaves_.addProperties(nLeaves_, persistence_);
+    methodNLeaves_.addProperties(nLeaves_, simplificationThreshold_);
 }
 
 void ContourTreeQueryProcessor::process() {
@@ -231,10 +217,87 @@ void ContourTreeQueryProcessor::queryTopoAngler() {
     }
 }
 
-void ContourTreeQueryProcessor::queryCutoff() { auto intersectingArcs = getIntersectingArcs(); }
+void ContourTreeQueryProcessor::queryCutoff() {
+    if (!util::checkPorts(contourTreeDataInport_, volumeInport_,
+                          contourTreeTopologicalFeatuesInport_))
+        return;
+
+    const auto cutoff = cutoff_.get();
+
+    const auto inputVolume = volumeInport_.getData();
+
+    inputVolume->getRepresentation<VolumeRAM>()->dispatch<void, dispatching::filter::Scalars>(
+        [&, this](auto vrprecision) {
+            using ValueType = util::PrecisionValueType<decltype(vrprecision)>;
+            auto volumeData = vrprecision->getDataTyped();
+
+            const auto contourTreeData = contourTreeDataInport_.getData();
+            const auto topologicalFeatures = contourTreeTopologicalFeatuesInport_.getData();
+
+            contourtree::SimplifyCT sim;
+            sim.setInput(contourTreeData);
+
+            sim.simplify(topologicalFeatures->order, -1, simplificationThreshold_.get(),
+                         topologicalFeatures->weights);
+
+            auto inRange = [&](const ValueType a, const ValueType b) {
+                return cutoff >= static_cast<float>(a) && cutoff <= static_cast<float>(b);
+            };
+
+            std::vector<size_t> intersectingBranches{};
+
+            const auto& branches = sim.branches;
+            const auto& arcs = contourTreeData->arcs;
+            const auto& arcMap = contourTreeInport_.getData()->arcMap;
+
+            for (size_t i{0}; i < branches.size(); ++i) {
+                const auto value1 = volumeData[contourTreeData->nodeVerts[branches[i].from]];
+                const auto value2 = volumeData[contourTreeData->nodeVerts[branches[i].to]];
+
+                if (inRange(value1, value2)) {
+                    intersectingBranches.push_back(i);
+                }
+            }
+
+            const auto numberOfElements = contourTreeInport_.getData()->noVertices;
+            auto rawData = new uint16_t[numberOfElements];
+            std::fill_n(rawData, numberOfElements, 0);
+
+            for (size_t i{0}; i < intersectingBranches.size(); ++i) {
+                const auto branchIndex = intersectingBranches[i];
+                const auto& branch = branches[branchIndex];
+
+                for (size_t j{0}; j < arcMap.size(); ++j) {
+                    for (const auto arcID : branch.arcs) {
+                        if (arcID == arcMap[j]) {
+                            // At this point we know that this voxel belongs to this arc
+                            //
+                            if (static_cast<float>(volumeData[j]) <= cutoff) {
+                                rawData[j] = i + 1;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                for (const auto childIndex : branch.children) {
+                    const auto& childBranch = branches[childIndex];
+                    for (size_t j{0}; j < arcMap.size(); ++j) {
+                        for (const auto arcID : childBranch.arcs) {
+                            if (arcID == arcMap[j]) {
+                                rawData[j] = i + 1;
+                            }
+                        }
+                    }
+                }
+            }
+
+            generateSegmentationVolume(rawData, intersectingBranches.size());
+        });
+}
 
 void ContourTreeQueryProcessor::queryNLeaves() {
-    if (!util::checkPorts(volumeInport_,contourTreeInport_, contourTreeDataInport_,
+    if (!util::checkPorts(volumeInport_, contourTreeInport_, contourTreeDataInport_,
                           contourTreeSimplificationInport_))
         return;
 
@@ -258,21 +321,21 @@ void ContourTreeQueryProcessor::queryNLeaves() {
 
                 if (contourTree->treeType_ == contourtree::TreeType::JoinTree) {
                     f = topologicalFeatures
-                                   ->getNExtremalArcFeatures<contourtree::TreeType::JoinTree, ValueType>(
-                                       nLeaves_, persistence_.get(), grid->fnVals);
+                            ->getNExtremalArcFeatures<contourtree::TreeType::JoinTree, ValueType>(
+                                nLeaves_, simplificationThreshold_.get(), grid->fnVals);
                 }
 
                 if (contourTree->treeType_ == contourtree::TreeType::SplitTree) {
                     f = topologicalFeatures
                             ->getNExtremalArcFeatures<contourtree::TreeType::SplitTree, ValueType>(
-                                       nLeaves_, persistence_.get(), grid->fnVals);
+                                nLeaves_, simplificationThreshold_.get(), grid->fnVals);
                 }
 
                 if (f.size() < nLeaves_.get()) {
                     LogWarn(fmt::format(
                         "With persistence simplification level at {} the tree yielded {} features "
                         "instead of the requested {}.",
-                        persistence_.get(), f.size(), nLeaves_.get()));
+                        simplificationThreshold_.get(), f.size(), nLeaves_.get()));
                 }
 
                 return f;
@@ -296,73 +359,7 @@ void ContourTreeQueryProcessor::queryNLeaves() {
     generateSegmentationVolume(rawData, features.size());
 }
 
-std::vector<std::pair<uint32_t, uint32_t>> ContourTreeQueryProcessor::getIntersectingArcs() {
-    if (!util::checkPorts(contourTreeDataInport_, volumeInport_))
-        return std::vector<std::pair<uint32_t, uint32_t>>{};
 
-    const auto cutoff = cutoff_.get();
-
-    const auto inputVolume = volumeInport_.getData();
-
-    return inputVolume->getRepresentation<VolumeRAM>()
-        ->dispatch<std::vector<std::pair<uint32_t, uint32_t>>, dispatching::filter::Scalars>(
-            [&, this](auto vrprecision) {
-                using ValueType = util::PrecisionValueType<decltype(vrprecision)>;
-                auto volumeData = vrprecision->getDataTyped();
-
-                const auto contourTreeData = contourTreeDataInport_.getData();
-
-                const auto& arcs = contourTreeData->arcs;
-
-                std::vector<std::pair<uint32_t, uint32_t>> intersectingArcs;
-
-                auto inRange = [&](const ValueType a, const ValueType b) {
-                    return cutoff >= static_cast<float>(a) && cutoff <= static_cast<float>(b);
-                };
-
-                size_t numberOfIntersectingArcs = 0;
-
-                for (const auto [from, to, id] : arcs) {
-                    const auto value1 = volumeData[contourTreeData->nodeVerts[from]];
-                    const auto value2 = volumeData[contourTreeData->nodeVerts[to]];
-
-                    if (inRange(value1, value2)) {
-                        numberOfIntersectingArcs++;
-                    }
-                }
-
-                LogInfoCustom("ContourTreeComputationProcessor",
-                              fmt::format("{} intersecting arcs at cutoff {}.",
-                                          numberOfIntersectingArcs, cutoff));
-
-                return intersectingArcs;
-            });
-}
-
-std::vector<std::pair<uint32_t, uint32_t>>
-ContourTreeQueryProcessor::getNLeavesAndCorrespondingArcs() {
-    if (!util::checkPorts(contourTreeDataInport_))
-        return std::vector<std::pair<uint32_t, uint32_t>>{};
-
-    const auto contourTreeData = contourTreeDataInport_.getData();
-
-    const auto n = nLeaves_.get();
-
-    std::vector<std::pair<uint32_t, uint32_t>> list;
-
-    for (uint32_t i{0}; i < n; ++i) {
-        for (uint32_t j{0}; j < contourTreeData->arcs.size(); ++j) {
-            if (const auto [from, to, id] = contourTreeData->arcs[j]; from == i) {
-                list.emplace_back(i, j);
-                break;
-            }
-        }
-    }
-
-    LogInfo(fmt::format("Extracted {} node/arc pairs for {} features.", list.size(), n));
-
-    return list;
-}
 
 void ContourTreeQueryProcessor::generateSegmentationVolume(uint16_t* rawData, const glm::u8 n) {
     const auto inputVolume = volumeInport_.getData();

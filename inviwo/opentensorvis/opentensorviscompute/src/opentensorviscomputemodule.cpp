@@ -29,6 +29,7 @@
 
 #include <inviwo/opentensorviscompute/opentensorviscomputemodule.h>
 #include <inviwo/opentensorviscompute/processors/volumechannelsplitglprocessor.h>
+#include <inviwo/opentensorviscompute/processors/volumejacobianglprocessor.h>
 #include <inviwo/opentensorviscompute/processors/volumeminmaxglprocessor.h>
 #include <inviwo/opentensorviscompute/processors/volumereductionglprocessor.h>
 #include <modules/opengl/shader/shadermanager.h>
@@ -41,6 +42,7 @@ OpenTensorVisComputeModule::OpenTensorVisComputeModule(InviwoApplication* app) :
     ShaderManager::getPtr()->addShaderSearchPath(getPath(ModulePath::GLSL));
     
     registerProcessor<VolumeChannelSplitGLProcessor>();
+    registerProcessor<VolumeJacobianGLProcessor>();
     registerProcessor<VolumeMinMaxGLProcessor>();
     registerProcessor<VolumeNormalizationGLProcessor>();
     registerProcessor<VolumeReductionGLProcessor>();
