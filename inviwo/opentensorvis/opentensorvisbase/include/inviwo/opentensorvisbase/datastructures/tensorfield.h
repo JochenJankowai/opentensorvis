@@ -416,11 +416,7 @@ inline bool TensorField<N, precision>::hasMetaData() const {
     if constexpr (std::is_base_of_v<attributes::AttributeBase, T>) {
         const auto& headers = metaData_->getHeaders();
         const auto name = std::string(T::identifier);
-        auto pred = [name](const std::pair<std::string, const DataFormatBase*>& pair) -> bool {
-            return pair.first == name;
-        };
-
-        return std::find_if(headers.begin(), headers.end(), pred) != headers.end();
+        return std::find(headers.begin(), headers.end(), name) != headers.end();
     }
 }
 
@@ -430,11 +426,7 @@ inline std::optional<std::shared_ptr<const Column>> TensorField<N, precision>::g
     if constexpr (std::is_base_of_v<attributes::AttributeBase, T>) {
         const auto& headers = metaData_->getHeaders();
         const auto name = std::string(T::identifier);
-        auto pred = [name](const std::pair<std::string, const DataFormatBase*>& pair) -> bool {
-            return pair.first == name;
-        };
-
-        if (std::find_if(headers.begin(), headers.end(), pred) != headers.end()) {
+        if (std::find(headers.begin(), headers.end(), name) != headers.end()) {
             return metaData_->getColumn(name);
         }
 
