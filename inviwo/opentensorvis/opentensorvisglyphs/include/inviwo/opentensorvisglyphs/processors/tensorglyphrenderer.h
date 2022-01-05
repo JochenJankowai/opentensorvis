@@ -72,10 +72,10 @@ class IVW_MODULE_OPENTENSORVISGLYPHS_API TensorGlyphRenderer : public Processor 
  private:
   DataInport<std::vector<std::shared_ptr<Mesh>>> meshInport_;
   TensorField3DInport tensorFieldInport_;
-  DataInport<unsigned int> offsetInport_;
+  DataInport<size_t> offsetInport_;
   ImageInport imageInport_;
   MeshOutport selectedMeshOutport_;
-  DataOutport<unsigned int> indexOutport_;
+  DataOutport<size_t> indexOutport_;
 
   ImageOutport outport_;
 

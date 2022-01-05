@@ -406,17 +406,21 @@ inline bool TensorField<N, precision>::hasMetaData(const std::string& name) cons
     if constexpr (N == 3) {
         return util::for_each_type<attributes::types3D>{}(HasMetaData{}, name).wasFound_;
     } else {
-      return false;
+        return false;
     }
 }
 
 template <unsigned int N, typename precision>
 template <typename T>
-inline bool TensorField<N, precision>::hasMetaData() const {
+bool TensorField<N, precision>::hasMetaData() const {
     if constexpr (std::is_base_of_v<attributes::AttributeBase, T>) {
-        const auto& headers = metaData_->getHeaders();
         const auto name = std::string(T::identifier);
-        return std::find(headers.begin(), headers.end(), name) != headers.end();
+
+        for (const auto column : *metaData_) {
+            if (column->getHeader() == name) return true;
+        }
+
+        return false;
     }
 }
 
@@ -424,13 +428,11 @@ template <unsigned int N, typename precision>
 template <typename T>
 inline std::optional<std::shared_ptr<const Column>> TensorField<N, precision>::getMetaData() const {
     if constexpr (std::is_base_of_v<attributes::AttributeBase, T>) {
-        const auto& headers = metaData_->getHeaders();
-        const auto name = std::string(T::identifier);
-        if (std::find(headers.begin(), headers.end(), name) != headers.end()) {
-            return metaData_->getColumn(name);
-        }
+        if (!this->hasMetaData<T>()) return std::nullopt;
 
-        return std::nullopt;
+        const auto name = std::string(T::identifier);
+        
+        return metaData_->getColumn(name);
     }
 }
 

@@ -109,7 +109,7 @@ TensorGlyphRenderer::TensorGlyphRenderer()
     picking_.resize(meshInport_.getData()->size());
   });
 
-  indexOutport_.setData(std::make_shared<unsigned int>(0));
+  indexOutport_.setData(std::make_shared<size_t>(0));
 
   addProperty(selectedIDProperty_);
   selectedIDProperty_.setReadOnly(false);
@@ -213,8 +213,8 @@ void TensorGlyphRenderer::process() {
     selectedMeshOutport_.setData(
         glyphType_.generateGlyph(tensorField, selectedID_ + offset, vec3(0.f)));
 
-    indexOutport_.setData(std::make_shared<unsigned int>(
-        static_cast<unsigned int>(selectedID_ + offset)));
+    indexOutport_.setData(std::make_shared<size_t>(
+        static_cast<size_t>(selectedID_ + offset)));
   } else {
     selectedMeshOutport_.setData(glyphType_.generateQuadric(
         dmat3(1), dvec3(0), glyphType_.size(), dvec4(1)));

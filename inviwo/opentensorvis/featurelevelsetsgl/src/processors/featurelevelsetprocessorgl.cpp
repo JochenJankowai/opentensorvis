@@ -619,7 +619,7 @@ void FeatureLevelSetProcessorGL::onWillAddProperty(Property* property, size_t) {
             resizeTraitAllocation();
         }
 
-        traitProperty->onChange([&, this]() { generateTraitMesh(traitProperty->getIdentifier()); });
+        //traitProperty->onChange([&, this]() { generateTraitMesh(traitProperty->getIdentifier()); });
     }
 }
 
