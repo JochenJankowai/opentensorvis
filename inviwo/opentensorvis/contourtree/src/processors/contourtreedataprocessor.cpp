@@ -44,14 +44,16 @@ const ProcessorInfo ContourTreeDataProcessor::getProcessorInfo() const { return 
 ContourTreeDataProcessor::ContourTreeDataProcessor()
     : Processor()
     , contourTreeInport_("contourTreeInport")
+    , contourTreeOutport_("passthrough")
     , contourTreeDataOutport_("contourTreeDataOutport") {
 
-    addPorts(contourTreeInport_, contourTreeDataOutport_);
+    addPorts(contourTreeInport_, contourTreeOutport_,contourTreeDataOutport_);
 }
 
 void ContourTreeDataProcessor::process() {
     contourTreeDataOutport_.setData(
         std::make_shared<contourtree::ContourTreeData>(contourTreeInport_.getData()));
+    contourTreeOutport_.setData(contourTreeInport_.getData());
 }
 
 }  // namespace inviwo

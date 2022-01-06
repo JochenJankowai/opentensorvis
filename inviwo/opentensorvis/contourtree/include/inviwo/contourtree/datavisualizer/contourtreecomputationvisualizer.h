@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2021 Inviwo Foundation
+ * Copyright (c) 2018-2020 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,35 +30,32 @@
 #pragma once
 
 #include <inviwo/contourtree/contourtreemoduledefine.h>
-#include <inviwo/core/processors/processor.h>
-#include <inviwo/core/ports/volumeport.h>
-#include <inviwo/contourtree/ports/contourtreeport.h>
-#include <inviwo/core/properties/compositeproperty.h>
-#include <constants.h>
-#include <inviwo/core/ports/meshport.h>
+#include <inviwo/core/common/inviwo.h>
+#include <inviwo/core/rendering/datavisualizer.h>
 
 namespace inviwo {
 
-/** \docpage{org.inviwo.ContourTreeComputationProcessor, Contour Tree}
- * ![](org.inviwo.ContourTreeComputationProcessor.png?classIdentifier=org.inviwo.ContourTreeComputationProcessor)
- */
-    
-class IVW_MODULE_CONTOURTREE_API ContourTreeComputationProcessor : public Processor {
+class IVW_MODULE_CONTOURTREE_API ContourTreeComputationVisualizer : public DataVisualizer {
 public:
-    ContourTreeComputationProcessor();
-    virtual ~ContourTreeComputationProcessor() = default;
+    ContourTreeComputationVisualizer(InviwoApplication* app);
+    virtual ~ContourTreeComputationVisualizer() = default;
+    virtual std::string getName() const override;
+    virtual Document getDescription() const override;
+    virtual std::vector<FileExtension> getSupportedFileExtensions() const override;
+    virtual bool isOutportSupported(const Outport* port) const override;
 
-    virtual void process() override;
+    virtual bool hasSourceProcessor() const override;
+    virtual bool hasVisualizerNetwork() const override;
 
-    virtual const ProcessorInfo getProcessorInfo() const override;
-    static const ProcessorInfo processorInfo_;
+    virtual std::pair<Processor*, Outport*> addSourceProcessor(
+        const std::string& filename, ProcessorNetwork* network) const override;
+    virtual std::vector<Processor*> addVisualizerNetwork(Outport* outport,
+                                                         ProcessorNetwork* network) const override;
+    virtual std::vector<Processor*> addSourceAndVisualizerNetwork(
+        const std::string& filename, ProcessorNetwork* network) const override;
 
 private:
-    VolumeInport volumeInport_;
-    VolumeOutport volumeOutport_;
-    ContourTreeOutport contourTreeOutport_;
-  
-    TemplateOptionProperty<contourtree::TreeType> treeType_;
+    [[maybe_unused]] InviwoApplication* app_;
 };
 
 }  // namespace inviwo

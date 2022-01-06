@@ -50,12 +50,13 @@ ContourTreeSimplificationProcessor::ContourTreeSimplificationProcessor()
     : Processor()
     , contourTreeInport_("contourTreeInport")
     , contourTreeDataInport_("contourTreeDataInport")
+    , contourTreeDataOutport_("passthrough")
     , contourTreeSimplificationOutport_("contourTreeSimplificationOutport")
     , simplificationMetod_("simplificationMetod", "Simplification method",
                            {{"persistence", "Persistence", SimplificationMetod::Persistence},
                             {"hypervolume", "Hypervolume", SimplificationMetod::Hypervolume}},
                            1) {
-    addPorts(contourTreeInport_, contourTreeDataInport_, contourTreeSimplificationOutport_);
+    addPorts(contourTreeInport_, contourTreeDataInport_, contourTreeDataOutport_,contourTreeSimplificationOutport_);
 
     addProperties(simplificationMetod_);
 }
@@ -82,6 +83,7 @@ void ContourTreeSimplificationProcessor::process() {
     simplifyCt->computeWeights();
 
     contourTreeSimplificationOutport_.setData(simplifyCt);
+    contourTreeDataOutport_.setData(contourTreeDataInport_.getData());
 }
 
 }  // namespace inviwo

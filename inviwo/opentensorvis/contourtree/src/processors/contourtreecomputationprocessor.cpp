@@ -56,12 +56,13 @@ const ProcessorInfo ContourTreeComputationProcessor::getProcessorInfo() const {
 ContourTreeComputationProcessor::ContourTreeComputationProcessor()
     : Processor()
     , volumeInport_("volumeInport")
+    , volumeOutport_("passthrough")
     , contourTreeOutport_("contourTreeOutport")
     , treeType_("treeType", "Tree type",
                 {{"join", "Join", contourtree::TreeType::JoinTree},
                  {"split", "Split", contourtree::TreeType::SplitTree}},
                 0) {
-    addPorts(volumeInport_, contourTreeOutport_);
+    addPorts(volumeInport_, volumeOutport_,contourTreeOutport_);
     addProperties(treeType_);
 }
 
@@ -102,6 +103,8 @@ void ContourTreeComputationProcessor::process() {
 
             contourTreeOutport_.setData(mergeTree);
         });
+
+    volumeOutport_.setData(volumeInport_.getData());
 }
 
 }  // namespace inviwo

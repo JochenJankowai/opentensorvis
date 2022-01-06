@@ -51,6 +51,7 @@ public:
 
 private:
     ContourTreeInport contourTreeInport_;
+    ContourTreeOutport contourTreeOutport_;
     ContourTreeDataOutport contourTreeDataOutport_;
 };
 

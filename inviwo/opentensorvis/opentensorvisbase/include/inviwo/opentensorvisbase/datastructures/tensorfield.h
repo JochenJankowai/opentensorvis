@@ -81,57 +81,57 @@ public:
     TensorField& operator=(const TensorField&) = delete;
 
     // Destructors
-    virtual ~TensorField() = default;
+    ~TensorField() override = default;
 
     /**
      * NOTE: This method creates a shallow copy, i.e. the tensors and the meta data are
      * not copied. Rather, the copy points towards the same data as the input field. If you need a
      * deep copy, use the deepCopy method.
      */
-    virtual TensorField<N, precision>* clone() const = 0;
+    TensorField<N, precision>* clone() const override = 0;
 
     /**
      * NOTE: This method constructor creates a deep copy, i.e. the tensors and the meta data are
      * copied. If you need a shallow copy, use the copy constructor or clone method.
      */
-    virtual TensorField<N, precision>* deepCopy() const = 0;
+    [[nodiscard]] virtual TensorField<N, precision>* deepCopy() const = 0;
 
-    std::string getDataInfo() const;
-
-    template <bool useMask = false, typename ReturnType = std::conditional_t<
-                                        useMask, std::pair<bool, const matN&>, matN&>>
-    const ReturnType at(sizeN_t position) const;
+    [[nodiscard]] std::string getDataInfo() const;
 
     template <bool useMask = false, typename ReturnType = std::conditional_t<
                                         useMask, std::pair<bool, const matN&>, matN&>>
-    const ReturnType at(size_t index) const;
+    [[nodiscard]] const ReturnType at(sizeN_t position) const;
 
-    sizeN_t getDimensions() const final { return dimensions_; }
+    template <bool useMask = false, typename ReturnType = std::conditional_t<
+                                        useMask, std::pair<bool, const matN&>, matN&>>
+    [[nodiscard]] const ReturnType at(size_t index) const;
+
+    [[nodiscard]] sizeN_t getDimensions() const final { return dimensions_; }
 
     template <typename T>
-    glm::vec<N, T, glm::defaultp> getDimensionsAs() const {
+    [[nodiscard]] glm::vec<N, T, glm::defaultp> getDimensionsAs() const {
         return glm::vec<N, T, glm::defaultp>(dimensions_);
     }
 
     template <typename T = float>
-    glm::vec<N, T> getExtents() const;
+    [[nodiscard]] glm::vec<N, T> getExtents() const;
 
     void setExtents(const glm::vec<N, float>& extents);
 
     template <typename T = size_t>
-    glm::vec<N, T> getBounds() const;
+    [[nodiscard]] glm::vec<N, T> getBounds() const;
 
     template <typename T = float>
-    glm::vec<N, T> getSpacing() const;
+    [[nodiscard]] glm::vec<N, T> getSpacing() const;
 
-    size_t getSize() const { return size_; }
+    [[nodiscard]] size_t getSize() const { return size_; }
 
-    matNb getBasisAndOffset() const;
+    [[nodiscard]] matNb getBasisAndOffset() const;
 
-    std::shared_ptr<const std::vector<matN>> tensors() const;
+    [[nodiscard]] std::shared_ptr<const std::vector<matN>> tensors() const;
 
     void setMask(const std::vector<glm::uint8>& mask) { binaryMask_ = mask; }
-    const std::vector<glm::uint8>& getMask() const { return binaryMask_; }
+    [[nodiscard]] const std::vector<glm::uint8>& getMask() const { return binaryMask_; }
 
     void setTensors(std::shared_ptr<std::vector<matN>> tensors);
     void setMetaData(std::shared_ptr<DataFrame> metaData);
@@ -140,7 +140,7 @@ public:
     If the tensor field has a mask, this method return the number of 1s in it -
     telling you how many of the positions in the tensor field are defined.
     */
-    int getNumDefinedEntries() const;
+    [[nodiscard]] int getNumDefinedEntries() const;
 
     /**
      * Data map for the eigen values of the tensor field.
@@ -153,7 +153,7 @@ public:
      */
     std::array<DataMapper, N> dataMapEigenVectors_;
 
-    bool hasMask() const { return binaryMask_.size() == size_; }
+    [[nodiscard]] bool hasMask() const { return binaryMask_.size() == size_; }
 
     const util::IndexMapper<N>& indexMapper() const { return indexMapper_; }
 
@@ -163,16 +163,16 @@ public:
      * the desired meta data.
      */
     template <typename T>
-    bool hasMetaData() const;
+    [[nodiscard]] bool hasMetaData() const;
 
-    bool hasMetaData(const std::string& name) const;
+    [[nodiscard]] bool hasMetaData(const std::string& name) const;
 
     /**
      * Tensor field meta data is stored in a DataFrame. If available, this method returns the column
      * for the meta data specified by T (see attributes.h). Nullopt otherwise.
      */
     template <typename T>
-    std::optional<std::shared_ptr<const Column>> getMetaData() const;
+    [[nodiscard]] std::optional<std::shared_ptr<const Column>> getMetaData() const;
 
     /**
      * This method returns the underlying container for the meta data specified by T (see
@@ -180,29 +180,29 @@ public:
      * available.
      */
     template <typename T>
-    const std::vector<typename T::value_type>& getMetaDataContainer() const;
+    [[nodiscard]] const std::vector<typename T::value_type>& getMetaDataContainer() const;
 
-    std::shared_ptr<const DataFrame> metaData() const { return metaData_; }
-    std::shared_ptr<DataFrame> metaData() { return metaData_; }
+    [[nodiscard]] std::shared_ptr<const DataFrame> metaData() const { return metaData_; }
+    [[nodiscard]] std::shared_ptr<DataFrame> metaData() { return metaData_; }
 
-    value_type getMajorEigenValue(const size_t index) const {
+    [[nodiscard]] value_type getMajorEigenValue(const size_t index) const {
         return value_type(this->getMetaDataContainer<attributes::MajorEigenValue>()[index]);
     }
-    value_type getMinorEigenValue(const size_t index) const {
+    [[nodiscard]] value_type getMinorEigenValue(const size_t index) const {
         return value_type(this->getMetaDataContainer<attributes::MinorEigenValue>()[index]);
     }
 
-    const std::vector<vecN>& majorEigenVectors() const {
+    [[nodiscard]] const std::vector<vecN>& majorEigenVectors() const {
         return this->getMetaDataContainer<attributes::MajorEigenVector<N>>();
     }
-    const std::vector<vecN>& minorEigenVectors() const {
+    [[nodiscard]] const std::vector<vecN>& minorEigenVectors() const {
         return this->getMetaDataContainer<attributes::MinorEigenVector<N>>();
     }
 
-    const std::vector<value_type>& majorEigenValues() const {
+    [[nodiscard]] const std::vector<value_type>& majorEigenValues() const {
         return this->getMetaDataContainer<attributes::MajorEigenValue>();
     }
-    const std::vector<value_type>& minorEigenValues() const {
+    [[nodiscard]] const std::vector<value_type>& minorEigenValues() const {
         return this->getMetaDataContainer<attributes::MinorEigenValue>();
     }
 

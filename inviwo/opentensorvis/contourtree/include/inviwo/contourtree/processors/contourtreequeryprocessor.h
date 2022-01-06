@@ -64,7 +64,8 @@ private:
     ContourTreeSimplificationInport contourTreeSimplificationInport_;
     ContourTreeTopologicalFeaturesInport contourTreeTopologicalFeatuesInport_;
 
-    VolumeOutport volumeOutport_;
+    VolumeOutport voxelizedVolumeOutport_;
+    VolumeOutport smoothVolumeOutport_;
     
     TemplateOptionProperty<QueryMethod> queryMethod_;
 
@@ -82,13 +83,14 @@ private:
      */
     CompositeProperty methodCutoff_;
     FloatProperty cutoff_;
+    FloatProperty simplificationThreshold1_;
 
     /**
      * Properties to steed method for extracting N leaves and their corresponding arcs.
      */
     CompositeProperty methodNLeaves_;
     IntProperty nLeaves_;
-    FloatProperty simplificationThreshold_;
+    FloatProperty simplificationThreshold2_;
     
 
     void query(QueryMethod method);
@@ -97,7 +99,7 @@ private:
     void queryCutoff();
     void queryNLeaves();
     
-    void generateSegmentationVolume(uint16_t* rawData, glm::u8 n);
+    void generateSegmentationVolume(uint16_t* rawData, size_t n);
 };
 
 }  // namespace inviwo

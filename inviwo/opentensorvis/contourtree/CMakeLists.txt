@@ -11,6 +11,7 @@ add_subdirectory(ext/contour-tree)
 set(HEADER_FILES
     include/inviwo/contourtree/contourtreemodule.h
     include/inviwo/contourtree/contourtreemoduledefine.h
+    include/inviwo/contourtree/datavisualizer/contourtreecomputationvisualizer.h
     include/inviwo/contourtree/ports/contourtreedataport.h
     include/inviwo/contourtree/ports/contourtreeport.h
     include/inviwo/contourtree/ports/contourtreesimplificationport.h
@@ -31,6 +32,7 @@ ivw_group("Header Files" ${HEADER_FILES})
 # Add source files
 set(SOURCE_FILES
     src/contourtreemodule.cpp
+    src/datavisualizer/contourtreecomputationvisualizer.cpp
     src/processors/contourtreecomputationprocessor.cpp
     src/processors/contourtreedataprocessor.cpp
     src/processors/contourtreequerycriticalpointsprocessor.cpp

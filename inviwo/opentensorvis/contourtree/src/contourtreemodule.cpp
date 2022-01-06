@@ -40,6 +40,7 @@
 #include <inviwo/contourtree/processors/contourtreequerysubtrees.h>
 #include <inviwo/contourtree/processors/contourtreequerytopoangler.h>
 #include <inviwo/contourtree/processors/contourtreetopologicalfeaturesprocessor.h>
+#include <inviwo/contourtree/datavisualizer/contourtreecomputationvisualizer.h>
 
 namespace inviwo {
 
@@ -61,6 +62,8 @@ ContourTreeModule::ContourTreeModule(InviwoApplication* app) : InviwoModule(app,
     registerProcessor<ContourTreeQueryTopoAngler>();
     registerProcessor<ContourTreeSimplificationProcessor>();
     registerProcessor<ContourTreeTopologicalFeaturesProcessor>();
+
+    registerDataVisualizer(std::make_unique<ContourTreeComputationVisualizer>(app));
 }
 
 }  // namespace inviwo

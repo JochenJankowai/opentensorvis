@@ -57,6 +57,8 @@ private:
     
     ContourTreeDataInport contourTreeDataInport_;
     ContourTreeSimplificationInport contourTreeSimplificationInport_;
+    ContourTreeDataOutport contourTreeDataOutport_;
+    ContourTreeSimplificationOutport contourTreeSimplificationOutport_;
     ContourTreeTopologicalFeaturesOutport contourTreeTopologicalFeatuesOutport_;
 
     TemplateOptionProperty<FeatureType> featureType_;

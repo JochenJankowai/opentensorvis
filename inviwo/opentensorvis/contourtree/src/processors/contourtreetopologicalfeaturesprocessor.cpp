@@ -47,13 +47,15 @@ ContourTreeTopologicalFeaturesProcessor::ContourTreeTopologicalFeaturesProcessor
     : Processor()
     , contourTreeDataInport_("contourTreeDataInport")
     , contourTreeSimplificationInport_("contourTreeSimplificationInport")
+    , contourTreeDataOutport_("contourTreeDataPassthrough")
+    , contourTreeSimplificationOutport_("simplificationPassthrough")
     , contourTreeTopologicalFeatuesOutport_("contourTreeTopologicalFeatuesOutport")
     , featureType_("featureType", "Feature type",
                    {{"arc", "Arc", FeatureType::Arc},
                     {"partitionedExtrema", "Partitioned extrema", FeatureType::PartitionedExtrema}},
                    1) {
 
-    addPorts(contourTreeDataInport_, contourTreeSimplificationInport_,
+    addPorts(contourTreeDataInport_, contourTreeSimplificationInport_,contourTreeDataOutport_,contourTreeSimplificationOutport_,
              contourTreeTopologicalFeatuesOutport_);
 
     addProperties(featureType_);
@@ -75,6 +77,8 @@ void ContourTreeTopologicalFeaturesProcessor::process() {
                                             contourTreeSimplification->weights_, partition);
 
     contourTreeTopologicalFeatuesOutport_.setData(topologicalFeatures);
+    contourTreeSimplificationOutport_.setData(contourTreeSimplificationInport_.getData());
+    contourTreeDataOutport_.setData(contourTreeDataInport_.getData());
 }
 
 }  // namespace inviwo
