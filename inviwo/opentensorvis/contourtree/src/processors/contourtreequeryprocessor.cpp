@@ -74,12 +74,14 @@ ContourTreeQueryProcessor::ContourTreeQueryProcessor()
     , simplificationThreshold1_("simplificationThreshold1", "Simplification threshold")
     , methodNLeaves_("methodNLeaves", "N Leaves")
     , nLeaves_("nLeaves", "Number of leaves", 1, 1, 12, 1)
-    , simplificationThreshold2_("simplificationThreshold2", "Simplification threshold") {
+    , simplificationThreshold2_("simplificationThreshold2", "Simplification threshold")
+    , text_("text", "Contour tree info", "", InvalidationLevel::InvalidOutput,
+            PropertySemantics::TextEditor) {
     addPorts(volumeInport_, contourTreeInport_, contourTreeDataInport_,
              contourTreeSimplificationInport_, contourTreeTopologicalFeatuesInport_,
-             voxelizedVolumeOutport_,smoothVolumeOutport_);
+             voxelizedVolumeOutport_, smoothVolumeOutport_);
 
-    addProperties(queryMethod_, methodTopoAngler_, methodCutoff_, methodNLeaves_);
+    addProperties(queryMethod_, methodTopoAngler_, methodCutoff_, methodNLeaves_, text_);
 
     contourTreeSimplificationInport_.onChange([this]() {
         const auto contourTreeSimplification = contourTreeSimplificationInport_.getData();
@@ -96,7 +98,7 @@ ContourTreeQueryProcessor::ContourTreeQueryProcessor()
         simplificationThreshold1_.setMinValue(min);
         simplificationThreshold1_.setMaxValue(max);
 
-         if (simplificationThreshold2_.get() < min && simplificationThreshold2_.get() > max) {
+        if (simplificationThreshold2_.get() < min && simplificationThreshold2_.get() > max) {
             simplificationThreshold2_.set(min);
         }
 
@@ -124,16 +126,16 @@ ContourTreeQueryProcessor::ContourTreeQueryProcessor()
      */
     methodTopoAngler_.visibilityDependsOn(queryMethod_,
                                           [](const TemplateOptionProperty<QueryMethod>& p) {
-        return p.get() == QueryMethod::TopoAngler;
-    });
+                                              return p.get() == QueryMethod::TopoAngler;
+                                          });
     topKFeatures_.visibilityDependsOn(queryCriterion_,
                                       [](const TemplateOptionProperty<QueryCriterion>& p) {
                                           return p.get() == QueryCriterion::TopKFeatures;
                                       });
     threshold_.visibilityDependsOn(queryCriterion_,
                                    [](const TemplateOptionProperty<QueryCriterion>& p) {
-        return p.get() == QueryCriterion::Threshold;
-    });
+                                       return p.get() == QueryCriterion::Threshold;
+                                   });
 
     methodTopoAngler_.addProperties(queryCriterion_, topKFeatures_, threshold_);
 
@@ -142,17 +144,17 @@ ContourTreeQueryProcessor::ContourTreeQueryProcessor()
      */
     methodCutoff_.visibilityDependsOn(queryMethod_,
                                       [](const TemplateOptionProperty<QueryMethod>& p) {
-        return p.get() == QueryMethod::Cutoff;
-    });
-    methodCutoff_.addProperties(cutoff_,simplificationThreshold1_);
+                                          return p.get() == QueryMethod::Cutoff;
+                                      });
+    methodCutoff_.addProperties(cutoff_, simplificationThreshold1_);
 
     /**
      * Setup for nLeaves method
      */
     methodNLeaves_.visibilityDependsOn(queryMethod_,
                                        [](const TemplateOptionProperty<QueryMethod>& p) {
-        return p.get() == QueryMethod::Leaves;
-    });
+                                           return p.get() == QueryMethod::Leaves;
+                                       });
     methodNLeaves_.addProperties(nLeaves_, simplificationThreshold2_);
 }
 
@@ -176,10 +178,12 @@ void ContourTreeQueryProcessor::queryTopoAngler() {
     const auto contourTree = contourTreeInport_.getData();
     const auto topologicalFeatures = contourTreeTopologicalFeatuesInport_.getData();
 
-    std::vector<contourtree::Feature> features;
+    std::pair<contourtree::SimplifyCT, std::vector<contourtree::Feature>> features;
 
     const auto topKFeatures =
         queryCriterion_.get() == QueryCriterion::TopKFeatures ? topKFeatures_.get() : -1;
+
+    auto segmentMinima = std::make_shared<std::map<size_t, float>>();
 
     if (!topologicalFeatures->isPartitioned) {
         features = topologicalFeatures->getArcFeatures(topKFeatures, threshold_.get());
@@ -192,17 +196,20 @@ void ContourTreeQueryProcessor::queryTopoAngler() {
         auto rawData = new uint16_t[numberOfElements];
         std::fill_n(rawData, numberOfElements, 0);
 
-        for (size_t i{0}; i < features.size(); ++i) {
-            for (const auto arcId : features[i].arcs) {
+        for (size_t i{0}; i < features.second.size(); ++i) {
+            for (const auto arcId : features.second[i].arcs) {
                 for (size_t j{0}; j < numberOfElements; ++j) {
                     if (contourTree->arcMap[j] == arcId) {
                         rawData[j] = static_cast<uint16_t>(i + 1);
+
+                        segmentMinima->at(i) =
+                            std::min(segmentMinima->at(i), contourTree->data->getFunctionValue(j));
                     }
                 }
             }
         }
 
-        generateSegmentationVolume(rawData, features.size());
+        generateSegmentationVolume(rawData, features.second.size());
 
     } else {
         features =
@@ -216,18 +223,25 @@ void ContourTreeQueryProcessor::queryTopoAngler() {
         auto rawData = new uint16_t[numberOfElements];
         std::fill_n(rawData, numberOfElements, 0);
 
-        for (size_t i{1}; i < features.size(); ++i) {
-            for (const auto arcId : features[i].arcs) {
+        for (size_t i{1}; i < features.second.size(); ++i) {
+            for (const auto arcId : features.second[i].arcs) {
                 for (int64_t j{0}; j < numberOfElements; ++j) {
                     if (contourTree->arcMap[j] == arcId) {
                         rawData[j] = static_cast<uint16_t>(i);
+
+                        segmentMinima->at(i) =
+                            std::min(segmentMinima->at(i), contourTree->data->getFunctionValue(j));
                     }
                 }
             }
         }
 
-        generateSegmentationVolume(rawData, features.size() - 1);
+        generateSegmentationVolume(rawData, features.second.size() - 1);
     }
+
+    updateContourTreeInfo(features.first);
+
+    segmentMinimaOutport_.setData(segmentMinima);
 }
 
 void ContourTreeQueryProcessor::queryCutoff() {
@@ -258,6 +272,8 @@ void ContourTreeQueryProcessor::queryCutoff() {
             };
 
             std::vector<size_t> intersectingBranches{};
+
+            updateContourTreeInfo(sim);
 
             const auto& branches = sim.branches;
             const auto& arcs = contourTreeData->arcs;
@@ -323,14 +339,14 @@ void ContourTreeQueryProcessor::queryNLeaves() {
     const auto features =
         volumeInport_.getData()
             ->getRepresentation<VolumeRAM>()
-            ->dispatch<std::vector<contourtree::Feature>,
+            ->dispatch<std::pair<contourtree::SimplifyCT, std::vector<contourtree::Feature>>,
                        dispatching::filter::Scalars>([&, this](auto vrprecision) {
                 using ValueType = util::PrecisionValueType<decltype(vrprecision)>;
 
                 const auto grid = std::dynamic_pointer_cast<const contourtree::Grid3D<ValueType>>(
                     contourTree->data);
 
-                std::vector<contourtree::Feature> f;
+                std::pair<contourtree::SimplifyCT, std::vector<contourtree::Feature>> f;
 
                 if (contourTree->treeType_ == contourtree::TreeType::JoinTree) {
                     f = topologicalFeatures
@@ -344,23 +360,25 @@ void ContourTreeQueryProcessor::queryNLeaves() {
                                 nLeaves_, simplificationThreshold2_.get(), grid->fnVals);
                 }
 
-                if (f.size() < nLeaves_.get()) {
+                if (f.second.size() < nLeaves_.get()) {
                     LogWarn(fmt::format(
                         "With persistence simplification level at {} the tree yielded {} features "
                         "instead of the requested {}.",
-                        simplificationThreshold2_.get(), f.size(), nLeaves_.get()));
+                        simplificationThreshold2_.get(), f.second.size(), nLeaves_.get()));
                 }
 
                 return f;
             });
+
+    updateContourTreeInfo(features.first);
 
     const auto numberOfElements = contourTree->noVertices;
 
     auto rawData = new uint16_t[numberOfElements];
     std::fill_n(rawData, numberOfElements, 0);
 
-    for (size_t i{0}; i < features.size(); ++i) {
-        for (const auto arcId : features[i].arcs) {
+    for (size_t i{0}; i < features.second.size(); ++i) {
+        for (const auto arcId : features.second[i].arcs) {
             for (size_t j{0}; j < numberOfElements; ++j) {
                 if (contourTree->arcMap[j] == arcId) {
                     rawData[j] = static_cast<uint16_t>(i + 1);
@@ -369,10 +387,8 @@ void ContourTreeQueryProcessor::queryNLeaves() {
         }
     }
 
-    generateSegmentationVolume(rawData, features.size());
+    generateSegmentationVolume(rawData, features.second.size());
 }
-
-
 
 void ContourTreeQueryProcessor::generateSegmentationVolume(uint16_t* rawData, const size_t n) {
     const auto inputVolume = volumeInport_.getData();
@@ -394,6 +410,28 @@ void ContourTreeQueryProcessor::generateSegmentationVolume(uint16_t* rawData, co
 
     voxelizedVolumeOutport_.setData(segmentationVolume);
     smoothVolumeOutport_.setData(smoothVolume);
+}
+
+void ContourTreeQueryProcessor::updateContourTreeInfo(const contourtree::SimplifyCT& simplifyCt) {
+    NetworkLock l;
+    const auto numberOfNodes = simplifyCt.nodes.size();
+    const auto numberOfBranches = simplifyCt.branches.size();
+    if (auto simFn = simplifyCt.simFn) {
+        const auto minValue = simplifyCt.simFn->getMinValue();
+        const auto maxValue = simplifyCt.simFn->getMaxValue();
+
+        text_.set(
+            fmt::format("Contour tree info:\nNumber of nodes:{:>30}\nNumber of "
+                        "branches:{:>30}\nMin value:{:>30}\nMax value:{:>30}",
+                        numberOfNodes, numberOfBranches, minValue, maxValue));
+
+        return;
+    }
+
+    text_.set(
+        fmt::format("Contour tree info:\nNumber of nodes:{:>30}\nNumber of "
+                    "branches:{:>30}",
+                    numberOfNodes, numberOfBranches));
 }
 
 }  // namespace inviwo

@@ -31,7 +31,6 @@
 #include <inviwo/core/datastructures/volume/volumeram.h>
 #include <inviwo/core/datastructures/volume/volumeramprecision.h>
 #include <Grid3D.h>
-#include <MergeTree.h>
 #include <inviwo/core/network/networklock.h>
 #include <tuple>
 #include <execution>
@@ -61,7 +60,7 @@ ContourTreeComputationProcessor::ContourTreeComputationProcessor()
     , treeType_("treeType", "Tree type",
                 {{"join", "Join", contourtree::TreeType::JoinTree},
                  {"split", "Split", contourtree::TreeType::SplitTree}},
-                0) {
+                0){
     addPorts(volumeInport_, volumeOutport_,contourTreeOutport_);
     addProperties(treeType_);
 }
@@ -105,6 +104,10 @@ void ContourTreeComputationProcessor::process() {
         });
 
     volumeOutport_.setData(volumeInport_.getData());
+
+    
 }
+
+
 
 }  // namespace inviwo

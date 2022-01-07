@@ -53,8 +53,9 @@ public:
     static const ProcessorInfo processorInfo_;
 
 private:
-    VolumeInport volumeInport_;
+    DataInport<std::map<size_t, float>> segmentMinimaInport_;
     BrushingAndLinkingInport brushingAndLinkingInport_;
+
     ImageOutport imageOutport_;
 
     FloatProperty height_;

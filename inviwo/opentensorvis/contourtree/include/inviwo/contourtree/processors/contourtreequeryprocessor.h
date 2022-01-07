@@ -38,6 +38,7 @@
 #include <inviwo/contourtree/ports/contourtreedataport.h>
 #include <inviwo/contourtree/ports/contourtreesimplificationport.h>
 #include <inviwo/contourtree/ports/contourtreetopologicalfeaturesport.h>
+#include <inviwo/core/properties/stringproperty.h>
 
 namespace inviwo {
 
@@ -66,6 +67,7 @@ private:
 
     VolumeOutport voxelizedVolumeOutport_;
     VolumeOutport smoothVolumeOutport_;
+    DataOutport<std::map<size_t, float>> segmentMinima_;
     
     TemplateOptionProperty<QueryMethod> queryMethod_;
 
@@ -100,6 +102,10 @@ private:
     void queryNLeaves();
     
     void generateSegmentationVolume(uint16_t* rawData, size_t n);
+
+    StringProperty text_;
+
+    void updateContourTreeInfo(const contourtree::SimplifyCT& simplifyCt);
 };
 
 }  // namespace inviwo

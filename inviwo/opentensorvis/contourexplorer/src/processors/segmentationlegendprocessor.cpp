@@ -49,7 +49,7 @@ const ProcessorInfo SegmentationLegendProcessor::getProcessorInfo() const { retu
 
 SegmentationLegendProcessor::SegmentationLegendProcessor()
     : Processor()
-    , volumeInport_("volumeInport")
+    , segmentMinimaInport_("segmentMinimaInport")
     , brushingAndLinkingInport_("brushingAndLinkingInport")
     , imageOutport_("imageOutport")
     , height_("height", "Height", 20, 10, 200, 2)
@@ -60,7 +60,7 @@ SegmentationLegendProcessor::SegmentationLegendProcessor()
     , nvgContext_{
           InviwoApplication::getPtr()->getModuleByType<NanoVGUtilsModule>()->getNanoVGContext()} {
 
-    addPorts(volumeInport_, brushingAndLinkingInport_, imageOutport_);
+    addPorts(segmentMinimaInport_, brushingAndLinkingInport_, imageOutport_);
 
     fontColor_.setSemantics(PropertySemantics::Color);
     fontColor_.setCurrentStateAsDefault();
@@ -86,13 +86,15 @@ SegmentationLegendProcessor::SegmentationLegendProcessor()
 }
 
 void SegmentationLegendProcessor::process() {
-    if (!util::checkPorts(volumeInport_)) return;
+    if (!util::checkPorts(segmentMinimaInport_)) return;
 
-    const auto inputVolume = volumeInport_.getData();
+    const auto& segmentMinima = *segmentMinimaInport_.getData();
 
-    const auto [min, max] = inputVolume->dataMap_.dataRange;
-    const auto numberOfSegments = static_cast<float>(max) + 1.0f;
-    const auto iNumberOfSegments = static_cast<size_t>(max) + 1;
+    const auto max =
+        std::max_element(std::begin(segmentMinima), std::end(segmentMinima));
+        
+    const auto numberOfSegments = static_cast<float>(max->second) + 1.0f;
+    const auto iNumberOfSegments = static_cast<size_t>(max->second) + 1;
 
     // Get color map
     const auto& colorMap = colorbrewer::getColormap(colorbrewer::Family::Set3,

@@ -36,6 +36,8 @@
 #include <inviwo/core/properties/compositeproperty.h>
 #include <constants.h>
 #include <inviwo/core/ports/meshport.h>
+#include <inviwo/core/properties/stringproperty.h>
+#include <MergeTree.h>
 
 namespace inviwo {
 
