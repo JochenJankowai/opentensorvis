@@ -56,6 +56,7 @@ ContourTreeQueryProcessor::ContourTreeQueryProcessor()
     , contourTreeTopologicalFeatuesInport_("contourTreeTopologicalFeatuesInport")
     , voxelizedVolumeOutport_("voxelizedVolumeOutport")
     , smoothVolumeOutport_("smoothVolumeOutport")
+    , segmentMinimaOutport_("segmentMinimaOutport")
     , queryMethod_("queryMethod", "Query method",
                    {{"option_methodTopoAngler", "TopoAngler", QueryMethod::TopoAngler},
                     {"option_methodCutoff", "Cutoff", QueryMethod::Cutoff},

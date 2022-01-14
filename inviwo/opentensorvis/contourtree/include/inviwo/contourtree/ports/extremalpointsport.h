@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2021 Inviwo Foundation
+ * Copyright (c) 2012-2020 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,43 +29,32 @@
 
 #pragma once
 
-#include <inviwo/contourexplorer/contourexplorermoduledefine.h>
-#include <inviwo/core/processors/processor.h>
-#include <inviwo/core/ports/volumeport.h>
-#include <modules/brushingandlinking/ports/brushingandlinkingports.h>
-#include <inviwo/core/ports/imageport.h>
-#include <inviwo/nanovgutils/nanovgcontext.h>
-#include <modules/fontrendering/properties/fontproperty.h>
-#include <inviwo/contourtree/ports/extremalpointsport.h>
+#include <inviwo/core/ports/datainport.h>
+#include <inviwo/core/ports/dataoutport.h>
+#include <inviwo/core/datastructures/datatraits.h>
 
 namespace inviwo {
 
-/** \docpage{org.inviwo.SegmentationLegendProcessor, Segmentation Legend Processor}
- * ![](org.inviwo.SegmentationLegendProcessor.png?classIdentifier=org.inviwo.SegmentationLegendProcessor)
+/**
+ * \ingroup ports
  */
-class IVW_MODULE_CONTOUREXPLORER_API SegmentationLegendProcessor : public Processor {
-public:
-    SegmentationLegendProcessor();
-    virtual ~SegmentationLegendProcessor() = default;
+using ExtremalPointsInport = DataInport<std::map<size_t, float>>;
 
-    virtual void process() override;
+/**
+ * \ingroup ports
+ */
+using ExtremalPointsOutport = DataOutport<std::map<size_t, float>>;
 
-    virtual const ProcessorInfo getProcessorInfo() const override;
-    static const ProcessorInfo processorInfo_;
-
-private:
-    ExtremalPointsInport segmentMinimaInport_;
-    BrushingAndLinkingInport brushingAndLinkingInport_;
-
-    ImageOutport imageOutport_;
-
-    FloatProperty height_;
-    FloatProperty marginBottom_;
-    FloatProperty marginLeft_;
-    FontProperty fontProperties_;
-    FloatVec4Property fontColor_;
-
-    NanoVGContext& nvgContext_;
+template <>
+struct DataTraits<std::map<size_t, float>> {
+    static std::string classIdentifier() { return "org.inviwo.contourtree.ExtremalPoints"; }
+    static std::string dataName() { return "ExtremalPoints"; }
+    static uvec3 colorCode() { return uvec3(5, 255, 255); }
+    static Document info(const std::map<size_t, float>&) {
+        std::ostringstream oss;
+        Document doc;
+        doc.append("p", oss.str());
+        return doc;
+    }
 };
-
 }  // namespace inviwo

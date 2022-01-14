@@ -39,6 +39,7 @@
 #include <inviwo/contourtree/ports/contourtreesimplificationport.h>
 #include <inviwo/contourtree/ports/contourtreetopologicalfeaturesport.h>
 #include <inviwo/core/properties/stringproperty.h>
+#include <inviwo/contourtree/ports/extremalpointsport.h>
 
 namespace inviwo {
 
@@ -67,7 +68,7 @@ private:
 
     VolumeOutport voxelizedVolumeOutport_;
     VolumeOutport smoothVolumeOutport_;
-    DataOutport<std::map<size_t, float>> segmentMinima_;
+    ExtremalPointsOutport segmentMinimaOutport_;
     
     TemplateOptionProperty<QueryMethod> queryMethod_;
 

@@ -36,6 +36,7 @@
 #include <inviwo/contourtree/ports/contourtreedataport.h>
 #include <inviwo/contourtree/ports/contourtreesimplificationport.h>
 #include <inviwo/contourtree/ports/contourtreetopologicalfeaturesport.h>
+#include <inviwo/contourtree/ports/extremalpointsport.h>
 #include <inviwo/contourtree/processors/contourtreequerycriticalpointsprocessor.h>
 #include <inviwo/contourtree/processors/contourtreequerysubtrees.h>
 #include <inviwo/contourtree/processors/contourtreequerytopoangler.h>
@@ -53,6 +54,8 @@ ContourTreeModule::ContourTreeModule(InviwoApplication* app) : InviwoModule(app,
     registerPort<ContourTreeSimplificationOutport>();
     registerPort<ContourTreeTopologicalFeaturesInport>();
     registerPort<ContourTreeTopologicalFeaturesOutport>();
+    registerPort<ExtremalPointsInport>();
+    registerPort<ExtremalPointsOutport>();
 
     registerProcessor<ContourTreeComputationProcessor>();
     registerProcessor<ContourTreeDataProcessor>();
