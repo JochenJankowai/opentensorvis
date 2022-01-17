@@ -146,29 +146,31 @@ void ContourExplorerProcessor::handlePicking(PickingEvent* p) {
         uint32_t value{};
 
         if (const auto dataPoint = plane.getIntersection(dataPos1, dataPos2); dataPoint) {
-            const auto index =
-                static_cast<size3_t>(vec3{ct.getDataToIndexMatrix() * vec4{*dataPoint, 1.0f}});
+            const auto index = static_cast<size3_t>(
+                vec3{ct.getDataToIndexMatrix() * vec4{*dataPoint, 1.0f}} + vec3{0.5f});
 
             const auto cind = glm::clamp(index, size3_t{0}, data->getDimensions() - size3_t{1});
             value = static_cast<uint32_t>(data->getRepresentation<VolumeRAM>()->getAsDVec4(cind).x);
-
-            LogInfo(fmt::format("Picked id: {}", value));
 
             if (ignoreZeroIndex_.get() && value == 0) {
             } else {
                 auto selection = brushingAndLinkingInport_.getSelectedIndices();
                 if (selection.contains(value)) {
                     selection.remove(value);
+                    LogInfo(fmt::format("Deselected id: {}", value));
                 } else {
                     selection.add(value);
+                    LogInfo(fmt::format("Selected id: {}", value));
                 }
 
                 brushingAndLinkingInport_.select(selection);
+
+                LogInfo(fmt::format("Current selection: {}", selection));
             }
 
             p->markAsUsed();
         }
-        
+
         invalidate(InvalidationLevel::Valid);
     }
 }
@@ -182,12 +184,13 @@ void ContourExplorerProcessor::updateTF() {
 
     BitSet selection;
 
-    selection.addRange(0, max+1);
+    selection.addRange(0, max + 1);
 
     const auto tfPrimitives =
         SegmentationTransferFunctionGenerator::generateTFPrimitivesForSegments(selection, max + 1);
 
-    LogInfo(fmt::format("Generated {} tf primitives for {} segments.", tfPrimitives.size(), max + 1));
+    LogInfo(
+        fmt::format("Generated {} tf primitives for {} segments.", tfPrimitives.size(), max + 1));
 
     NetworkLock l;
 
@@ -200,7 +203,7 @@ void ContourExplorerProcessor::generateIsoVolume() {
     const auto& selection = brushingAndLinkingInport_.getSelectedIndices();
 
     std::set s(std::begin(selection), std::end(selection));
-    
+
     const auto inputVolume = inport_.getData();
 
     auto rawData = inputVolume->getRepresentation<VolumeRAM>()
@@ -215,7 +218,7 @@ void ContourExplorerProcessor::generateIsoVolume() {
                            int i = 0;
 
                            std::transform(rawInput, rawInput + numberOfElements, rawOutput,
-                                          [selection,&i](const auto val) {
+                                          [selection, &i](const auto val) {
                                               if (selection.contains(val)) {
                                                   i++;
                                                   return 1;
@@ -236,7 +239,7 @@ void ContourExplorerProcessor::generateIsoVolume() {
     isoVolume->setModelMatrix(inputVolume->getModelMatrix());
     isoVolume->setWorldMatrix(inputVolume->getWorldMatrix());
 
-    isoVolume->dataMap_.dataRange = isoVolume->dataMap_.valueRange = dvec2{0,1};
+    isoVolume->dataMap_.dataRange = isoVolume->dataMap_.valueRange = dvec2{0, 1};
 
     isoVolumeOutport_.setData(isoVolume);
 }
