@@ -27,12 +27,10 @@
  *
  *********************************************************************************/
 
-#include <inviwo/contourexplorer/algorithm/generatesegmentedtf.h>
+#include <inviwo/contourexplorer/util/segmentationcolorhelper.h>
 
 namespace inviwo {
-TFPrimitiveSet SegmentationTransferFunctionGenerator::generateTFPrimitivesForSegments(
-    const BitSet& selection, size_t numberOfSegments, double slope, const vec4& shadeColor) {
-
+std::vector<dvec4> SegmentationColorHelper::getColorMapForNSegments(size_t numberOfSegments) {
     std::vector<dvec4> colorMap;
     if (numberOfSegments > 24) {
         for (size_t i{0}; i < numberOfSegments; ++i) {
@@ -42,15 +40,27 @@ TFPrimitiveSet SegmentationTransferFunctionGenerator::generateTFPrimitivesForSeg
     } else if (numberOfSegments > 12) {
         colorMap = colorbrewer::getColormap(colorbrewer::Family::Set3, 12);
 
-        const auto& rest =
-            colorbrewer::getColormap(colorbrewer::Family::Paired, numberOfSegments - 12);
+        auto rest =
+            colorbrewer::getColormap(colorbrewer::Family::Paired, 12);
+
+        rest.resize(numberOfSegments - 12);
 
         colorMap.insert(std::begin(colorMap), std::begin(rest), std::end(rest));
     } else if (numberOfSegments < 3) {
-        colorMap.emplace_back(1.0);
+        colorMap.emplace_back(0.2);
+        if (numberOfSegments == 2) colorMap.emplace_back(0.8);
     } else {
         colorMap = colorbrewer::getColormap(colorbrewer::Family::Set3, numberOfSegments);
     }
+
+    return colorMap;
+}
+
+
+TFPrimitiveSet SegmentationColorHelper::generateTFPrimitivesForSegments(
+    const BitSet& selection, size_t numberOfSegments, double slope, const vec4& shadeColor) {
+
+    auto colorMap = SegmentationColorHelper::getColorMapForNSegments(numberOfSegments);
 
     TFPrimitiveSet tfPoints;
 

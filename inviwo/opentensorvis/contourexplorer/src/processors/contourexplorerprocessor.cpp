@@ -42,7 +42,7 @@
 #include <modules/opengl/texture/textureunit.h>
 #include <modules/opengl/texture/textureutils.h>
 #include <modules/opengl/volume/volumeutils.h>
-#include <inviwo/contourexplorer/algorithm/generatesegmentedtf.h>
+#include <inviwo/contourexplorer/util/segmentationcolorhelper.h>
 #include <inviwo/core/network/networklock.h>
 #include <set>
 
@@ -155,17 +155,10 @@ void ContourExplorerProcessor::handlePicking(PickingEvent* p) {
             if (ignoreZeroIndex_.get() && value == 0) {
             } else {
                 auto selection = brushingAndLinkingInport_.getSelectedIndices();
-                if (selection.contains(value)) {
-                    selection.remove(value);
-                    LogInfo(fmt::format("Deselected id: {}", value));
-                } else {
-                    selection.add(value);
-                    LogInfo(fmt::format("Selected id: {}", value));
-                }
 
+                selection.flip(value);
+                
                 brushingAndLinkingInport_.select(selection);
-
-                LogInfo(fmt::format("Current selection: {}", selection));
             }
 
             p->markAsUsed();
@@ -187,7 +180,7 @@ void ContourExplorerProcessor::updateTF() {
     selection.addRange(0, max + 1);
 
     const auto tfPrimitives =
-        SegmentationTransferFunctionGenerator::generateTFPrimitivesForSegments(selection, max + 1);
+        SegmentationColorHelper::generateTFPrimitivesForSegments(selection, max + 1);
 
     LogInfo(
         fmt::format("Generated {} tf primitives for {} segments.", tfPrimitives.size(), max + 1));

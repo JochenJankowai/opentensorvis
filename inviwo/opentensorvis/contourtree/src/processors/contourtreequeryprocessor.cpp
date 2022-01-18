@@ -56,7 +56,7 @@ ContourTreeQueryProcessor::ContourTreeQueryProcessor()
     , contourTreeTopologicalFeatuesInport_("contourTreeTopologicalFeatuesInport")
     , voxelizedVolumeOutport_("voxelizedVolumeOutport")
     , smoothVolumeOutport_("smoothVolumeOutport")
-    , segmentMinimaOutport_("segmentMinimaOutport")
+    , extremalPointsOutport_("segmentMinimaOutport")
     , queryMethod_("queryMethod", "Query method",
                    {{"option_methodTopoAngler", "TopoAngler", QueryMethod::TopoAngler},
                     {"option_methodCutoff", "Cutoff", QueryMethod::Cutoff},
@@ -80,7 +80,7 @@ ContourTreeQueryProcessor::ContourTreeQueryProcessor()
             PropertySemantics::TextEditor) {
     addPorts(volumeInport_, contourTreeInport_, contourTreeDataInport_,
              contourTreeSimplificationInport_, contourTreeTopologicalFeatuesInport_,
-             voxelizedVolumeOutport_, smoothVolumeOutport_);
+             voxelizedVolumeOutport_, smoothVolumeOutport_, extremalPointsOutport_);
 
     addProperties(queryMethod_, methodTopoAngler_, methodCutoff_, methodNLeaves_, text_);
 
@@ -184,10 +184,19 @@ void ContourTreeQueryProcessor::queryTopoAngler() {
     const auto topKFeatures =
         queryCriterion_.get() == QueryCriterion::TopKFeatures ? topKFeatures_.get() : -1;
 
-    auto segmentMinima = std::make_shared<std::map<size_t, float>>();
+    auto extremalPoints = std::make_shared<std::map<size_t, float>>();
+    auto& extremalPointsRef = *extremalPoints;
 
+    auto initExtremalPoints = [&extremalPoints = *extremalPoints](const size_t n) {
+        for (size_t i{0}; i < n; i++) {
+            extremalPoints[i] = std::numeric_limits<float>::max();
+        }
+    };
+    
     if (!topologicalFeatures->isPartitioned) {
         features = topologicalFeatures->getArcFeatures(topKFeatures, threshold_.get());
+
+        initExtremalPoints(features.second.size());
 
         /*
          * Look up which feature the arcId in arcMap belongs to and assign value. That should be it.
@@ -203,8 +212,8 @@ void ContourTreeQueryProcessor::queryTopoAngler() {
                     if (contourTree->arcMap[j] == arcId) {
                         rawData[j] = static_cast<uint16_t>(i + 1);
 
-                        segmentMinima->at(i) =
-                            std::min(segmentMinima->at(i), contourTree->data->getFunctionValue(j));
+                        extremalPointsRef[i] =
+                            std::min(extremalPointsRef[i], contourTree->data->getFunctionValue(j));
                     }
                 }
             }
@@ -215,6 +224,8 @@ void ContourTreeQueryProcessor::queryTopoAngler() {
     } else {
         features =
             topologicalFeatures->getPartitionedExtremaFeatures(topKFeatures, threshold_.get());
+
+        initExtremalPoints(features.second.size());
 
         /*
          * Look up which feature the arcId in arcMap belongs to and assign value. That should be it.
@@ -230,8 +241,8 @@ void ContourTreeQueryProcessor::queryTopoAngler() {
                     if (contourTree->arcMap[j] == arcId) {
                         rawData[j] = static_cast<uint16_t>(i);
 
-                        segmentMinima->at(i) =
-                            std::min(segmentMinima->at(i), contourTree->data->getFunctionValue(j));
+                        extremalPointsRef[i] =
+                            std::min(extremalPointsRef[i], contourTree->data->getFunctionValue(j));
                     }
                 }
             }
@@ -242,7 +253,9 @@ void ContourTreeQueryProcessor::queryTopoAngler() {
 
     updateContourTreeInfo(features.first);
 
-    segmentMinimaOutport_.setData(segmentMinima);
+    extremalPointsOutport_.setData(extremalPoints);
+
+    LogInfo(fmt::format("{}", extremalPoints));
 }
 
 void ContourTreeQueryProcessor::queryCutoff() {

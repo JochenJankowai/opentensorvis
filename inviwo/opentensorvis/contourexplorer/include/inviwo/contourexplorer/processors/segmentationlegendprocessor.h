@@ -57,6 +57,7 @@ private:
     ExtremalPointsInport segmentMinimaInport_;
     BrushingAndLinkingInport brushingAndLinkingInport_;
 
+    ImageInport imageInport_;
     ImageOutport imageOutport_;
 
     FloatProperty height_;

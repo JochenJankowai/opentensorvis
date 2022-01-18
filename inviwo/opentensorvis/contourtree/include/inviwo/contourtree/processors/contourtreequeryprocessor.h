@@ -68,7 +68,7 @@ private:
 
     VolumeOutport voxelizedVolumeOutport_;
     VolumeOutport smoothVolumeOutport_;
-    ExtremalPointsOutport segmentMinimaOutport_;
+    ExtremalPointsOutport extremalPointsOutport_;
     
     TemplateOptionProperty<QueryMethod> queryMethod_;
 

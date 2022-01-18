@@ -16,6 +16,7 @@ set(HEADER_FILES
     include/inviwo/contourtree/ports/contourtreeport.h
     include/inviwo/contourtree/ports/contourtreesimplificationport.h
     include/inviwo/contourtree/ports/contourtreetopologicalfeaturesport.h
+    include/inviwo/contourtree/ports/extremalpointsport.h
     include/inviwo/contourtree/processors/contourtreecomputationprocessor.h
     include/inviwo/contourtree/processors/contourtreedataprocessor.h
     include/inviwo/contourtree/processors/contourtreequerycriticalpointsprocessor.h

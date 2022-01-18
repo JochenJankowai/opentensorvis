@@ -35,8 +35,10 @@
 #include <inviwo/core/util/colorbrewer.h>
 
 namespace inviwo {
-class IVW_MODULE_CONTOUREXPLORER_API SegmentationTransferFunctionGenerator {
+class IVW_MODULE_CONTOUREXPLORER_API SegmentationColorHelper {
 public:
+    static std::vector<dvec4> getColorMapForNSegments(size_t n);
+    
     static TFPrimitiveSet generateTFPrimitivesForSegments(const BitSet& selection,
                                                           size_t numberOfSegments,
                                                           double slope = 0.1,

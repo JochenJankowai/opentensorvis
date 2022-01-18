@@ -34,6 +34,7 @@
 #include <inviwo/core/common/inviwoapplication.h>
 #include <modules/opengl/openglutils.h>
 #include <modules/opengl/texture/textureutils.h>
+#include <inviwo/contourexplorer/util/segmentationcolorhelper.h>
 
 namespace inviwo {
 
@@ -51,25 +52,27 @@ SegmentationLegendProcessor::SegmentationLegendProcessor()
     : Processor()
     , segmentMinimaInport_("segmentMinimaInport")
     , brushingAndLinkingInport_("brushingAndLinkingInport")
+    , imageInport_("imageInport")
     , imageOutport_("imageOutport")
     , height_("height", "Height", 20, 10, 200, 2)
     , marginBottom_("marginBottom", "Margin bottom", 20, 0, 200, 2)
     , marginLeft_("marginLeft", "Margin left", 20, 0, 200, 2)
     , fontProperties_("fontProperties", "Font properties")
-    , fontColor_("","")
+    , fontColor_("fontColor", "Font color", dvec4{1}, dvec4{0, 0, 0, 1}, vec4{1}, dvec4{0.0001},
+                 InvalidationLevel::InvalidOutput, PropertySemantics::Color)
     , nvgContext_{
           InviwoApplication::getPtr()->getModuleByType<NanoVGUtilsModule>()->getNanoVGContext()} {
 
-    addPorts(segmentMinimaInport_, brushingAndLinkingInport_, imageOutport_);
+    imageInport_.setOptional(true);
 
-    fontColor_.setSemantics(PropertySemantics::Color);
-    fontColor_.setCurrentStateAsDefault();
+    addPorts(imageInport_, segmentMinimaInport_, brushingAndLinkingInport_, imageOutport_);
+
     fontProperties_.addProperties(fontColor_);
-    addProperties(height_, marginBottom_, marginLeft_,fontProperties_);
+    addProperties(height_, marginBottom_, marginLeft_, fontProperties_);
 
     auto loadFontIfNeeded = [this]() {
-        auto fontFace = fontProperties_.fontFace_.getSelectedValue();
-        auto fontName = fontProperties_.fontFace_.getSelectedIdentifier();
+        const auto fontFace = fontProperties_.fontFace_.getSelectedValue();
+        const auto& fontName = fontProperties_.fontFace_.getSelectedIdentifier();
 
         if (nvgContext_.findFont(fontFace) == -1) {
             if (nvgContext_.createFont(fontName, fontFace) == -1) {
@@ -88,28 +91,26 @@ SegmentationLegendProcessor::SegmentationLegendProcessor()
 void SegmentationLegendProcessor::process() {
     if (!util::checkPorts(segmentMinimaInport_)) return;
 
-    const auto& segmentMinima = *segmentMinimaInport_.getData();
+    auto segmentMinima = *segmentMinimaInport_.getData();
 
-    const auto max =
-        std::max_element(std::begin(segmentMinima), std::end(segmentMinima));
-        
-    const auto numberOfSegments = static_cast<float>(max->second) + 1.0f;
-    const auto iNumberOfSegments = static_cast<size_t>(max->second) + 1;
+    const auto max = segmentMinima.size();
+
+    const auto numberOfSegments = static_cast<float>(max) + 1.0f;
+    const auto iNumberOfSegments = static_cast<size_t>(numberOfSegments);
 
     // Get color map
-    const auto& colorMap = colorbrewer::getColormap(colorbrewer::Family::Set3,
-                                                    static_cast<glm::uint8>(numberOfSegments));
+    const auto colorMap = SegmentationColorHelper::getColorMapForNSegments(iNumberOfSegments);
 
-    auto drawValues = [this](const vec2& at, const vec2& values) {
-        auto text = std::string{fmt::format("[{:03.4f}, {:03.4f}]", values.x, values.y)};
+    auto drawValues = [this](const vec2& at, const float value, const float textBoxWidth) {
+        auto text = std::string{fmt::format("{:03.4f}", value)};
         auto bounds = nvgContext_.textBounds(at, text);
 
         nvgContext_.beginPath();
         nvgContext_.fontSize(static_cast<float>(fontProperties_.fontSize_.get()));
         nvgContext_.fontFace(fontProperties_.fontFace_.getSelectedIdentifier());
-        nvgContext_.textAlign(NanoVGContext::Alignment::Center_Bottom);
+        nvgContext_.textAlign(NanoVGContext::Alignment::Left_Bottom);
         nvgContext_.fillColor(fontColor_.get());
-        nvgContext_.textBox(at, bounds[2] - bounds[0], text);
+        nvgContext_.textBox(at, textBoxWidth, text);
         nvgContext_.closePath();
     };
 
@@ -127,7 +128,11 @@ void SegmentationLegendProcessor::process() {
 
     auto dimensions = vec2(imageOutport_.getDimensions());
 
-    utilgl::activateAndClearTarget(imageOutport_);
+    if (imageInport_.isReady()) {
+        utilgl::activateTargetAndCopySource(imageOutport_, imageInport_, ImageType::ColorDepth);
+    } else {
+        utilgl::activateAndClearTarget(imageOutport_, ImageType::ColorDepth);
+    }
 
     nvgContext_.activate(dimensions);
 
@@ -144,12 +149,16 @@ void SegmentationLegendProcessor::process() {
                                    (rectangleWidth * static_cast<float>(i)) + marginLeft_.get(),
                                dimensions.y - marginBottom_.get() - height_.get());
     }
-    
+
     for (size_t i{0}; i < iNumberOfSegments; ++i) {
         drawRectangle(positions[i], size2_t{rectangleWidth, height_.get()}, colorMap[i]);
-        drawValues(positions[i] + vec2(0, height_.get()/2.0f), positions[i]);
     }
 
+    // Separeta loop so the text would always be on top
+    for (size_t i{0}; i < iNumberOfSegments; ++i) {
+        drawValues(positions[i] + vec2(0, height_.get() / 2.0f), segmentMinima[i], rectangleWidth);
+    }
+    
     nvgContext_.deactivate();
 
     utilgl::deactivateCurrentTarget();

@@ -30,7 +30,7 @@
 #include <inviwo/contourexplorer/processors/segmentationvolumetransferfunctionprocessor.h>
 #include <inviwo/core/network/networklock.h>
 #include <inviwo/opentensorviscompute/algorithm/volumereductiongl.h>
-#include <inviwo/contourexplorer/algorithm/generatesegmentedtf.h>
+#include <inviwo/contourexplorer/util/segmentationcolorhelper.h>
 
 namespace inviwo {
 
@@ -73,7 +73,7 @@ void SegmentationVolumeTransferFunctionProcessor::process() {
 
     auto& tf = tfProperty_.get();
 
-    const auto tfPoints = SegmentationTransferFunctionGenerator::generateTFPrimitivesForSegments(
+    const auto tfPoints = SegmentationColorHelper::generateTFPrimitivesForSegments(
         selection, numberOfFeatures, slope_.get(), shadeColor_.get());
 
     NetworkLock l;

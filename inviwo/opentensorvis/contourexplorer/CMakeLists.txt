@@ -1,7 +1,7 @@
 ivw_module(ContourExplorer)
 
 set(HEADER_FILES
-    include/inviwo/contourexplorer/algorithm/generatesegmentedtf.h
+    include/inviwo/contourexplorer/util/segmentationcolorhelper.h
     include/inviwo/contourexplorer/contourexplorermodule.h
     include/inviwo/contourexplorer/contourexplorermoduledefine.h
     include/inviwo/contourexplorer/processors/contourexplorerprocessor.h
@@ -14,7 +14,7 @@ set(HEADER_FILES
 ivw_group("Header Files" ${HEADER_FILES})
 
 set(SOURCE_FILES
-    src/algorithm/generatesegmentedtf.cpp
+    src/util/segmentationcolorhelper.cpp
     src/contourexplorermodule.cpp
     src/processors/contourexplorerprocessor.cpp
     src/processors/contourtreetosegmentationvolume.cpp
