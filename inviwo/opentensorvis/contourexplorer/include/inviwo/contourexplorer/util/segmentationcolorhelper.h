@@ -43,6 +43,10 @@ public:
                                                           size_t numberOfSegments,
                                                           double slope = 0.1,
                                                           const vec4& shadeColor = vec4(0.0f));
+
+    static dvec3 hclToRgb(const dvec3& hcl);
+
+    static dvec3 rgbToHcl(const dvec3& rgb);
 };
 
 }  // namespace inviwo

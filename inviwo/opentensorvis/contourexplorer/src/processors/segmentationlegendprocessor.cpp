@@ -36,6 +36,8 @@
 #include <modules/opengl/texture/textureutils.h>
 #include <inviwo/contourexplorer/util/segmentationcolorhelper.h>
 
+#include "inviwo/core/interaction/events/mouseevent.h"
+
 namespace inviwo {
 
 // The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
@@ -54,21 +56,60 @@ SegmentationLegendProcessor::SegmentationLegendProcessor()
     , brushingAndLinkingInport_("brushingAndLinkingInport")
     , imageInport_("imageInport")
     , imageOutport_("imageOutport")
+    , styling_("styling", "Styling")
     , height_("height", "Height", 20, 10, 200, 2)
     , marginBottom_("marginBottom", "Margin bottom", 20, 0, 200, 2)
     , marginLeft_("marginLeft", "Margin left", 20, 0, 200, 2)
+    , cornerRadius_("", "", 10, 0, 30, 2)
+    , luminanceMultiplier_("luminanceMultiplier", "Luminance multiplier", 0.2f, 0.0f, 1.0f, 0.01f)
+    , strokeWitdth_("strokeWitdth", "Stroke witdth", 1.0f, 1.0f, 10.0f, 0.1f)
     , fontProperties_("fontProperties", "Font properties")
     , fontColor_("fontColor", "Font color", dvec4{1}, dvec4{0, 0, 0, 1}, vec4{1}, dvec4{0.0001},
                  InvalidationLevel::InvalidOutput, PropertySemantics::Color)
-    , nvgContext_{
-          InviwoApplication::getPtr()->getModuleByType<NanoVGUtilsModule>()->getNanoVGContext()} {
+    , nvgContext_{InviwoApplication::getPtr()
+                      ->getModuleByType<NanoVGUtilsModule>()
+                      ->getNanoVGContext()}
+    , eventPropertySelection_(
+          "eventPropertyClusterSelection", "Cluster selection",
+          [this](Event* e) {
+              if (const auto ev = e->getAs<MouseEvent>()) {
+                  isMouseDown_ = true;
+                  mousePos_ = ev->pos();
+                  invalidate(InvalidationLevel::InvalidOutput);
+              }
+          },
+          MouseButton::Left, MouseState::Press)
+    , eventPropertyHighlighting_(
+          "eventPropertyHighlighting", "Highlighting",
+          [this](Event* e) {
+              if (const auto ev = e->getAs<MouseEvent>()) {
+                  isMouseDown_ = false;
+                  mousePos_ = ev->pos();
+                  invalidate(InvalidationLevel::InvalidOutput);
+              }
+          },
+          MouseButton::None, MouseState::Move)
+    , mousePos_(0.0f)
+    , isMouseDown_(false) {
 
     imageInport_.setOptional(true);
 
     addPorts(imageInport_, segmentMinimaInport_, brushingAndLinkingInport_, imageOutport_);
 
     fontProperties_.addProperties(fontColor_);
-    addProperties(height_, marginBottom_, marginLeft_, fontProperties_);
+    fontProperties_.fontSize_.setSemantics(PropertySemantics::Default);
+    fontProperties_.setAllPropertiesCurrentStateAsDefault();
+    fontProperties_.setCurrentStateAsDefault();
+
+    eventPropertySelection_.setReadOnly(true);
+    eventPropertySelection_.setVisible(false);
+    eventPropertyHighlighting_.setReadOnly(true);
+    eventPropertyHighlighting_.setVisible(false);
+
+    styling_.addProperties(height_, marginBottom_, marginLeft_, cornerRadius_, luminanceMultiplier_,
+                           strokeWitdth_);
+
+    addProperties(styling_, fontProperties_, eventPropertySelection_, eventPropertyHighlighting_);
 
     auto loadFontIfNeeded = [this]() {
         const auto fontFace = fontProperties_.fontFace_.getSelectedValue();
@@ -93,35 +134,14 @@ void SegmentationLegendProcessor::process() {
 
     auto segmentMinima = *segmentMinimaInport_.getData();
 
-    const auto max = segmentMinima.size();
+    const auto iNumberOfSegments = segmentMinima.size();
 
-    const auto numberOfSegments = static_cast<float>(max) + 1.0f;
-    const auto iNumberOfSegments = static_cast<size_t>(numberOfSegments);
+    const auto numberOfSegments = static_cast<float>(iNumberOfSegments);
+
+    auto selection = brushingAndLinkingInport_.getSelectedIndices();
 
     // Get color map
-    const auto colorMap = SegmentationColorHelper::getColorMapForNSegments(iNumberOfSegments);
-
-    auto drawValues = [this](const vec2& at, const float value, const float textBoxWidth) {
-        auto text = std::string{fmt::format("{:03.4f}", value)};
-        auto bounds = nvgContext_.textBounds(at, text);
-
-        nvgContext_.beginPath();
-        nvgContext_.fontSize(static_cast<float>(fontProperties_.fontSize_.get()));
-        nvgContext_.fontFace(fontProperties_.fontFace_.getSelectedIdentifier());
-        nvgContext_.textAlign(NanoVGContext::Alignment::Left_Bottom);
-        nvgContext_.fillColor(fontColor_.get());
-        nvgContext_.textBox(at, textBoxWidth, text);
-        nvgContext_.closePath();
-    };
-
-    auto drawRectangle = [&, this](const vec2& position, const size2_t& dimensions,
-                                   const dvec4& color) {
-        nvgContext_.beginPath();
-        nvgContext_.rect(position, vec2(dimensions));
-        nvgContext_.fillColor(color);
-        nvgContext_.fill();
-        nvgContext_.closePath();
-    };
+    auto colorMap = SegmentationColorHelper::getColorMapForNSegments(iNumberOfSegments);
 
     // Generate positions
     const auto segments = 2.0f + (numberOfSegments - 1.0f) + (numberOfSegments * 2.0f);
@@ -144,6 +164,55 @@ void SegmentationLegendProcessor::process() {
 
     std::vector<vec2> positions{};
 
+    auto drawValues = [this](const vec2& at, const float value, const float textBoxWidth) {
+        auto text = std::string{fmt::format("{:03.4f}", value)};
+        auto bounds = nvgContext_.textBounds(at, text);
+
+        nvgContext_.beginPath();
+        nvgContext_.fontSize(static_cast<float>(fontProperties_.fontSize_.get()));
+        nvgContext_.fontFace(fontProperties_.fontFace_.getSelectedIdentifier());
+        nvgContext_.textAlign(NanoVGContext::Alignment::Center_Middle);
+        nvgContext_.fillColor(fontColor_.get());
+        nvgContext_.textBox(at, textBoxWidth, text);
+        nvgContext_.closePath();
+    };
+
+    auto drawRectangle = [&, this](const size_t i, const vec2& extends) {
+        const auto& position = positions[i];
+        auto& color = colorMap[i];
+
+        nvgContext_.beginPath();
+        nvgContext_.roundedRect(position, extends, cornerRadius_.get());
+
+        auto flipY = [&](const vec2 pos) {
+            return vec2{pos.x, dimensions.y - pos.y};
+        };
+
+        /*
+         * Unfortunately, picking has never been merged into nanovg. Therefore, we need to do it
+         * ourselves. It'll be inaccurate since the rounded corners won't be respected but it'll do.
+         */
+        const auto hitPos = flipY(position);
+        if (isMouseDown_ && mousePos_.x >= hitPos.x && mousePos_.x <= hitPos.x + extends.x &&
+            mousePos_.y <= hitPos.y && mousePos_.y >= hitPos.y - extends.y) {
+            selection.flip(i);
+            brushingAndLinkingInport_.select(selection);
+        }
+
+        if (selection.contains(i)) {
+            auto hcl = SegmentationColorHelper::rgbToHcl(dvec3(color));
+            hcl.z *= 1.0f + luminanceMultiplier_.get();
+            color = dvec4(
+                glm::clamp(SegmentationColorHelper::hclToRgb(hcl), dvec3(0.0), dvec3(1.0)), 1.0);
+            nvgContext_.strokeColor(vec4{vec3{0.5f}, 1.0f});
+            nvgContext_.strokeWidth(strokeWitdth_.get());
+            nvgContext_.stroke();
+        }
+        nvgContext_.fillColor(color);
+        nvgContext_.fill();
+        nvgContext_.closePath();
+    };
+
     for (size_t i{0}; i < iNumberOfSegments; ++i) {
         positions.emplace_back((gapWidth * static_cast<float>(i + 1)) +
                                    (rectangleWidth * static_cast<float>(i)) + marginLeft_.get(),
@@ -151,14 +220,14 @@ void SegmentationLegendProcessor::process() {
     }
 
     for (size_t i{0}; i < iNumberOfSegments; ++i) {
-        drawRectangle(positions[i], size2_t{rectangleWidth, height_.get()}, colorMap[i]);
+        drawRectangle(i, vec2{rectangleWidth, height_.get()});
     }
 
     // Separeta loop so the text would always be on top
     for (size_t i{0}; i < iNumberOfSegments; ++i) {
         drawValues(positions[i] + vec2(0, height_.get() / 2.0f), segmentMinima[i], rectangleWidth);
     }
-    
+
     nvgContext_.deactivate();
 
     utilgl::deactivateCurrentTarget();

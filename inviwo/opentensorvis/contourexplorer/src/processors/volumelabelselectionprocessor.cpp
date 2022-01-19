@@ -36,7 +36,7 @@ namespace inviwo {
 // The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
 const ProcessorInfo VolumeLabelSelectionProcessor::processorInfo_{
     "org.inviwo.VolumeLabelSelectionProcessor",  // Class identifier
-    "Volume Label Selection",          // Display name
+    "Volume Label Selection",                    // Display name
     "OpenTensorVis",                             // Category
     CodeState::Experimental,                     // Code state
     Tags::CPU,                                   // Tags
@@ -48,16 +48,17 @@ const ProcessorInfo VolumeLabelSelectionProcessor::getProcessorInfo() const {
 VolumeLabelSelectionProcessor::VolumeLabelSelectionProcessor()
     : Processor()
     , volumeInport_("volumeInport")
-    , linkingInport_("linkingOutport")
+    , brushingAndLinkingInport_("linkingOutport")
     , labels_("labels", "Labels") {
 
-    addPorts(volumeInport_, linkingInport_);
+    addPorts(volumeInport_, brushingAndLinkingInport_);
     addProperties(labels_);
 
-    volumeInport_.onChange([this]() { updateSelectables(); });
+    volumeInport_.onChange([this]() { updateList(); });
+    brushingAndLinkingInport_.onChange([this]() { updateSelectionExternal(); });
 }
 
-void VolumeLabelSelectionProcessor::updateSelectables() {
+void VolumeLabelSelectionProcessor::updateList() {
     if (!volumeInport_.hasData() || !volumeInport_.getData()) {
         return;
     }
@@ -88,29 +89,38 @@ void VolumeLabelSelectionProcessor::updateSelectables() {
 
     for (int32_t i{min}; i <= max; i++) {
         auto prop = new BoolProperty(std::to_string(i), std::to_string(i), currentSelection[i]);
-        prop->onChange([this]() { updateSelection(); });
+        prop->onChange([this]() { updateSelectionInternal(); });
         labels_.addProperty(prop);
     }
 
-    linkingInport_.select(s);
+    brushingAndLinkingInport_.select(s);
 }
 
 void VolumeLabelSelectionProcessor::process() {}
 
-void VolumeLabelSelectionProcessor::updateSelection() {
+void VolumeLabelSelectionProcessor::updateSelectionInternal() {
     auto props = labels_.getProperties();
     BitSet selection;
-
-    // std::unordered_set<size_t> selection{};
-
     for (auto prop : props) {
         auto boolProperty = dynamic_cast<BoolProperty*>(prop);
         if (boolProperty->get()) {
             selection.add(static_cast<size_t>(std::atoi(prop->getIdentifier().c_str())));
         }
     }
+    brushingAndLinkingInport_.select(selection);
+}
 
-    linkingInport_.select(selection);
+void VolumeLabelSelectionProcessor::updateSelectionExternal() {
+    auto props = labels_.getProperties();
+
+    auto selection = brushingAndLinkingInport_.getSelectedIndices();
+
+    for (size_t i{0}; i < props.size(); i++) {
+        auto boolProperty = dynamic_cast<BoolProperty*>(props[i]);
+        boolProperty->set(selection.contains(i));
+    }
+
+    invalidate(InvalidationLevel::Valid);
 }
 
 }  // namespace inviwo

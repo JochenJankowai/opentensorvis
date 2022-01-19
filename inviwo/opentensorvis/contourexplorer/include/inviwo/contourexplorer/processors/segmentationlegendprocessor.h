@@ -60,13 +60,23 @@ private:
     ImageInport imageInport_;
     ImageOutport imageOutport_;
 
+    CompositeProperty styling_;
     FloatProperty height_;
     FloatProperty marginBottom_;
     FloatProperty marginLeft_;
+    FloatProperty cornerRadius_;
+    FloatProperty luminanceMultiplier_;
+    FloatProperty strokeWitdth_;
     FontProperty fontProperties_;
     FloatVec4Property fontColor_;
 
     NanoVGContext& nvgContext_;
+
+    EventProperty eventPropertySelection_;
+    EventProperty eventPropertyHighlighting_;
+
+    vec2 mousePos_;
+    bool isMouseDown_;
 };
 
 }  // namespace inviwo

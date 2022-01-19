@@ -192,7 +192,7 @@ void ContourTreeQueryProcessor::queryTopoAngler() {
             extremalPoints[i] = std::numeric_limits<float>::max();
         }
     };
-    
+
     if (!topologicalFeatures->isPartitioned) {
         features = topologicalFeatures->getArcFeatures(topKFeatures, threshold_.get());
 
@@ -255,7 +255,7 @@ void ContourTreeQueryProcessor::queryTopoAngler() {
 
     extremalPointsOutport_.setData(extremalPoints);
 
-    LogInfo(fmt::format("{}", extremalPoints));
+    LogInfo(fmt::format("{}", *extremalPoints));
 }
 
 void ContourTreeQueryProcessor::queryCutoff() {
@@ -302,6 +302,17 @@ void ContourTreeQueryProcessor::queryCutoff() {
                 }
             }
 
+            auto extremalPoints = std::make_shared<std::map<size_t, float>>();
+            auto& extremalPointsRef = *extremalPoints;
+
+            auto initExtremalPoints = [&extremalPoints = *extremalPoints](const size_t n) {
+                for (size_t i{0}; i < n; i++) {
+                    extremalPoints[i] = std::numeric_limits<float>::max();
+                }
+            };
+
+            initExtremalPoints(intersectingBranches.size());
+
             const auto numberOfElements = contourTreeInport_.getData()->noVertices;
             auto rawData = new uint16_t[numberOfElements];
             std::fill_n(rawData, numberOfElements, 0);
@@ -317,24 +328,30 @@ void ContourTreeQueryProcessor::queryCutoff() {
                             //
                             if (static_cast<float>(volumeData[j]) <= cutoff) {
                                 rawData[j] = i + 1;
+                                extremalPointsRef[i] =
+                                    std::min(extremalPointsRef[i], static_cast<float>(volumeData[j]));
                                 break;
                             }
                         }
                     }
                 }
 
+                // Not sure if Branch stores all arcs it contains or just the simplification level
+                // below it. If it only contained the level below, we'd need recursion here.
                 for (const auto childIndex : branch.children) {
                     const auto& childBranch = branches[childIndex];
                     for (size_t j{0}; j < arcMap.size(); ++j) {
                         for (const auto arcID : childBranch.arcs) {
                             if (arcID == arcMap[j]) {
                                 rawData[j] = i + 1;
+                                extremalPointsRef[i] =
+                                    std::min(extremalPointsRef[i], static_cast<float>(volumeData[j]));
                             }
                         }
                     }
                 }
             }
-
+            extremalPointsOutport_.setData(extremalPoints);
             generateSegmentationVolume(rawData, intersectingBranches.size());
         });
 }
@@ -391,16 +408,29 @@ void ContourTreeQueryProcessor::queryNLeaves() {
     auto rawData = new uint16_t[numberOfElements];
     std::fill_n(rawData, numberOfElements, 0);
 
+    auto extremalPoints = std::make_shared<std::map<size_t, float>>();
+    auto& extremalPointsRef = *extremalPoints;
+
+    auto initExtremalPoints = [&extremalPoints = *extremalPoints](const size_t n) {
+        for (size_t i{0}; i < n; i++) {
+            extremalPoints[i] = std::numeric_limits<float>::max();
+        }
+    };
+
+    initExtremalPoints(features.second.size());
+
     for (size_t i{0}; i < features.second.size(); ++i) {
         for (const auto arcId : features.second[i].arcs) {
             for (size_t j{0}; j < numberOfElements; ++j) {
                 if (contourTree->arcMap[j] == arcId) {
                     rawData[j] = static_cast<uint16_t>(i + 1);
+                    extremalPointsRef[i] =
+                        std::min(extremalPointsRef[i], contourTree->data->getFunctionValue(j));
                 }
             }
         }
     }
-
+    extremalPointsOutport_.setData(extremalPoints);
     generateSegmentationVolume(rawData, features.second.size());
 }
 

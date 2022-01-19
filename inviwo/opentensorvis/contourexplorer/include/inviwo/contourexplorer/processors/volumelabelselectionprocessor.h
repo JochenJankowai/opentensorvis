@@ -51,12 +51,13 @@ public:
 
 private:
     VolumeInport volumeInport_;
-    BrushingAndLinkingInport linkingInport_;
+    BrushingAndLinkingInport brushingAndLinkingInport_;
 
     CompositeProperty labels_;
 
-    void updateSelectables();
-    void updateSelection();
+    void updateList();
+    void updateSelectionInternal();
+    void updateSelectionExternal();
 };
 
 }  // namespace inviwo

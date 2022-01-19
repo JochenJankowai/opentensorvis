@@ -40,8 +40,7 @@ std::vector<dvec4> SegmentationColorHelper::getColorMapForNSegments(size_t numbe
     } else if (numberOfSegments > 12) {
         colorMap = colorbrewer::getColormap(colorbrewer::Family::Set3, 12);
 
-        auto rest =
-            colorbrewer::getColormap(colorbrewer::Family::Paired, 12);
+        auto rest = colorbrewer::getColormap(colorbrewer::Family::Paired, 12);
 
         rest.resize(numberOfSegments - 12);
 
@@ -56,15 +55,21 @@ std::vector<dvec4> SegmentationColorHelper::getColorMapForNSegments(size_t numbe
     return colorMap;
 }
 
+TFPrimitiveSet SegmentationColorHelper::generateTFPrimitivesForSegments(const BitSet& selection,
+                                                                        size_t numberOfSegments,
+                                                                        double slope,
+                                                                        const vec4& shadeColor) {
 
-TFPrimitiveSet SegmentationColorHelper::generateTFPrimitivesForSegments(
-    const BitSet& selection, size_t numberOfSegments, double slope, const vec4& shadeColor) {
-
-    auto colorMap = SegmentationColorHelper::getColorMapForNSegments(numberOfSegments);
+    const auto colorMap = SegmentationColorHelper::getColorMapForNSegments(numberOfSegments);
 
     TFPrimitiveSet tfPoints;
 
     const auto dMaxValue = static_cast<double>(numberOfSegments) - 1.0;
+
+    if (selection.size() == 1) {
+        tfPoints.add(0.5, colorMap[0]);
+        return tfPoints;
+    }
 
     for (auto id : selection) {
         // We'll handle these later
@@ -101,6 +106,79 @@ TFPrimitiveSet SegmentationColorHelper::generateTFPrimitivesForSegments(
     }
 
     return tfPoints;
+}
+
+dvec3 SegmentationColorHelper::hclToRgb(const dvec3& hcl) {
+    {
+        dvec3 rgb{};
+
+        if (hcl.z != 0.0) {
+            constexpr auto pi = 3.1415926536;
+            constexpr auto hclGamma = 3.0;
+            constexpr auto hclY0 = 100.0;
+            constexpr auto hclMaxL = 0.530454533953517;
+
+            auto h = hcl.x;
+            const auto c = hcl.y;
+            const auto l = hcl.z * hclMaxL;
+            const auto q = glm::exp((1.0 - c / (2.0 * l)) * (hclGamma / hclY0));
+            const auto u = (2.0 * l - c) / (2.0 * q - 1.0);
+            const auto v = c / q;
+            const auto t = glm::tan(
+                (h + glm::min(glm::fract(2.0 * h) / 4.0, glm::fract(-2.0 * h) / 8.0)) * pi * 2.0);
+            h *= 6.0;
+            if (h <= 1.0) {
+                rgb.r = 1.0;
+                rgb.g = t / (1.0 + t);
+            } else if (h <= 2.0) {
+                rgb.r = (1.0 + t) / t;
+                rgb.g = 1.0;
+            } else if (h <= 3.0) {
+                rgb.g = 1.0;
+                rgb.b = 1.0 + t;
+            } else if (h <= 4.0) {
+                rgb.g = 1.0 / (1.0 + t);
+                rgb.b = 1.0;
+            } else if (h <= 5.0) {
+                rgb.r = -1.0 / t;
+                rgb.b = 1.0;
+            } else {
+                rgb.r = 1.0;
+                rgb.b = -t;
+            }
+            rgb = rgb * v + u;
+        }
+
+        return rgb;
+    }
+}
+
+dvec3 SegmentationColorHelper::rgbToHcl(const dvec3& rgb) {
+    {
+        constexpr auto hclGamma = 3.0;
+        constexpr auto hclY0 = 100.0;
+        constexpr auto hclMaxL = 0.530454533953517;
+
+        dvec3 hcl{};
+        auto h = 0.0;
+        const auto u = glm::min(rgb.r, glm::min(rgb.g, rgb.b));
+        const auto v = glm::max(rgb.r, glm::max(rgb.g, rgb.b));
+        auto q = hclGamma / hclY0;
+        hcl.y = v - u;
+
+        if (hcl.y != 0.0) {
+            constexpr auto pi = 3.1415926536;
+            h = glm::atan(rgb.g - rgb.b, rgb.r - rgb.g) / pi;
+            q *= u / v;
+        }
+
+        q = exp(q);
+        hcl.x = glm::fract(h / 2.0 - glm::min(glm::fract(h), glm::fract(-h)) / 6.0);
+        hcl.y *= q;
+        hcl.z = glm::mix(-u, v, q) / (hclMaxL * 2.0);
+
+        return hcl;
+    }
 }
 
 }  // namespace inviwo
