@@ -87,6 +87,7 @@ private:
     CompositeProperty methodCutoff_;
     FloatProperty cutoff_;
     FloatProperty simplificationThreshold1_;
+    IntProperty numberOfIntersectingArcs_;
 
     /**
      * Properties to steed method for extracting N leaves and their corresponding arcs.

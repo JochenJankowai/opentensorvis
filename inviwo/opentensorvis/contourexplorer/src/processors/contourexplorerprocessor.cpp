@@ -161,7 +161,7 @@ void ContourExplorerProcessor::handlePicking(PickingEvent* p) {
                 brushingAndLinkingInport_.select(selection);
             }
 
-            p->markAsUsed();
+            //p->markAsUsed();
         }
 
         invalidate(InvalidationLevel::Valid);

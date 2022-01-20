@@ -51,14 +51,14 @@ struct DataTraits<std::map<size_t, float>> {
     static std::string classIdentifier() { return "org.inviwo.contourtree.ExtremalPoints"; }
     static std::string dataName() { return "ExtremalPoints"; }
     static uvec3 colorCode() { return uvec3(5, 255, 255); }
-    static Document info(const std::map<size_t, float>&) {
+    static Document info(const std::map<size_t, float>& m) {
         std::ostringstream oss;
+        oss << "Number of extremal points: " << std::to_string(m.size());
         Document doc;
         doc.append("p", oss.str());
         return doc;
     }
 };
-
 
 }  // namespace inviwo
 
@@ -94,7 +94,7 @@ struct fmt::formatter<std::map<size_t, float>> {
     auto format(const std::map<size_t, float>& p, FormatContext& ctx) -> decltype(ctx.out()) {
         // ctx.out() is an output iterator to write to.
 
-        for (const auto& item:p) {
+        for (const auto& item : p) {
             format_to(ctx.out(), "({}, {:.4f}),\n", item.first, item.second);
         }
 

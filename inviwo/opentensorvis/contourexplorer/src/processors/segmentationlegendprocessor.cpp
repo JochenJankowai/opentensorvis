@@ -165,7 +165,9 @@ void SegmentationLegendProcessor::process() {
     std::vector<vec2> positions{};
 
     auto drawValues = [this](const vec2& at, const float value, const float textBoxWidth) {
-        auto text = std::string{fmt::format("{:03.4f}", value)};
+        auto text = value == std::numeric_limits<float>::max()
+                        ? "inf"
+                        : std::string{fmt::format("{:03.4f}", value)};
         auto bounds = nvgContext_.textBounds(at, text);
 
         nvgContext_.beginPath();

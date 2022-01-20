@@ -73,6 +73,7 @@ ContourTreeQueryProcessor::ContourTreeQueryProcessor()
     , methodCutoff_("methodCutoff", "Cutoff")
     , cutoff_("cutoff", "Function value")
     , simplificationThreshold1_("simplificationThreshold1", "Simplification threshold")
+    , numberOfIntersectingArcs_("numberOfIntersectingArcs", "Number of features")
     , methodNLeaves_("methodNLeaves", "N Leaves")
     , nLeaves_("nLeaves", "Number of leaves", 1, 1, 12, 1)
     , simplificationThreshold2_("simplificationThreshold2", "Simplification threshold")
@@ -147,7 +148,8 @@ ContourTreeQueryProcessor::ContourTreeQueryProcessor()
                                       [](const TemplateOptionProperty<QueryMethod>& p) {
                                           return p.get() == QueryMethod::Cutoff;
                                       });
-    methodCutoff_.addProperties(cutoff_, simplificationThreshold1_);
+    numberOfIntersectingArcs_.setReadOnly(true);
+    methodCutoff_.addProperties(cutoff_, simplificationThreshold1_, numberOfIntersectingArcs_);
 
     /**
      * Setup for nLeaves method
@@ -210,7 +212,7 @@ void ContourTreeQueryProcessor::queryTopoAngler() {
             for (const auto arcId : features.second[i].arcs) {
                 for (size_t j{0}; j < numberOfElements; ++j) {
                     if (contourTree->arcMap[j] == arcId) {
-                        rawData[j] = static_cast<uint16_t>(i + 1);
+                        rawData[j] = static_cast<uint16_t>(i);
 
                         extremalPointsRef[i] =
                             std::min(extremalPointsRef[i], contourTree->data->getFunctionValue(j));
@@ -248,7 +250,7 @@ void ContourTreeQueryProcessor::queryTopoAngler() {
             }
         }
 
-        generateSegmentationVolume(rawData, features.second.size() - 1);
+        generateSegmentationVolume(rawData, features.second.size());
     }
 
     updateContourTreeInfo(features.first);
@@ -327,7 +329,7 @@ void ContourTreeQueryProcessor::queryCutoff() {
                             // At this point we know that this voxel belongs to this arc
                             //
                             if (static_cast<float>(volumeData[j]) <= cutoff) {
-                                rawData[j] = i + 1;
+                                rawData[j] = i;
                                 extremalPointsRef[i] =
                                     std::min(extremalPointsRef[i], static_cast<float>(volumeData[j]));
                                 break;
@@ -343,7 +345,7 @@ void ContourTreeQueryProcessor::queryCutoff() {
                     for (size_t j{0}; j < arcMap.size(); ++j) {
                         for (const auto arcID : childBranch.arcs) {
                             if (arcID == arcMap[j]) {
-                                rawData[j] = i + 1;
+                                rawData[j] = i;
                                 extremalPointsRef[i] =
                                     std::min(extremalPointsRef[i], static_cast<float>(volumeData[j]));
                             }
@@ -351,6 +353,8 @@ void ContourTreeQueryProcessor::queryCutoff() {
                     }
                 }
             }
+
+            numberOfIntersectingArcs_.set(intersectingBranches.size());
             extremalPointsOutport_.setData(extremalPoints);
             generateSegmentationVolume(rawData, intersectingBranches.size());
         });
@@ -416,14 +420,16 @@ void ContourTreeQueryProcessor::queryNLeaves() {
             extremalPoints[i] = std::numeric_limits<float>::max();
         }
     };
-
+    
     initExtremalPoints(features.second.size());
 
-    for (size_t i{0}; i < features.second.size(); ++i) {
-        for (const auto arcId : features.second[i].arcs) {
+    extremalPointsRef[0] = std::numeric_limits<float>::max();
+
+    for (size_t i{1}; i <= features.second.size(); i++) {
+        for (const auto arcId : features.second[i-1].arcs) {
             for (size_t j{0}; j < numberOfElements; ++j) {
                 if (contourTree->arcMap[j] == arcId) {
-                    rawData[j] = static_cast<uint16_t>(i + 1);
+                    rawData[j] = static_cast<uint16_t>(i);
                     extremalPointsRef[i] =
                         std::min(extremalPointsRef[i], contourTree->data->getFunctionValue(j));
                 }
@@ -431,7 +437,7 @@ void ContourTreeQueryProcessor::queryNLeaves() {
         }
     }
     extremalPointsOutport_.setData(extremalPoints);
-    generateSegmentationVolume(rawData, features.second.size());
+    generateSegmentationVolume(rawData, features.second.size()+1);
 }
 
 void ContourTreeQueryProcessor::generateSegmentationVolume(uint16_t* rawData, const size_t n) {
