@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2021 Inviwo Foundation
+ * Copyright (c) 2022 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,52 +26,17 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *********************************************************************************/
-
 #pragma once
 
-#include <inviwo/contourexplorer/contourexplorermoduledefine.h>
-#include <inviwo/core/processors/processor.h>
-#include <inviwo/core/properties/transferfunctionproperty.h>
-#include <inviwo/contourtree/ports/extremalpointsport.h>
-#include <modules/brushingandlinking/ports/brushingandlinkingports.h>
-#include <inviwo/core/util/colorbrewer.h>
-#include <inviwo/core/properties/ordinalproperty.h>
+#include <inviwo/geometrysilhouette/geometrysilhouettemoduledefine.h>
+#include <inviwo/core/common/inviwomodule.h>
 
 namespace inviwo {
 
-/** \docpage{org.inviwo.SegmentationVolumeTransferFunctionProcessor, Segmentation Volume Transfer
- * Function Processor}
- * ![](org.inviwo.SegmentationVolumeTransferFunctionProcessor.png?classIdentifier=org.inviwo.SegmentationVolumeTransferFunctionProcessor)
- * Explanation of how to use the processor.
- *
- * ### Inports
- *   * __<Inport1>__ <description>.
- *
- * ### Outports
- *   * __<Outport1>__ <description>.
- *
- * ### Properties
- *   * __<Prop1>__ <description>.
- *   * __<Prop2>__ <description>
- */
-class IVW_MODULE_CONTOUREXPLORER_API SegmentationVolumeTransferFunctionProcessor
-    : public Processor {
+class IVW_MODULE_GEOMETRYSILHOUETTE_API GeometrySilhouetteModule : public InviwoModule {
 public:
-    SegmentationVolumeTransferFunctionProcessor();
-    virtual ~SegmentationVolumeTransferFunctionProcessor() = default;
-
-    virtual void process() override;
-
-    virtual const ProcessorInfo getProcessorInfo() const override;
-    static const ProcessorInfo processorInfo_;
-
-private:
-    BrushingAndLinkingInport brushingAndLinkingInport_;
-    ExtremalPointsInport extremalPointsInport_;
-
-    TransferFunctionProperty tfProperty_;
-    DoubleProperty slope_;
-    FloatVec4Property shadeColor_;
+    GeometrySilhouetteModule(InviwoApplication* app);
+    virtual ~GeometrySilhouetteModule() = default;
 };
 
 }  // namespace inviwo

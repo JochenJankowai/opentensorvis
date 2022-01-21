@@ -50,6 +50,27 @@ const ProcessorInfo SegmentationLegendProcessor::processorInfo_{
 };
 const ProcessorInfo SegmentationLegendProcessor::getProcessorInfo() const { return processorInfo_; }
 
+void SegmentationLegendProcessor::handleSelection() {
+    auto dimensions = vec2(imageOutport_.getDimensions());
+    const auto extents = vec2{rectangleWidth_, height_.get()};
+    auto selection = brushingAndLinkingInport_.getSelectedIndices();
+    auto flipY = [&](const vec2 pos) { return vec2{pos.x, dimensions.y - pos.y}; };
+
+    /*
+     * Unfortunately, picking has never been merged into nanovg. Therefore, we need to do it
+     * ourselves. It'll be inaccurate since the rounded corners won't be respected but it'll do.
+     */
+    for (size_t i{0}; i < positions_.size();i++) {
+        const auto hitPos = flipY(positions_[i]);
+        if (isMouseDown_ && mousePos_.x >= hitPos.x && mousePos_.x <= hitPos.x + extents.x &&
+            mousePos_.y <= hitPos.y && mousePos_.y >= hitPos.y - extents.y) {
+            selection.flip(i);
+            brushingAndLinkingInport_.select(selection);
+            break;
+        }
+    }
+}
+
 SegmentationLegendProcessor::SegmentationLegendProcessor()
     : Processor()
     , segmentMinimaInport_("segmentMinimaInport")
@@ -75,7 +96,7 @@ SegmentationLegendProcessor::SegmentationLegendProcessor()
               if (const auto ev = e->getAs<MouseEvent>()) {
                   isMouseDown_ = true;
                   mousePos_ = ev->pos();
-                  invalidate(InvalidationLevel::InvalidOutput);
+                  handleSelection();
               }
           },
           MouseButton::Left, MouseState::Press)
@@ -158,16 +179,16 @@ void SegmentationLegendProcessor::process() {
 
     dimensions.x -= marginLeft_.get();
 
-    const auto gapWidth = dimensions.x / segments;
+    gapWidth_ = dimensions.x / segments;
 
-    const auto rectangleWidth = gapWidth * 2;
+    rectangleWidth_ = gapWidth_ * 2;
 
-    std::vector<vec2> positions{};
+    positions_.clear();
 
     auto drawValues = [this](const vec2& at, const float value, const float textBoxWidth) {
         auto text = value == std::numeric_limits<float>::max()
                         ? "inf"
-                        : std::string{fmt::format("{:03.4f}", value)};
+                        : std::string{fmt::format("{:03.4e}", value)};
         auto bounds = nvgContext_.textBounds(at, text);
 
         nvgContext_.beginPath();
@@ -180,32 +201,28 @@ void SegmentationLegendProcessor::process() {
     };
 
     auto drawRectangle = [&, this](const size_t i, const vec2& extends) {
-        const auto& position = positions[i];
+        const auto& position = positions_[i];
         auto& color = colorMap[i];
 
-        nvgContext_.beginPath();
-        nvgContext_.roundedRect(position, extends, cornerRadius_.get());
-
-        auto flipY = [&](const vec2 pos) {
-            return vec2{pos.x, dimensions.y - pos.y};
-        };
+        auto flipY = [&](const vec2 pos) { return vec2{pos.x, dimensions.y - pos.y}; };
 
         /*
          * Unfortunately, picking has never been merged into nanovg. Therefore, we need to do it
          * ourselves. It'll be inaccurate since the rounded corners won't be respected but it'll do.
          */
         const auto hitPos = flipY(position);
-        if (isMouseDown_ && mousePos_.x >= hitPos.x && mousePos_.x <= hitPos.x + extends.x &&
+        if (mousePos_.x >= hitPos.x && mousePos_.x <= hitPos.x + extends.x &&
             mousePos_.y <= hitPos.y && mousePos_.y >= hitPos.y - extends.y) {
-            selection.flip(i);
-            brushingAndLinkingInport_.select(selection);
-        }
-
-        if (selection.contains(i)) {
             auto hcl = SegmentationColorHelper::rgbToHcl(dvec3(color));
             hcl.z *= 1.0f + luminanceMultiplier_.get();
             color = dvec4(
                 glm::clamp(SegmentationColorHelper::hclToRgb(hcl), dvec3(0.0), dvec3(1.0)), 1.0);
+        }
+        
+        nvgContext_.beginPath();
+        nvgContext_.roundedRect(position, extends, cornerRadius_.get());
+        
+        if (selection.contains(i)) {
             nvgContext_.strokeColor(vec4{vec3{0.5f}, 1.0f});
             nvgContext_.strokeWidth(strokeWitdth_.get());
             nvgContext_.stroke();
@@ -216,18 +233,18 @@ void SegmentationLegendProcessor::process() {
     };
 
     for (size_t i{0}; i < iNumberOfSegments; ++i) {
-        positions.emplace_back((gapWidth * static_cast<float>(i + 1)) +
-                                   (rectangleWidth * static_cast<float>(i)) + marginLeft_.get(),
+        positions_.emplace_back((gapWidth_ * static_cast<float>(i + 1)) +
+                                   (rectangleWidth_ * static_cast<float>(i)) + marginLeft_.get(),
                                dimensions.y - marginBottom_.get() - height_.get());
     }
 
     for (size_t i{0}; i < iNumberOfSegments; ++i) {
-        drawRectangle(i, vec2{rectangleWidth, height_.get()});
+        drawRectangle(i, vec2{rectangleWidth_, height_.get()});
     }
 
     // Separeta loop so the text would always be on top
     for (size_t i{0}; i < iNumberOfSegments; ++i) {
-        drawValues(positions[i] + vec2(0, height_.get() / 2.0f), segmentMinima[i], rectangleWidth);
+        drawValues(positions_[i] + vec2(0, height_.get() / 2.0f), segmentMinima[i], rectangleWidth_);
     }
 
     nvgContext_.deactivate();

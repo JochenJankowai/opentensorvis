@@ -77,6 +77,11 @@ private:
 
     vec2 mousePos_;
     bool isMouseDown_;
+    std::vector<vec2> positions_;
+    float gapWidth_;
+    float rectangleWidth_;
+
+    void handleSelection();
 };
 
 }  // namespace inviwo

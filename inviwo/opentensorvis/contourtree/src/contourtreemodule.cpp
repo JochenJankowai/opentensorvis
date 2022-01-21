@@ -46,16 +46,11 @@
 namespace inviwo {
 
 ContourTreeModule::ContourTreeModule(InviwoApplication* app) : InviwoModule(app, "ContourTree") {
-    registerPort<ContourTreeInport>();
-    registerPort<ContourTreeOutport>();
-    registerPort<ContourTreeDataInport>();
-    registerPort<ContourTreeDataOutport>();
-    registerPort<ContourTreeSimplificationInport>();
-    registerPort<ContourTreeSimplificationOutport>();
-    registerPort<ContourTreeTopologicalFeaturesInport>();
-    registerPort<ContourTreeTopologicalFeaturesOutport>();
-    registerPort<ExtremalPointsInport>();
-    registerPort<ExtremalPointsOutport>();
+    registerDefaultsForDataType<contourtree::MergeTree>();
+    registerDefaultsForDataType<contourtree::ContourTreeData>();
+    registerDefaultsForDataType<contourtree::SimplifyCT>();
+    registerDefaultsForDataType<contourtree::TopologicalFeatures>();
+    registerDefaultsForDataType<ExtremalPoints>();
 
     registerProcessor<ContourTreeComputationProcessor>();
     registerProcessor<ContourTreeDataProcessor>();
@@ -67,6 +62,8 @@ ContourTreeModule::ContourTreeModule(InviwoApplication* app) : InviwoModule(app,
     registerProcessor<ContourTreeTopologicalFeaturesProcessor>();
 
     registerDataVisualizer(std::make_unique<ContourTreeComputationVisualizer>(app));
+
+    
 }
 
 }  // namespace inviwo

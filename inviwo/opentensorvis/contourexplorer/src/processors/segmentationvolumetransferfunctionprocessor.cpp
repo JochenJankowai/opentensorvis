@@ -49,25 +49,21 @@ const ProcessorInfo SegmentationVolumeTransferFunctionProcessor::getProcessorInf
 SegmentationVolumeTransferFunctionProcessor::SegmentationVolumeTransferFunctionProcessor()
     : Processor()
     , brushingAndLinkingInport_("brushingAndLinkingInport")
-    , volumeInport_("volumeInport")
+    , extremalPointsInport_("extremalPointsInport")
     , tfProperty_("tf", "Transfer function")
     , slope_("slope", "Slope", 0.1, 0.01, 0.5, 0.001)
     , shadeColor_("shadeColor", "Shade color", vec4(0), vec4(0), vec4(1), vec4(0.00001f),
                   InvalidationLevel::InvalidOutput, PropertySemantics::Color) {
 
-    addPorts(brushingAndLinkingInport_, volumeInport_);
+    addPorts(brushingAndLinkingInport_, extremalPointsInport_);
 
     addProperties(tfProperty_, slope_, shadeColor_);
 }
 
 void SegmentationVolumeTransferFunctionProcessor::process() {
-    if (!volumeInport_.hasData() || !volumeInport_.getData()) return;
-
-    const auto inputVolume = volumeInport_.getData();
-
-    const auto maxValue = static_cast<int32_t>(inputVolume->dataMap_.dataRange.y);
-
-    const auto numberOfFeatures = maxValue + 1;
+    if (!extremalPointsInport_.hasData() || !extremalPointsInport_.getData()) return;
+    
+    const auto numberOfFeatures = extremalPointsInport_.getData()->size();
 
     const auto selection = brushingAndLinkingInport_.getSelectedIndices();
 

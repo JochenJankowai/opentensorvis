@@ -36,22 +36,23 @@
 
 namespace inviwo {
 
+using ExtremalPoints = std::map<size_t,float>;
 /**
  * \ingroup ports
  */
-using ExtremalPointsInport = DataInport<std::map<size_t, float>>;
+using ExtremalPointsInport = DataInport<ExtremalPoints>;
 
 /**
  * \ingroup ports
  */
-using ExtremalPointsOutport = DataOutport<std::map<size_t, float>>;
+using ExtremalPointsOutport = DataOutport<ExtremalPoints>;
 
 template <>
-struct DataTraits<std::map<size_t, float>> {
+struct DataTraits<ExtremalPoints> {
     static std::string classIdentifier() { return "org.inviwo.contourtree.ExtremalPoints"; }
     static std::string dataName() { return "ExtremalPoints"; }
     static uvec3 colorCode() { return uvec3(5, 255, 255); }
-    static Document info(const std::map<size_t, float>& m) {
+    static Document info(const ExtremalPoints& m) {
         std::ostringstream oss;
         oss << "Number of extremal points: " << std::to_string(m.size());
         Document doc;
@@ -63,7 +64,7 @@ struct DataTraits<std::map<size_t, float>> {
 }  // namespace inviwo
 
 template <>
-struct fmt::formatter<std::map<size_t, float>> {
+struct fmt::formatter<inviwo::ExtremalPoints> {
     // Presentation format: 'f' - fixed, 'e' - exponential.
     char presentation = 'f';
 

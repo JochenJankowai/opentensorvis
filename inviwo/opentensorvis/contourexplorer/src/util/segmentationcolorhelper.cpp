@@ -66,7 +66,7 @@ TFPrimitiveSet SegmentationColorHelper::generateTFPrimitivesForSegments(const Bi
 
     const auto dMaxValue = static_cast<double>(numberOfSegments) - 1.0;
 
-    if (selection.size() == 1) {
+    if (numberOfSegments == 1 && selection.contains(0)) {
         tfPoints.add(0.5, colorMap[0]);
         return tfPoints;
     }

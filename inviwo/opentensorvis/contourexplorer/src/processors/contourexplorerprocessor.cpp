@@ -177,13 +177,13 @@ void ContourExplorerProcessor::updateTF() {
 
     BitSet selection;
 
-    selection.addRange(0, max + 1);
+    selection.addRange(0, max);
 
     const auto tfPrimitives =
-        SegmentationColorHelper::generateTFPrimitivesForSegments(selection, max + 1);
+        SegmentationColorHelper::generateTFPrimitivesForSegments(selection, max);
 
     LogInfo(
-        fmt::format("Generated {} tf primitives for {} segments.", tfPrimitives.size(), max + 1));
+        fmt::format("Generated {} tf primitives for {} segments.", tfPrimitives.size(), max));
 
     NetworkLock l;
 
