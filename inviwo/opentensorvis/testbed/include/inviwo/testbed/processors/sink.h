@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2021 Inviwo Foundation
+ * Copyright (c) 2022 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,25 +29,40 @@
 
 #pragma once
 
-#include <inviwo/contourexplorer/contourexplorermoduledefine.h>
-#include <inviwo/core/datastructures/bitset.h>
-#include <inviwo/core/datastructures/tfprimitiveset.h>
-#include <inviwo/core/util/colorbrewer.h>
+#include <inviwo/testbed/testbedmoduledefine.h>
+#include <inviwo/core/processors/processor.h>
+#include <inviwo/core/properties/ordinalproperty.h>
+#include <inviwo/core/ports/imageport.h>
 
 namespace inviwo {
-class IVW_MODULE_CONTOUREXPLORER_API SegmentationColorHelper {
+
+/** \docpage{org.inviwo.Sink, Sink}
+ * ![](org.inviwo.Sink.png?classIdentifier=org.inviwo.Sink)
+ * Explanation of how to use the processor.
+ *
+ * ### Inports
+ *   * __<Inport1>__ <description>.
+ *
+ * ### Outports
+ *   * __<Outport1>__ <description>.
+ *
+ * ### Properties
+ *   * __<Prop1>__ <description>.
+ *   * __<Prop2>__ <description>
+ */
+class IVW_MODULE_TESTBED_API Sink : public Processor {
 public:
-    static std::vector<std::tuple<double, bool, int>> getPositionsAndLevelsForNSegments(size_t n, double slope = std::numeric_limits<double>::epsilon());
+    Sink();
+    virtual ~Sink() override = default;
 
-    static std::vector<dvec4> getColorMapForNSegments(size_t n);
+    virtual void process() override;
 
-    static TFPrimitiveSet generateTFPrimitivesForSegments(
-        const BitSet& selection, size_t numberOfSegments,
-        double slope = std::numeric_limits<double>::epsilon(), const vec4& shadeColor = vec4(0.0f));
+    virtual const ProcessorInfo getProcessorInfo() const override;
+    static const ProcessorInfo processorInfo_;
 
-    static dvec3 hclToRgb(const dvec3& hcl);
-
-    static dvec3 rgbToHcl(const dvec3& rgb);
+private:
+    ImageOutport outport_;
+    FloatVec3Property position_;
 };
 
 }  // namespace inviwo

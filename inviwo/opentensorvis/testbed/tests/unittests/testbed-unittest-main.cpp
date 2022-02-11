@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2021 Inviwo Foundation
+ * Copyright (c) 2022 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,27 +27,40 @@
  *
  *********************************************************************************/
 
-#pragma once
+#ifdef _MSC_VER
+#pragma comment(linker, "/SUBSYSTEM:CONSOLE")
+#ifdef IVW_ENABLE_MSVC_MEM_LEAK_TEST
+#include <vld.h>
+#endif
+#endif
 
-#include <inviwo/contourexplorer/contourexplorermoduledefine.h>
-#include <inviwo/core/datastructures/bitset.h>
-#include <inviwo/core/datastructures/tfprimitiveset.h>
-#include <inviwo/core/util/colorbrewer.h>
+#include <inviwo/core/util/logcentral.h>
+#include <inviwo/core/util/consolelogger.h>
+#include <inviwo/testutil/configurablegtesteventlistener.h>
 
-namespace inviwo {
-class IVW_MODULE_CONTOUREXPLORER_API SegmentationColorHelper {
-public:
-    static std::vector<std::tuple<double, bool, int>> getPositionsAndLevelsForNSegments(size_t n, double slope = std::numeric_limits<double>::epsilon());
+#include <warn/push>
+#include <warn/ignore/all>
+#include <gtest/gtest.h>
+#include <warn/pop>
 
-    static std::vector<dvec4> getColorMapForNSegments(size_t n);
+int main(int argc, char** argv) {
+    using namespace inviwo;
+    LogCentral::init();
+    auto logger = std::make_shared<ConsoleLogger>();
+    LogCentral::getPtr()->setVerbosity(LogVerbosity::Error);
+    LogCentral::getPtr()->registerLogger(logger);
 
-    static TFPrimitiveSet generateTFPrimitivesForSegments(
-        const BitSet& selection, size_t numberOfSegments,
-        double slope = std::numeric_limits<double>::epsilon(), const vec4& shadeColor = vec4(0.0f));
-
-    static dvec3 hclToRgb(const dvec3& hcl);
-
-    static dvec3 rgbToHcl(const dvec3& rgb);
-};
-
-}  // namespace inviwo
+    int ret = -1;
+    {
+#ifdef IVW_ENABLE_MSVC_MEM_LEAK_TEST
+        VLDDisable();
+        ::testing::InitGoogleTest(&argc, argv);
+        VLDEnable();
+#else
+        ::testing::InitGoogleTest(&argc, argv);
+#endif
+        inviwo::ConfigurableGTestEventListener::setup();
+        ret = RUN_ALL_TESTS();
+    }
+    return ret;
+}

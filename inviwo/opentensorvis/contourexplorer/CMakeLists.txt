@@ -31,7 +31,8 @@ set(SHADER_FILES
 ivw_group("Shader Files" ${SHADER_FILES})
 
 set(TEST_FILES
-    tests/unittests/contourexplorer-unittest-main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/unittests/contourexplorer-unittest-main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/unittests/colorhelper.cpp
 )
 ivw_add_unittest(${TEST_FILES})
 

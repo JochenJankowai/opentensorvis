@@ -67,7 +67,8 @@ ContourExplorerProcessor::ContourExplorerProcessor()
     , isoVolumeOutport_("isoVolumeOutport")
     , brushingAndLinkingInport_{"brushingAndLinkingInport"}
     , shader_{"embeddedvolumeslice.vert", "embeddedvolumeslice.frag", Shader::Build::No}
-    , ignoreZeroIndex_("ignoreZeroIndex", "Ignore zero index", true)
+    , ignoreZeroIndex_("ignoreZeroIndex", "Ignore zero index", false)
+    , ignoreLastIndex_("ignoreLastIndex", "Ignore last index", false)
     , planeNormal_{"planeNormal",          "Plane Normal",      vec3(1.f, 0.f, 0.f),
                    vec3(-1.f, -1.f, -1.f), vec3(1.f, 1.f, 1.f), vec3(0.01f, 0.01f, 0.01f)}
     , planePosition_{"planePosition", "Plane Position", vec3(0.5f), vec3(0.0f), vec3(1.0f)}
@@ -83,12 +84,10 @@ ContourExplorerProcessor::ContourExplorerProcessor()
 
     inport_.onChange([this]() { updateTF(); });
 
-    transferFunction_.setReadOnly(true);
-
     generateVolumeButton_.onChange([this]() { generateIsoVolume(); });
 
-    addProperties(ignoreZeroIndex_, planeNormal_, planePosition_, transferFunction_,
-                  generateVolumeButton_, camera_, trackball_);
+    addProperties(ignoreZeroIndex_, ignoreLastIndex_, planeNormal_, planePosition_,
+                  transferFunction_, generateVolumeButton_, camera_, trackball_);
 
     planePosition_.onChange([this]() { planeSettingsChanged(); });
     planeNormal_.onChange([this]() { planeSettingsChanged(); });
@@ -153,15 +152,25 @@ void ContourExplorerProcessor::handlePicking(PickingEvent* p) {
             value = static_cast<uint32_t>(data->getRepresentation<VolumeRAM>()->getAsDVec4(cind).x);
 
             if (ignoreZeroIndex_.get() && value == 0) {
+                LogInfo("Ignoring zeroth index.");
+            } else if (ignoreLastIndex_.get() &&
+                       value == static_cast<uint32_t>(data->dataMap_.dataRange.y)) {
+                LogInfo("Ignoring last index.");
             } else {
                 auto selection = brushingAndLinkingInport_.getSelectedIndices();
 
                 selection.flip(value);
-                
+
+                if (selection.contains(value)) {
+                    LogInfo(fmt::format("Selected {}", value));
+                } else {
+                    LogInfo(fmt::format("Deselected {}", value));
+                }
+
                 brushingAndLinkingInport_.select(selection);
             }
 
-            //p->markAsUsed();
+            // p->markAsUsed();
         }
 
         invalidate(InvalidationLevel::Valid);
@@ -177,13 +186,13 @@ void ContourExplorerProcessor::updateTF() {
 
     BitSet selection;
 
-    selection.addRange(0, max);
+    selection.addRange(0, max + 1);
 
     const auto tfPrimitives =
-        SegmentationColorHelper::generateTFPrimitivesForSegments(selection, max);
+        SegmentationColorHelper::generateTFPrimitivesForSegments(selection, max + 1);
 
     LogInfo(
-        fmt::format("Generated {} tf primitives for {} segments.", tfPrimitives.size(), max));
+        fmt::format("Generated {} tf primitives for {} segments.", tfPrimitives.size(), max + 1));
 
     NetworkLock l;
 

@@ -79,14 +79,14 @@ public:
 
     virtual void initializeResources() override;
 
-   protected:
+protected:
     virtual void process() override;
     void planeSettingsChanged();
     void handlePicking(PickingEvent* p);
     void updateTF();
     void generateIsoVolume();
 
-   private:
+private:
     VolumeInport inport_;
     ImageInport backgroundPort_;
     ImageOutport outport_;
@@ -96,6 +96,7 @@ public:
     Shader shader_;
 
     BoolProperty ignoreZeroIndex_;
+    BoolProperty ignoreLastIndex_;
 
     FloatVec3Property planeNormal_;
     FloatVec3Property planePosition_;

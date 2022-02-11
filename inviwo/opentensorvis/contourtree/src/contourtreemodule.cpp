@@ -62,8 +62,6 @@ ContourTreeModule::ContourTreeModule(InviwoApplication* app) : InviwoModule(app,
     registerProcessor<ContourTreeTopologicalFeaturesProcessor>();
 
     registerDataVisualizer(std::make_unique<ContourTreeComputationVisualizer>(app));
-
-    
 }
 
 }  // namespace inviwo

@@ -51,7 +51,8 @@ SegmentationVolumeTransferFunctionProcessor::SegmentationVolumeTransferFunctionP
     , brushingAndLinkingInport_("brushingAndLinkingInport")
     , extremalPointsInport_("extremalPointsInport")
     , tfProperty_("tf", "Transfer function")
-    , slope_("slope", "Slope", 0.1, 0.01, 0.5, 0.001)
+    , slope_("slope", "Slope", std::numeric_limits<double>::epsilon(),
+             std::numeric_limits<double>::epsilon(), 0.03, 0.001)
     , shadeColor_("shadeColor", "Shade color", vec4(0), vec4(0), vec4(1), vec4(0.00001f),
                   InvalidationLevel::InvalidOutput, PropertySemantics::Color) {
 
@@ -62,7 +63,7 @@ SegmentationVolumeTransferFunctionProcessor::SegmentationVolumeTransferFunctionP
 
 void SegmentationVolumeTransferFunctionProcessor::process() {
     if (!extremalPointsInport_.hasData() || !extremalPointsInport_.getData()) return;
-    
+
     const auto numberOfFeatures = extremalPointsInport_.getData()->size();
 
     const auto selection = brushingAndLinkingInport_.getSelectedIndices();
@@ -71,6 +72,9 @@ void SegmentationVolumeTransferFunctionProcessor::process() {
 
     const auto tfPoints = SegmentationColorHelper::generateTFPrimitivesForSegments(
         selection, numberOfFeatures, slope_.get(), shadeColor_.get());
+
+    LogInfo(fmt::format("Generated {} tf primitives for {} segments.", tfPoints.size(),
+                        numberOfFeatures));
 
     NetworkLock l;
 

@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2021 Inviwo Foundation
+ * Copyright (c) 2022 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,28 +26,17 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *********************************************************************************/
-
 #pragma once
 
-#include <inviwo/contourexplorer/contourexplorermoduledefine.h>
-#include <inviwo/core/datastructures/bitset.h>
-#include <inviwo/core/datastructures/tfprimitiveset.h>
-#include <inviwo/core/util/colorbrewer.h>
+#include <inviwo/testbed/testbedmoduledefine.h>
+#include <inviwo/core/common/inviwomodule.h>
 
 namespace inviwo {
-class IVW_MODULE_CONTOUREXPLORER_API SegmentationColorHelper {
+
+class IVW_MODULE_TESTBED_API TestBedModule : public InviwoModule {
 public:
-    static std::vector<std::tuple<double, bool, int>> getPositionsAndLevelsForNSegments(size_t n, double slope = std::numeric_limits<double>::epsilon());
-
-    static std::vector<dvec4> getColorMapForNSegments(size_t n);
-
-    static TFPrimitiveSet generateTFPrimitivesForSegments(
-        const BitSet& selection, size_t numberOfSegments,
-        double slope = std::numeric_limits<double>::epsilon(), const vec4& shadeColor = vec4(0.0f));
-
-    static dvec3 hclToRgb(const dvec3& hcl);
-
-    static dvec3 rgbToHcl(const dvec3& rgb);
+    TestBedModule(InviwoApplication* app);
+    virtual ~TestBedModule() = default;
 };
 
 }  // namespace inviwo

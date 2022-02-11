@@ -41,6 +41,8 @@
 #include <inviwo/core/properties/stringproperty.h>
 #include <inviwo/contourtree/ports/extremalpointsport.h>
 
+#include "modules/brushingandlinking/ports/brushingandlinkingports.h"
+
 namespace inviwo {
 
 /** \docpage{org.inviwo.ContourTreeQueryProcessor, Contour Tree Query Processor}
@@ -65,11 +67,12 @@ private:
     ContourTreeDataInport contourTreeDataInport_;
     ContourTreeSimplificationInport contourTreeSimplificationInport_;
     ContourTreeTopologicalFeaturesInport contourTreeTopologicalFeatuesInport_;
+    BrushingAndLinkingInport brushingAndLinkingInport_;
 
     VolumeOutport voxelizedVolumeOutport_;
     VolumeOutport smoothVolumeOutport_;
     ExtremalPointsOutport extremalPointsOutport_;
-    
+
     TemplateOptionProperty<QueryMethod> queryMethod_;
 
     /**
@@ -95,19 +98,20 @@ private:
     CompositeProperty methodNLeaves_;
     IntProperty nLeaves_;
     FloatProperty simplificationThreshold2_;
-    
 
     void query(QueryMethod method);
 
     void queryTopoAngler();
     void queryCutoff();
     void queryNLeaves();
-    
+
     void generateSegmentationVolume(uint16_t* rawData, size_t n);
 
     StringProperty text_;
 
     void updateContourTreeInfo(const contourtree::SimplifyCT& simplifyCt);
+
+    std::shared_ptr<std::map<size_t, float>> initExtremalPoints(const size_t n) const;
 };
 
 }  // namespace inviwo

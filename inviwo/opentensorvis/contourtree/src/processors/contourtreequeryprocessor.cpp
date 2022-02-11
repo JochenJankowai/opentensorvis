@@ -54,6 +54,7 @@ ContourTreeQueryProcessor::ContourTreeQueryProcessor()
     , contourTreeDataInport_("contourTreeDataInport")
     , contourTreeSimplificationInport_("contourTreeSimplificationInport")
     , contourTreeTopologicalFeatuesInport_("contourTreeTopologicalFeatuesInport")
+    , brushingAndLinkingInport_("brushingAndLinkingInport")
     , voxelizedVolumeOutport_("voxelizedVolumeOutport")
     , smoothVolumeOutport_("smoothVolumeOutport")
     , extremalPointsOutport_("segmentMinimaOutport")
@@ -81,7 +82,8 @@ ContourTreeQueryProcessor::ContourTreeQueryProcessor()
             PropertySemantics::TextEditor) {
     addPorts(volumeInport_, contourTreeInport_, contourTreeDataInport_,
              contourTreeSimplificationInport_, contourTreeTopologicalFeatuesInport_,
-             voxelizedVolumeOutport_, smoothVolumeOutport_, extremalPointsOutport_);
+             brushingAndLinkingInport_, voxelizedVolumeOutport_, smoothVolumeOutport_,
+             extremalPointsOutport_);
 
     addProperties(queryMethod_, methodTopoAngler_, methodCutoff_, methodNLeaves_, text_);
 
@@ -162,6 +164,10 @@ ContourTreeQueryProcessor::ContourTreeQueryProcessor()
 }
 
 void ContourTreeQueryProcessor::process() {
+    if (brushingAndLinkingInport_.isSelectionModified())
+        return;  // If the selection is modified then that is what triggered the evaluation. In that
+                 // case we don't need to to anything.
+
     switch (queryMethod_.get()) {
         case QueryMethod::TopoAngler:
             queryTopoAngler();
@@ -173,6 +179,7 @@ void ContourTreeQueryProcessor::process() {
             queryNLeaves();
             break;
     }
+    brushingAndLinkingInport_.select({});
 }
 
 void ContourTreeQueryProcessor::queryTopoAngler() {
@@ -186,72 +193,42 @@ void ContourTreeQueryProcessor::queryTopoAngler() {
     const auto topKFeatures =
         queryCriterion_.get() == QueryCriterion::TopKFeatures ? topKFeatures_.get() : -1;
 
-    auto extremalPoints = std::make_shared<std::map<size_t, float>>();
-    auto& extremalPointsRef = *extremalPoints;
-
-    auto initExtremalPoints = [&extremalPoints = *extremalPoints](const size_t n) {
-        for (size_t i{0}; i < n; i++) {
-            extremalPoints[i] = std::numeric_limits<float>::max();
-        }
-    };
-
     if (!topologicalFeatures->isPartitioned) {
         features = topologicalFeatures->getArcFeatures(topKFeatures, threshold_.get());
-
-        initExtremalPoints(features.second.size());
-
-        /*
-         * Look up which feature the arcId in arcMap belongs to and assign value. That should be it.
-         */
-        const auto numberOfElements = contourTree->noVertices;
-
-        auto rawData = new uint16_t[numberOfElements];
-        std::fill_n(rawData, numberOfElements, 0);
-
-        for (size_t i{0}; i < features.second.size(); ++i) {
-            for (const auto arcId : features.second[i].arcs) {
-                for (size_t j{0}; j < numberOfElements; ++j) {
-                    if (contourTree->arcMap[j] == arcId) {
-                        rawData[j] = static_cast<uint16_t>(i);
-
-                        extremalPointsRef[i] =
-                            std::min(extremalPointsRef[i], contourTree->data->getFunctionValue(j));
-                    }
-                }
-            }
-        }
-
-        generateSegmentationVolume(rawData, features.second.size());
 
     } else {
         features =
             topologicalFeatures->getPartitionedExtremaFeatures(topKFeatures, threshold_.get());
+    }
 
-        initExtremalPoints(features.second.size());
+    const auto extremalPoints = initExtremalPoints(features.second.size());
+    auto& extremalPointsRef = *extremalPoints;
 
-        /*
-         * Look up which feature the arcId in arcMap belongs to and assign value. That should be it.
-         */
-        const auto numberOfElements = contourTree->noVertices;
+    /*
+     * Look up which feature the arcId in arcMap belongs to and assign value. That should be it.
+     */
+    const auto numberOfElements = contourTree->noVertices;
 
-        auto rawData = new uint16_t[numberOfElements];
-        std::fill_n(rawData, numberOfElements, 0);
+    const auto rawData = new uint16_t[numberOfElements];
+    std::fill_n(rawData, numberOfElements, 0);
 
-        for (size_t i{1}; i < features.second.size(); ++i) {
-            for (const auto arcId : features.second[i].arcs) {
-                for (int64_t j{0}; j < numberOfElements; ++j) {
-                    if (contourTree->arcMap[j] == arcId) {
-                        rawData[j] = static_cast<uint16_t>(i);
+    for (size_t i{1}; i < features.second.size(); ++i) {
+        for (const auto arcId : features.second[i].arcs) {
+            for (int64_t j{0}; j < numberOfElements; ++j) {
+                if (contourTree->arcMap[j] == arcId) {
+                    rawData[j] = static_cast<uint16_t>(i);
 
-                        extremalPointsRef[i] =
-                            std::min(extremalPointsRef[i], contourTree->data->getFunctionValue(j));
-                    }
+                    extremalPointsRef[i] =
+                        std::min(extremalPointsRef[i], contourTree->data->getFunctionValue(j));
                 }
             }
         }
-
-        generateSegmentationVolume(rawData, features.second.size());
     }
+
+    // We know that the 0th feature contains the global minimum (I think?)
+    extremalPointsRef[0] = *std::min_element(rawData, rawData + numberOfElements);
+
+    generateSegmentationVolume(rawData, features.second.size());
 
     updateContourTreeInfo(features.first);
 
@@ -270,9 +247,9 @@ void ContourTreeQueryProcessor::queryCutoff() {
     const auto inputVolume = volumeInport_.getData();
 
     inputVolume->getRepresentation<VolumeRAM>()->dispatch<void, dispatching::filter::Scalars>(
-        [&, this](auto vrprecision) {
-            using ValueType = util::PrecisionValueType<decltype(vrprecision)>;
-            auto volumeData = vrprecision->getDataTyped();
+        [&, this](auto vrPrecision) {
+            using ValueType = util::PrecisionValueType<decltype(vrPrecision)>;
+            auto volumeData = vrPrecision->getDataTyped();
 
             const auto contourTreeData = contourTreeDataInport_.getData();
             const auto topologicalFeatures = contourTreeTopologicalFeatuesInport_.getData();
@@ -304,34 +281,45 @@ void ContourTreeQueryProcessor::queryCutoff() {
                 }
             }
 
-            auto extremalPoints = std::make_shared<std::map<size_t, float>>();
+            const auto extremalPoints = initExtremalPoints(intersectingBranches.size());
             auto& extremalPointsRef = *extremalPoints;
 
-            auto initExtremalPoints = [&extremalPoints = *extremalPoints](const size_t n) {
-                for (size_t i{0}; i < n; i++) {
-                    extremalPoints[i] = std::numeric_limits<float>::max();
+            const auto numberOfElements = contourTreeInport_.getData()->noVertices;
+            const auto rawData = new uint16_t[numberOfElements];
+            std::fill_n(rawData, numberOfElements, 0);
+
+            // DEBUG
+            // Return true if the map is faulty
+            auto checkArcMap = [](const std::vector<uint32_t>& map) -> bool {
+                std::unordered_map<unsigned, int> s;
+
+                for (const auto id : map) {
+                    s[id]++;
                 }
+
+                auto it = std::find_if(std::begin(s), std::end(s),
+                                       [](const auto& valuePair) { return valuePair.second == 1; });
+
+                return it == std::end(s);
             };
 
-            initExtremalPoints(intersectingBranches.size());
-
-            const auto numberOfElements = contourTreeInport_.getData()->noVertices;
-            auto rawData = new uint16_t[numberOfElements];
-            std::fill_n(rawData, numberOfElements, 0);
+            if (checkArcMap(arcMap)) {
+                LogError("Faulty arc map.");
+            }
 
             for (size_t i{0}; i < intersectingBranches.size(); ++i) {
                 const auto branchIndex = intersectingBranches[i];
                 const auto& branch = branches[branchIndex];
 
                 for (size_t j{0}; j < arcMap.size(); ++j) {
-                    for (const auto arcID : branch.arcs) {
-                        if (arcID == arcMap[j]) {
+                    for (const auto arcId : branch.arcs_) {
+                        if (arcId == arcMap[j]) {
                             // At this point we know that this voxel belongs to this arc
                             //
                             if (static_cast<float>(volumeData[j]) <= cutoff) {
                                 rawData[j] = i;
-                                extremalPointsRef[i] =
-                                    std::min(extremalPointsRef[i], static_cast<float>(volumeData[j]));
+                                extremalPointsRef[i] = std::min(extremalPointsRef[i],
+                                                                static_cast<float>(volumeData[j]));
                                 break;
                             }
                         }
@@ -339,22 +327,29 @@ void ContourTreeQueryProcessor::queryCutoff() {
                 }
 
                 // Not sure if Branch stores all arcs it contains or just the simplification level
-                // below it. If it only contained the level below, we'd need recursion here.
-                for (const auto childIndex : branch.children) {
-                    const auto& childBranch = branches[childIndex];
-                    for (size_t j{0}; j < arcMap.size(); ++j) {
-                        for (const auto arcID : childBranch.arcs) {
-                            if (arcID == arcMap[j]) {
-                                rawData[j] = i;
-                                extremalPointsRef[i] =
-                                    std::min(extremalPointsRef[i], static_cast<float>(volumeData[j]));
+                // below it. For safety, let's recurse.
+                std::function<void(std::vector<uint32_t>)> recurse;
+
+                recurse = [&](const std::vector<uint32_t>& children) {
+                    for (const auto childIndex : children) {
+                        const auto& childBranch = branches[childIndex];
+                        for (size_t j{0}; j < arcMap.size(); ++j) {
+                            for (const auto arcId : childBranch.arcs_) {
+                                if (arcId == arcMap[j]) {
+                                    rawData[j] = i;
+                                    extremalPointsRef[i] = std::min(
+                                        extremalPointsRef[i], static_cast<float>(volumeData[j]));
+                                }
                             }
                         }
+
+                        recurse(childBranch.children);
                     }
-                }
+                };
             }
 
             numberOfIntersectingArcs_.set(intersectingBranches.size());
+            LogInfo(fmt::format("{}", *extremalPoints));
             extremalPointsOutport_.setData(extremalPoints);
             generateSegmentationVolume(rawData, intersectingBranches.size());
         });
@@ -371,12 +366,12 @@ void ContourTreeQueryProcessor::queryNLeaves() {
 
     const auto topologicalFeatures = contourTreeTopologicalFeatuesInport_.getData();
 
-    const auto features =
+    const auto [simplification, features] =
         volumeInport_.getData()
             ->getRepresentation<VolumeRAM>()
             ->dispatch<std::pair<contourtree::SimplifyCT, std::vector<contourtree::Feature>>,
-                       dispatching::filter::Scalars>([&, this](auto vrprecision) {
-                using ValueType = util::PrecisionValueType<decltype(vrprecision)>;
+                       dispatching::filter::Scalars>([&, this](auto vrPrecision) {
+                using ValueType = util::PrecisionValueType<decltype(vrPrecision)>;
 
                 const auto grid = std::dynamic_pointer_cast<const contourtree::Grid3D<ValueType>>(
                     contourTree->data);
@@ -405,28 +400,18 @@ void ContourTreeQueryProcessor::queryNLeaves() {
                 return f;
             });
 
-    updateContourTreeInfo(features.first);
+    updateContourTreeInfo(simplification);
 
     const auto numberOfElements = contourTree->noVertices;
 
-    auto rawData = new uint16_t[numberOfElements];
+    const auto rawData = new uint16_t[numberOfElements];
     std::fill_n(rawData, numberOfElements, 0);
 
-    auto extremalPoints = std::make_shared<std::map<size_t, float>>();
+    const auto extremalPoints = initExtremalPoints(features.size() + 1);
     auto& extremalPointsRef = *extremalPoints;
 
-    auto initExtremalPoints = [&extremalPoints = *extremalPoints](const size_t n) {
-        for (size_t i{0}; i < n; i++) {
-            extremalPoints[i] = std::numeric_limits<float>::max();
-        }
-    };
-    
-    initExtremalPoints(features.second.size());
-
-    extremalPointsRef[0] = std::numeric_limits<float>::max();
-
-    for (size_t i{1}; i <= features.second.size(); i++) {
-        for (const auto arcId : features.second[i-1].arcs) {
+    for (size_t i{1}; i <= features.size(); i++) {
+        for (const auto arcId : features[i - 1].arcs) {
             for (size_t j{0}; j < numberOfElements; ++j) {
                 if (contourTree->arcMap[j] == arcId) {
                     rawData[j] = static_cast<uint16_t>(i);
@@ -436,8 +421,9 @@ void ContourTreeQueryProcessor::queryNLeaves() {
             }
         }
     }
+    LogInfo(fmt::format("{}", *extremalPoints));
     extremalPointsOutport_.setData(extremalPoints);
-    generateSegmentationVolume(rawData, features.second.size()+1);
+    generateSegmentationVolume(rawData, features.size() + 1);
 }
 
 void ContourTreeQueryProcessor::generateSegmentationVolume(uint16_t* rawData, const size_t n) {
@@ -449,7 +435,8 @@ void ContourTreeQueryProcessor::generateSegmentationVolume(uint16_t* rawData, co
 
     const auto segmentationVolume = std::make_shared<Volume>(segmentationVolumeRamPrecision);
 
-    segmentationVolume->dataMap_.dataRange = segmentationVolume->dataMap_.valueRange = dvec2{0, n};
+    segmentationVolume->dataMap_.dataRange = segmentationVolume->dataMap_.valueRange =
+        dvec2{0, n - 1};
     segmentationVolume->setBasis(inputVolume->getBasis());
     segmentationVolume->setOffset(inputVolume->getOffset());
 
@@ -484,4 +471,15 @@ void ContourTreeQueryProcessor::updateContourTreeInfo(const contourtree::Simplif
                     numberOfNodes, numberOfBranches));
 }
 
+std::shared_ptr<std::map<size_t, float>> ContourTreeQueryProcessor::initExtremalPoints(
+    const size_t n) const {
+    auto m = std::make_shared<std::map<size_t, float>>();
+    auto& mRef = *m;
+
+    for (size_t i{0}; i < n; i++) {
+        mRef[i] = std::numeric_limits<float>::max();
+    }
+
+    return m;
+}
 }  // namespace inviwo
