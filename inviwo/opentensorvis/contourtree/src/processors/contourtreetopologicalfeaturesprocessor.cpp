@@ -71,10 +71,19 @@ void ContourTreeTopologicalFeaturesProcessor::process() {
 
     const auto partition = featureType_.get() == FeatureType::PartitionedExtrema;
 
+    const auto t1 = std::chrono::high_resolution_clock::now();
+
     auto topologicalFeatures = std::make_shared<contourtree::TopologicalFeatures>();
 
     topologicalFeatures->loadDataFromArrays(contourTreeData, contourTreeSimplification->order_,
                                             contourTreeSimplification->weights_, partition);
+
+    const auto t2 = std::chrono::high_resolution_clock::now();
+
+    std::cout << "Contour tree features process(): "
+              << std::to_string(
+                     std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count())
+              << std::endl;
 
     contourTreeTopologicalFeatuesOutport_.setData(topologicalFeatures);
     contourTreeSimplificationOutport_.setData(contourTreeSimplificationInport_.getData());

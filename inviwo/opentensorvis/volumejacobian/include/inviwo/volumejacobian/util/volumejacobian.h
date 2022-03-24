@@ -31,6 +31,7 @@
 
 #include <inviwo/volumejacobian/volumejacobianmoduledefine.h>
 #include <inviwo/core/datastructures/volume/volume.h>
+#include <inviwo/opentensorvisbase/datastructures/tensorfield3d.h>
 
 namespace inviwo {
 
@@ -102,6 +103,8 @@ std::unique_ptr<Volume> jacobianOperation(const InVolume &v, JacobianOperations 
             throw Exception("Not yet implemented", IVW_CONTEXT_CUSTOM("volutil::jacobianOperation"));
     }
 }
+
+std::optional<std::shared_ptr<TensorField3D>> jacobian(std::shared_ptr<const Volume>);
 
 }  // namespace volutil
 }  // namespace inviwo

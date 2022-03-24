@@ -1,17 +1,19 @@
 ivw_module(VolumeJacobian)
 
 set(HEADER_FILES
+    include/inviwo/volumejacobian/processors/volumejacobianoperations.h
+    include/inviwo/volumejacobian/processors/volumejacobianprocessor.h
+    include/inviwo/volumejacobian/util/volumejacobian.h
     include/inviwo/volumejacobian/volumejacobianmodule.h
     include/inviwo/volumejacobian/volumejacobianmoduledefine.h
-    include/inviwo/volumejacobian/processors/volumejacobianoperations.h
-    include/inviwo/volumejacobian/util/volumejacobian.h
 )
 ivw_group("Header Files" ${HEADER_FILES})
 
 set(SOURCE_FILES
-    src/volumejacobianmodule.cpp
     src/processors/volumejacobianoperations.cpp
+    src/processors/volumejacobianprocessor.cpp
     src/util/volumejacobian.cpp
+    src/volumejacobianmodule.cpp
 )
 ivw_group("Source Files" ${SOURCE_FILES})
 

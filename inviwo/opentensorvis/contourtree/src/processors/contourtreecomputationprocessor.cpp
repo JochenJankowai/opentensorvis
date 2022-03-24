@@ -75,6 +75,8 @@ void ContourTreeComputationProcessor::process() {
         return;
     }
 
+    const auto t1 = std::chrono::high_resolution_clock::now();
+
     inputVolume->getRepresentation<VolumeRAM>()->dispatch<void, dispatching::filter::Scalars>(
         [&, this](auto vrprecision) {
             using ValueType = util::PrecisionValueType<decltype(vrprecision)>;
@@ -102,6 +104,12 @@ void ContourTreeComputationProcessor::process() {
 
             contourTreeOutport_.setData(mergeTree);
         });
+
+    const auto t2 = std::chrono::high_resolution_clock::now();
+
+    std::cout << "Contour tree computation process(): "
+              << std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count())
+              << std::endl;
 
     volumeOutport_.setData(volumeInport_.getData());
 

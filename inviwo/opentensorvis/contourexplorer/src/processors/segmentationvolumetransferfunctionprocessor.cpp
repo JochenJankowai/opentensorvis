@@ -72,10 +72,7 @@ void SegmentationVolumeTransferFunctionProcessor::process() {
 
     const auto tfPoints = SegmentationColorHelper::generateTFPrimitivesForSegments(
         selection, numberOfFeatures, slope_.get(), shadeColor_.get());
-
-    LogInfo(fmt::format("Generated {} tf primitives for {} segments.", tfPoints.size(),
-                        numberOfFeatures));
-
+    
     NetworkLock l;
 
     tf.clear();

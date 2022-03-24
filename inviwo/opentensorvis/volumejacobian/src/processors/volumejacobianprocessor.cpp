@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2021 Inviwo Foundation
+ * Copyright (c) 2022 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,43 +27,29 @@
  *
  *********************************************************************************/
 
-#include <inviwo/contourtree/processors/contourtreedataprocessor.h>
+#include <inviwo/volumejacobian/processors/volumejacobianprocessor.h>
+#include <inviwo/volumejacobian/util/volumejacobian.h>
 
 namespace inviwo {
 
 // The Class Identifier has to be globally unique. Use a reverse DNS naming scheme
-const ProcessorInfo ContourTreeDataProcessor::processorInfo_{
-    "org.inviwo.ContourTreeDataProcessor",          // Class identifier
-    "Contour Tree Data",                  // Display name
-    "OpenTensorVis",                                // Category
-    CodeState::Experimental,                        // Code state
-    "topology, merge tree, split tree, join tree",  // Tags
+const ProcessorInfo VolumeJacobianProcessor::processorInfo_{
+    "org.inviwo.VolumeJacobianProcessor",  // Class identifier
+    "Volume Jacobian",                     // Display name
+    "Volume operation",                    // Category
+    CodeState::Experimental,               // Code state
+    Tags::CPU,                             // Tags
 };
-const ProcessorInfo ContourTreeDataProcessor::getProcessorInfo() const { return processorInfo_; }
+const ProcessorInfo VolumeJacobianProcessor::getProcessorInfo() const { return processorInfo_; }
 
-ContourTreeDataProcessor::ContourTreeDataProcessor()
-    : Processor()
-    , contourTreeInport_("contourTreeInport")
-    , contourTreeOutport_("passthrough")
-    , contourTreeDataOutport_("contourTreeDataOutport") {
+VolumeJacobianProcessor::VolumeJacobianProcessor()
+    : Processor(), volumeInport_("volumeInport"), tensorField3DOutport_("tensorField3DOutport") {
 
-    addPorts(contourTreeInport_, contourTreeOutport_,contourTreeDataOutport_);
+    addPorts(volumeInport_, tensorField3DOutport_);
 }
 
-void ContourTreeDataProcessor::process() {
-    const auto t1 = std::chrono::high_resolution_clock::now();
-
-    contourTreeDataOutport_.setData(
-        std::make_shared<contourtree::ContourTreeData>(contourTreeInport_.getData()));
-
-    const auto t2 = std::chrono::high_resolution_clock::now();
-
-    std::cout << "Contour tree data process(): "
-              << std::to_string(
-                     std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count())
-              << std::endl;
-
-    contourTreeOutport_.setData(contourTreeInport_.getData());
+void VolumeJacobianProcessor::process() {
+    tensorField3DOutport_.setData(*volutil::jacobian(volumeInport_.getData()));
 }
 
 }  // namespace inviwo

@@ -72,6 +72,8 @@ void ContourTreeSimplificationProcessor::process() {
 
     std::shared_ptr<contourtree::SimFunction> simFn;
 
+    const auto t1 = std::chrono::high_resolution_clock::now();
+
     if (simplificationMetod_.get() == SimplificationMetod::Persistence) {
         simFn = std::make_shared<contourtree::Persistence>(contourTreeData);
     } else {
@@ -81,6 +83,13 @@ void ContourTreeSimplificationProcessor::process() {
 
     simplifyCt->simplify(simFn);
     simplifyCt->computeWeights();
+
+    const auto t2 = std::chrono::high_resolution_clock::now();
+
+    std::cout << "Contour tree simplification process(): "
+              << std::to_string(
+                     std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count())
+              << std::endl;
 
     contourTreeSimplificationOutport_.setData(simplifyCt);
     contourTreeDataOutport_.setData(contourTreeDataInport_.getData());

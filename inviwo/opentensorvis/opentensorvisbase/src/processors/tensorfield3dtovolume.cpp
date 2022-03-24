@@ -38,6 +38,7 @@
 #include <glm/gtx/component_wise.hpp>
 #include <inviwo/core/network/networklock.h>
 #include <inviwo/opentensorvisbase/opentensorvisbasemodule.h>
+#include <inviwo/dataframe/datastructures/column.h>
 
 namespace inviwo {
 namespace {

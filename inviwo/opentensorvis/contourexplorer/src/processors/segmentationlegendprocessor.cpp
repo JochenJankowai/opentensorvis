@@ -60,7 +60,7 @@ void SegmentationLegendProcessor::handleSelection() {
      * Unfortunately, picking has never been merged into nanovg. Therefore, we need to do it
      * ourselves. It'll be inaccurate since the rounded corners won't be respected but it'll do.
      */
-    for (size_t i{0}; i < positions_.size();i++) {
+    for (size_t i{0}; i < positions_.size(); i++) {
         const auto hitPos = flipY(positions_[i]);
         if (isMouseDown_ && mousePos_.x >= hitPos.x && mousePos_.x <= hitPos.x + extents.x &&
             mousePos_.y <= hitPos.y && mousePos_.y >= hitPos.y - extents.y) {
@@ -84,9 +84,13 @@ SegmentationLegendProcessor::SegmentationLegendProcessor()
     , cornerRadius_("", "", 10, 0, 30, 2)
     , luminanceMultiplier_("luminanceMultiplier", "Luminance multiplier", 0.2f, 0.0f, 1.0f, 0.01f)
     , strokeWitdth_("strokeWitdth", "Stroke witdth", 1.0f, 1.0f, 10.0f, 0.1f)
+    , strokeColor_("strokeColor", "Stroke color", vec4{1.0f}, vec4{0.0f, 0.0f, 0.0f, 1.0f},
+                   vec4{1.0f}, vec4{0.0001f}, InvalidationLevel::InvalidOutput,
+                   PropertySemantics::Color)
+    , numberOfDecimals_("numberOfDecimals", "Number of decimals",3,1,5,1) 
     , fontProperties_("fontProperties", "Font properties")
-    , fontColor_("fontColor", "Font color", dvec4{1}, dvec4{0, 0, 0, 1}, vec4{1}, dvec4{0.0001},
-                 InvalidationLevel::InvalidOutput, PropertySemantics::Color)
+    , fontColor_("fontColor", "Font color", vec4{1.0f}, vec4{0.0f, 0.0f, 0.0f, 1.0f}, vec4{1.0f},
+                 vec4{0.0001f}, InvalidationLevel::InvalidOutput, PropertySemantics::Color)
     , nvgContext_{InviwoApplication::getPtr()
                       ->getModuleByType<NanoVGUtilsModule>()
                       ->getNanoVGContext()}
@@ -128,7 +132,7 @@ SegmentationLegendProcessor::SegmentationLegendProcessor()
     eventPropertyHighlighting_.setVisible(false);
 
     styling_.addProperties(height_, marginBottom_, marginLeft_, cornerRadius_, luminanceMultiplier_,
-                           strokeWitdth_);
+                           strokeWitdth_, strokeColor_,numberOfDecimals_);
 
     addProperties(styling_, fontProperties_, eventPropertySelection_, eventPropertyHighlighting_);
 
@@ -175,6 +179,9 @@ void SegmentationLegendProcessor::process() {
         utilgl::activateAndClearTarget(imageOutport_, ImageType::ColorDepth);
     }
 
+    utilgl::DepthFuncState depthFunc(GL_ALWAYS);
+    utilgl::BlendModeState blending(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
     nvgContext_.activate(dimensions);
 
     dimensions.x -= marginLeft_.get();
@@ -186,11 +193,11 @@ void SegmentationLegendProcessor::process() {
     positions_.clear();
 
     auto drawValues = [this](const vec2& at, const float value, const float textBoxWidth) {
-        auto text = value == std::numeric_limits<float>::max()
+        const auto format = "{:30." + std::to_string(numberOfDecimals_.get()) + "e}";
+        const auto text = value == std::numeric_limits<float>::max()
                         ? "inf"
-                        : std::string{fmt::format("{:03.4e}", value)};
-        auto bounds = nvgContext_.textBounds(at, text);
-
+                        : std::string{fmt::format(format, value)};
+        
         nvgContext_.beginPath();
         nvgContext_.fontSize(static_cast<float>(fontProperties_.fontSize_.get()));
         nvgContext_.fontFace(fontProperties_.fontFace_.getSelectedIdentifier());
@@ -218,12 +225,12 @@ void SegmentationLegendProcessor::process() {
             color = dvec4(
                 glm::clamp(SegmentationColorHelper::hclToRgb(hcl), dvec3(0.0), dvec3(1.0)), 1.0);
         }
-        
+
         nvgContext_.beginPath();
         nvgContext_.roundedRect(position, extends, cornerRadius_.get());
-        
+
         if (selection.contains(i)) {
-            nvgContext_.strokeColor(vec4{vec3{0.5f}, 1.0f});
+            nvgContext_.strokeColor(strokeColor_.get());
             nvgContext_.strokeWidth(strokeWitdth_.get());
             nvgContext_.stroke();
         }
@@ -234,8 +241,8 @@ void SegmentationLegendProcessor::process() {
 
     for (size_t i{0}; i < iNumberOfSegments; ++i) {
         positions_.emplace_back((gapWidth_ * static_cast<float>(i + 1)) +
-                                   (rectangleWidth_ * static_cast<float>(i)) + marginLeft_.get(),
-                               dimensions.y - marginBottom_.get() - height_.get());
+                                    (rectangleWidth_ * static_cast<float>(i)) + marginLeft_.get(),
+                                dimensions.y - marginBottom_.get() - height_.get());
     }
 
     for (size_t i{0}; i < iNumberOfSegments; ++i) {
@@ -244,7 +251,8 @@ void SegmentationLegendProcessor::process() {
 
     // Separeta loop so the text would always be on top
     for (size_t i{0}; i < iNumberOfSegments; ++i) {
-        drawValues(positions_[i] + vec2(0, height_.get() / 2.0f), segmentMinima[i], rectangleWidth_);
+        drawValues(positions_[i] + vec2(0, height_.get() / 2.0f), segmentMinima[i],
+                   rectangleWidth_);
     }
 
     nvgContext_.deactivate();

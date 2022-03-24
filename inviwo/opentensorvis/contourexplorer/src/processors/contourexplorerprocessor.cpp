@@ -191,9 +191,6 @@ void ContourExplorerProcessor::updateTF() {
     const auto tfPrimitives =
         SegmentationColorHelper::generateTFPrimitivesForSegments(selection, max + 1);
 
-    LogInfo(
-        fmt::format("Generated {} tf primitives for {} segments.", tfPrimitives.size(), max + 1));
-
     NetworkLock l;
 
     transferFunction_.get().clear();

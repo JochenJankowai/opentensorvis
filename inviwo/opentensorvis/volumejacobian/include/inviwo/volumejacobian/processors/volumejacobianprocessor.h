@@ -2,7 +2,7 @@
  *
  * Inviwo - Interactive Visualization Workshop
  *
- * Copyright (c) 2021 Inviwo Foundation
+ * Copyright (c) 2022 Inviwo Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,24 +29,31 @@
 
 #pragma once
 
-#include <inviwo/contourexplorer/contourexplorermoduledefine.h>
+#include <inviwo/volumejacobian/volumejacobianmoduledefine.h>
 #include <inviwo/core/processors/processor.h>
 #include <inviwo/core/ports/volumeport.h>
-#include <modules/brushingandlinking/ports/brushingandlinkingports.h>
-#include <inviwo/core/ports/imageport.h>
-#include <inviwo/nanovgutils/nanovgcontext.h>
-#include <modules/fontrendering/properties/fontproperty.h>
-#include <inviwo/contourtree/ports/extremalpointsport.h>
+#include <inviwo/opentensorvisbase/ports/tensorfieldport.h>
 
 namespace inviwo {
 
-/** \docpage{org.inviwo.SegmentationLegendProcessor, Segmentation Legend Processor}
- * ![](org.inviwo.SegmentationLegendProcessor.png?classIdentifier=org.inviwo.SegmentationLegendProcessor)
+/** \docpage{org.inviwo.VolumeJacobianProcessor, Volume Jacobian Processor}
+ * ![](org.inviwo.VolumeJacobianProcessor.png?classIdentifier=org.inviwo.VolumeJacobianProcessor)
+ * Explanation of how to use the processor.
+ *
+ * ### Inports
+ *   * __<Inport1>__ <description>.
+ *
+ * ### Outports
+ *   * __<Outport1>__ <description>.
+ *
+ * ### Properties
+ *   * __<Prop1>__ <description>.
+ *   * __<Prop2>__ <description>
  */
-class IVW_MODULE_CONTOUREXPLORER_API SegmentationLegendProcessor : public Processor {
+class IVW_MODULE_VOLUMEJACOBIAN_API VolumeJacobianProcessor : public Processor {
 public:
-    SegmentationLegendProcessor();
-    virtual ~SegmentationLegendProcessor() = default;
+    VolumeJacobianProcessor();
+    virtual ~VolumeJacobianProcessor() override = default;
 
     virtual void process() override;
 
@@ -54,36 +61,8 @@ public:
     static const ProcessorInfo processorInfo_;
 
 private:
-    ExtremalPointsInport segmentMinimaInport_;
-    BrushingAndLinkingInport brushingAndLinkingInport_;
-
-    ImageInport imageInport_;
-    ImageOutport imageOutport_;
-
-    CompositeProperty styling_;
-    FloatProperty height_;
-    FloatProperty marginBottom_;
-    FloatProperty marginLeft_;
-    FloatProperty cornerRadius_;
-    FloatProperty luminanceMultiplier_;
-    FloatProperty strokeWitdth_;
-    FloatVec4Property strokeColor_;
-    IntProperty numberOfDecimals_;
-    FontProperty fontProperties_;
-    FloatVec4Property fontColor_;
-
-    NanoVGContext& nvgContext_;
-
-    EventProperty eventPropertySelection_;
-    EventProperty eventPropertyHighlighting_;
-
-    vec2 mousePos_;
-    bool isMouseDown_;
-    std::vector<vec2> positions_;
-    float gapWidth_;
-    float rectangleWidth_;
-
-    void handleSelection();
+    VolumeInport volumeInport_;
+    TensorField3DOutport tensorField3DOutport_;
 };
 
 }  // namespace inviwo

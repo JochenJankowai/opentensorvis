@@ -309,9 +309,9 @@ void FeatureLevelSetProcessorGL::process() {
     auto min = reduction_.reduce_v(outputTexture, ReductionOperator::Min);
     const auto max = reduction_.reduce_v(outputTexture, ReductionOperator::Max);
 
-    if (std::abs(max - min) < std::numeric_limits<double>::epsilon()) {
+    /*if (std::abs(max - min) < std::numeric_limits<double>::epsilon()) {
         min = min - max;
-    }
+    }*/
 
     outputTexture->dataMap_.valueRange = outputTexture->dataMap_.dataRange =
         dvec2(min, capMaxDistance_.get() ? std::min(max, maxDist_) : max);

@@ -29,6 +29,7 @@
 
 #include <inviwo/volumejacobian/volumejacobianmodule.h>
 #include <inviwo/volumejacobian/processors/volumejacobianoperations.h>
+#include <inviwo/volumejacobian/processors/volumejacobianprocessor.h>
 
 namespace inviwo {
 
@@ -40,6 +41,7 @@ VolumeJacobianModule::VolumeJacobianModule(InviwoApplication* app) : InviwoModul
 
     // Processors
     registerProcessor<VolumeJacobianOperations>();
+    registerProcessor<VolumeJacobianProcessor>();
 
     // Properties
     // registerProperty<VolumeJacobianProperty>();

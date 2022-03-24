@@ -49,12 +49,12 @@ public:
 namespace detail {
 
 template <typename F, typename T>
-F componentMin(F a, const T &b) {
+F componentMin(F a, const T& b) {
     return static_cast<F>(std::min(a, b));
 }
 
 template <typename F, glm::length_t L, typename T, glm::qualifier Q>
-F componentMin(F a, const glm::vec<L, T, Q> &b) {
+F componentMin(F a, const glm::vec<L, T, Q>& b) {
     for (glm::length_t i = 0; i < L; i++) {
         a = static_cast<F>(std::min(a, b[i]));
     }
@@ -62,12 +62,12 @@ F componentMin(F a, const glm::vec<L, T, Q> &b) {
 }
 
 template <typename F, typename T>
-F componentMax(F a, const T &b) {
+F componentMax(F a, const T& b) {
     return static_cast<F>(std::max(a, b));
 }
 
 template <typename F, glm::length_t L, typename T, glm::qualifier Q>
-F componentMax(F a, const glm::vec<L, T, Q> &b) {
+F componentMax(F a, const glm::vec<L, T, Q>& b) {
     for (glm::length_t i = 0; i < L; i++) {
         a = static_cast<F>(std::max(a, b[i]));
     }
@@ -75,7 +75,7 @@ F componentMax(F a, const glm::vec<L, T, Q> &b) {
 }
 
 template <typename Callback>
-std::unique_ptr<Volume> volumeJacobian(const Volume &volume, Callback &&callback) {
+std::unique_ptr<Volume> volumeJacobian(const Volume& volume, Callback&& callback) {
     using ReturnType = std::invoke_result_t<Callback, mat3>;
 
     auto newVolumeRep = std::make_shared<VolumeRAMPrecision<ReturnType>>(volume.getDimensions());
@@ -111,7 +111,7 @@ std::unique_ptr<Volume> volumeJacobian(const Volume &volume, Callback &&callback
             const auto worldSpace = Sampler::Space::World;
             const Sampler sampler(volume, worldSpace);
 
-            util::forEachVoxelParallel(*vol, [&](const size3_t &pos) {
+            util::forEachVoxelParallel(*vol, [&](const size3_t& pos) {
                 const vec3 world{m * vec4((vec3(pos) + 0.5f) / vec3(volume.getDimensions()), 1)};
 
                 const auto Fxp = static_cast<vec3>(sampler.sample(world + ox));
@@ -150,7 +150,7 @@ std::unique_ptr<Volume> volumeJacobian(const Volume &volume, Callback &&callback
 
 std::unique_ptr<Volume> curl(std::shared_ptr<const Volume> volume) { return curl(*volume); }
 
-std::unique_ptr<Volume> curl(const Volume &volume) {
+std::unique_ptr<Volume> curl(const Volume& volume) {
     return detail::volumeJacobian(volume, [](auto J) -> vec3 {
         return vec3{J[1].z - J[2].y, J[2].x - J[0].z, J[0].y - J[1].x};
     });
@@ -160,7 +160,7 @@ std::unique_ptr<Volume> eigenValues(std::shared_ptr<const Volume> volume) {
     return eigenValues(*volume);
 }
 
-std::unique_ptr<Volume> eigenValues(const Volume &volume) {
+std::unique_ptr<Volume> eigenValues(const Volume& volume) {
     return detail::volumeJacobian(volume, [](auto J) {
         if (glm::length2(J[0]) < 0.000001) {
             return vec3{0};
@@ -184,7 +184,7 @@ std::unique_ptr<Volume> eigenValues(const Volume &volume) {
         const auto e = es.eigenvalues();
         vec3 ev{e(0), e(1), e(2)};
 
-        auto sort = [](vec3 &v) {
+        auto sort = [](vec3& v) {
             if (v.x < v.y) {
                 std::swap(v.x, v.y);
             }
@@ -199,16 +199,16 @@ std::unique_ptr<Volume> eigenValues(const Volume &volume) {
         sort(ev);
 
         return ev;
-        //return glm::clamp(ev, -1000.f, 1000.0f);
+        // return glm::clamp(ev, -1000.f, 1000.0f);
     });
 }
 
 std::unique_ptr<Volume> qValues(std::shared_ptr<const Volume> volume) { return qValues(*volume); }
 
-std::unique_ptr<Volume> qValues(const Volume &volume) {
+std::unique_ptr<Volume> qValues(const Volume& volume) {
     return detail::volumeJacobian(volume, [](auto J) {
         const auto T = glm::matrixCompMult(J, glm::transpose(J));
-        return -(glm::compAdd(T[0]) + glm::compAdd(T[1]) + glm::compAdd(T[2]))*0.5f;
+        return -(glm::compAdd(T[0]) + glm::compAdd(T[1]) + glm::compAdd(T[2])) * 0.5f;
 
         /*const auto S = (J + JT) * 0.5f;
         const auto O = (J - JT) * 0.5f;
@@ -218,7 +218,7 @@ std::unique_ptr<Volume> qValues(const Volume &volume) {
 
 std::unique_ptr<Volume> q2Values(std::shared_ptr<const Volume> volume) { return q2Values(*volume); }
 
-std::unique_ptr<Volume> q2Values(const Volume &volume) {
+std::unique_ptr<Volume> q2Values(const Volume& volume) {
     return detail::volumeJacobian(volume, [](auto J) {
         if (glm::length2(J[0]) < 0.000001) {
             return 0.0f;
@@ -246,9 +246,8 @@ std::unique_ptr<Volume> q2Values(const Volume &volume) {
 
 std::unique_ptr<Volume> q3Values(std::shared_ptr<const Volume> volume) { return q3Values(*volume); }
 
-std::unique_ptr<Volume> q3Values(const Volume &volume) {
+std::unique_ptr<Volume> q3Values(const Volume& volume) {
     return detail::volumeJacobian(volume, [](auto J) {
-        
         if (glm::length2(J[0]) < 0.000001) {
             return 0.0f;
         }
@@ -258,7 +257,7 @@ std::unique_ptr<Volume> q3Values(const Volume &volume) {
         if (glm::length2(J[2]) < 0.000001) {
             return 0.0f;
         }
-        const auto JT = glm::transpose(J);  
+        const auto JT = glm::transpose(J);
         const auto S = (J + JT) * 0.5f;
         const auto O = (J - JT) * 0.5f;
 
@@ -273,6 +272,62 @@ std::unique_ptr<Volume> q3Values(const Volume &volume) {
         }
         return (Onorm2 - Snorm2) * 0.5f;
     });
+}
+
+std::optional<std::shared_ptr<TensorField3D>> jacobian(std::shared_ptr<const Volume> volume) {
+    const auto m = volume->getCoordinateTransformer().getDataToWorldMatrix();
+
+    const auto a = m * vec4(0, 0, 0, 1);
+    const auto b = m * vec4(1.0f / vec3(volume->getDimensions() - size3_t(1)), 1);
+    const auto spacing = b - a;
+
+    const vec3 ox(spacing.x, 0, 0);
+    const vec3 oy(0, spacing.y, 0);
+    const vec3 oz(0, 0, spacing.z);
+
+    // I only want float vec3s, no need for dispatching
+    if (volume->getDataFormat()->getComponents() != 3 ||
+        volume->getDataFormat()->getPrecision() != 32 ||
+        volume->getDataFormat()->getNumericType() != NumericType::Float) {
+        LogErrorCustom("volutil::jacobian", "Wrong input data format.");
+        return std::nullopt;
+    }
+
+    std::vector<TensorField3D::matN> tensors;
+    tensors.resize(glm::compMul(volume->getDimensions()));
+
+    auto vol =
+        dynamic_cast<const VolumeRAMPrecision<vec3>*>(volume->getRepresentation<VolumeRAM>());
+
+    auto sampler = TemplateVolumeSampler<vec3, float>(volume, CoordinateSpace::World);
+
+    util::IndexMapper3D indexMapper(volume->getDimensions());
+
+    util::forEachVoxelParallel(*vol, [&](const size3_t& pos) {
+        const vec3 world{m * vec4((vec3(pos) + 0.5f) / vec3(volume->getDimensions()), 1)};
+
+        const auto index = indexMapper(pos);
+
+        const auto Fxp = sampler.sample(world + ox);
+        const auto Fxm = sampler.sample(world - ox);
+        const auto Fyp = sampler.sample(world + oy);
+        const auto Fym = sampler.sample(world - oy);
+        const auto Fzp = sampler.sample(world + oz);
+        const auto Fzm = sampler.sample(world - oz);
+
+        const mat3 J{(Fxp - Fxm) / (2.0f * spacing.x),  //
+                     (Fyp - Fym) / (2.0f * spacing.y),  //
+                     (Fzp - Fzm) / (2.0f * spacing.z)};
+
+        tensors[index] = J;
+    });
+
+    auto jacobianField = std::make_shared<TensorField3D>(volume->getDimensions(), tensors);
+
+    jacobianField->setModelMatrix(volume->getModelMatrix());
+    jacobianField->setWorldMatrix(volume->getWorldMatrix());
+
+    return jacobianField;
 }
 
 }  // namespace volutil

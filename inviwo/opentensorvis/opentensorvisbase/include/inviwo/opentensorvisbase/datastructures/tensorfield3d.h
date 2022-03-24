@@ -45,9 +45,9 @@ public:
     TensorField3D() = delete;
 
     TensorField3D(const sizeN_t& dimensions, const std::vector<matN>& tensors,
-                  std::shared_ptr<DataFrame> metaData = nullptr);
+                  std::shared_ptr<DataFrame> metaData = std::make_shared<DataFrame>());
     TensorField3D(const sizeN_t& dimensions, std::shared_ptr<std::vector<matN>> tensors,
-                  std::shared_ptr<DataFrame> metaData = nullptr);
+                  std::shared_ptr<DataFrame> metaData = std::make_shared<DataFrame>());
 
     virtual ~TensorField3D() = default;
 
